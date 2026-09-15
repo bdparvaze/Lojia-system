@@ -63,7 +63,6 @@ Contributions make the open-source community an amazing place to learn, inspire,
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
----
 
 # লোজিয়া সিস্টেম (Lojia System) - বিজনেস ম্যানেজমেন্ট অ্যাপ 🛒📊
 
@@ -83,7 +82,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## 🛠️ প্রযুক্তি স্ট্যাক (Tech Stack)
 
 *   **প্ল্যাটফর্ম:** অ্যান্ড্রয়েড (Android)
-*   **প্রোগ্রামিং ভাষা:** কোটলিন (Java/Kotlin)
+*   **প্রোগ্রামিং ভাষা:** কোটলিন (Kotlin)
 *   **ইউআই ফ্রেমওয়ার্ক:** জেটপ্যাক কম্পোজ (Jetpack Compose - Material 3)
 *   **ডেটাবেস:** রুম ডেটাবেস (Room Database - SQLite) (Version 2.6.1)
 *   **আর্কিটেকচার:** MVVM (Model-View-ViewModel)

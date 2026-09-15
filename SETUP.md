@@ -12,7 +12,6 @@
 *   **Android Studio:** Android Studio Koala, Jellyfish বা এর নতুন কোনো ভার্সন।
 *   **Gradle:** প্রজেক্টে Gradle Wrapper দেওয়া আছে (আলাদা করে ইনস্টল করার দরকার নেই)।
 *   **Git:** সোর্স কোড ক্লোন করার জন্য।
-*   **Python:** স্ক্রিপ্টগুলো (localization/string fix) চালানোর জন্য Python 3.x প্রয়োজন।
 
 ---
 
@@ -40,7 +39,7 @@ export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 টার্মিনাল বা কমান্ড প্রম্পট খুলুন এবং নিচের কমান্ডটি রান করুন:
 
 ```bash
-git clone https://github.com/yourusername/lojia-system.git
+git clone https://github.com/bdparvaze/Lojia-system.git
 cd lojia-system
 ```
 
@@ -112,22 +111,4 @@ cd lojia-system
 
 ---
 
-## ৯. Python Scripts ব্যবহার (Using Utility Python Scripts)
-
-প্রজেক্টের বিভিন্ন স্বয়ংক্রিয় কাজ (যেমন— স্ট্রিং এক্সট্রাক্ট করা, লোকালাইজেশন ফাইল আপডেট করা বা কোডের ফরম্যাটিং ঠিক করা) করার জন্য বেশ কিছু পাইথন স্ক্রিপ্ট রয়েছে। এগুলো সাধারণত রুট ফোল্ডারে বা `scripts/` ফোল্ডারে থাকে।
-
-**কিছু গুরুত্বপূর্ণ স্ক্রিপ্ট:**
-*   `create_full_locales.py` / `create_five_locales.py`: ভাষা অনুবাদের এক্সএমএল (XML) ফাইল জেনারেট করার জন্য।
-*   `add_strings.py`: নতুন স্ট্রিং রিসোর্স যোগ করার জন্য।
-*   `fix_compilation.py`: সাধারণ কোড সিনট্যাক্স স্বয়ংক্রিয়ভাবে ঠিক করার জন্য।
-
-**যেভাবে রান করবেন:**
-টার্মিনাল থেকে স্ক্রিপ্টের ডিরেক্টরিতে গিয়ে নিচের কমান্ডটি ব্যবহার করুন:
-
-```bash
-python3 scripts/create_full_locales.py
-```
-*(স্ক্রিপ্টটি চালানোর আগে নিশ্চিত করুন আপনার মেশিনে Python 3.x ইনস্টল করা আছে।)*
-
----
 *Happy Coding! 🎉*
