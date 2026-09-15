@@ -1,5 +1,6 @@
 package com.lojia.pos.pos
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -446,7 +447,7 @@ fun PosScreen(
 
                     // Optional Search Field Row
                     if (showSearchField) {
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = searchQuery,
                             onValueChange = { posViewModel.searchQuery.value = it },
                             placeholder = { Text(stringResource(R.string.search_items_barcode)) },
@@ -778,7 +779,7 @@ fun PosScreen(
             },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = customerNameInput,
                         onValueChange = { customerNameInput = it },
                         label = { Text(stringResource(R.string.customer_name_label)) },
@@ -832,7 +833,7 @@ fun PosScreen(
             title = { Text(stringResource(R.string.save_open_ticket)) },
             text = {
                 Column {
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = newTicketNameInput,
                         onValueChange = { newTicketNameInput = it },
                         label = { Text(stringResource(R.string.ticket_name_table)) },

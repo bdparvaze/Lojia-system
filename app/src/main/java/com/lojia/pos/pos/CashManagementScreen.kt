@@ -1,5 +1,6 @@
 package com.lojia.pos.pos
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -185,7 +186,7 @@ fun CashManagementScreen(
                     onExpandedChange = { cashierDropdownExpanded = !cashierDropdownExpanded },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = selectedCashier.ifBlank { stringResource(R.string.select_cashier) },
                         onValueChange = {},
                         readOnly = true,

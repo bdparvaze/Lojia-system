@@ -1,5 +1,6 @@
 package com.lojia.pos.pos
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -458,7 +459,7 @@ fun BarcodeScannerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = manualBarcode,
                         onValueChange = { manualBarcode = it },
                         placeholder = { Text(stringResource(R.string.eg_101_102_628100), color = Color(0xFF64748B), fontSize = 13.sp) },

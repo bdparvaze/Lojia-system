@@ -1,5 +1,6 @@
 package com.lojia.pos.settings
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -245,7 +246,7 @@ fun CashierManagementSection(
         // =====================================================================
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // Real-time Search TextField
-            OutlinedTextField(
+            LojiaTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = {

@@ -1,5 +1,7 @@
 package com.lojia.pos.report
 
+import androidx.compose.foundation.layout.imePadding
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -985,7 +987,7 @@ private fun LiveCashflowTab(
                                     )
                                     Spacer(Modifier.height(2.dp))
                                     Text(
-                                        text = stringResource(R.string.msg_2f_sar_13).format(activeSession.startingCash),
+                                        text = "%.2f ${stringResource(R.string.currency_unit)}".format(activeSession.startingCash),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = ShiftColors.NetCashGreen,
@@ -1231,7 +1233,10 @@ private fun LiveCashflowTab(
             },
             text = {
                 val dayShiftText = stringResource(R.string.shift_day)
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()
+                ) {
                     LabeledDropdown(
                         label = stringResource(R.string.cashier),
                         options = cashierOptions,
@@ -1307,7 +1312,10 @@ private fun LiveCashflowTab(
                 }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()
+                ) {
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = ShiftColors.BrassLight,
@@ -1334,12 +1342,12 @@ private fun LiveCashflowTab(
                         value = actualCountText,
                         onChange = { actualCountText = it }
                     )
-                    OutlinedTextField(
+                    LojiaMultilineTextField(
                         value = notesText,
                         onValueChange = { notesText = it },
                         label = { Text(stringResource(R.string.shift_notes_variance)) },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)
                     )
                 }
             },
@@ -1457,7 +1465,7 @@ private fun ShiftReportArchivesTab(
                 .fillMaxWidth()
                 .padding(bottom = 14.dp)
         ) {
-            OutlinedTextField(
+            LojiaTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = {
@@ -1678,7 +1686,7 @@ private fun ShiftReportArchivesTab(
                                         )
                                         Spacer(Modifier.height(2.dp))
                                         Text(
-                                            text = stringResource(R.string.msg_2f_sar_13).format(report.totalSales),
+                                            text = "%.2f ${stringResource(R.string.currency_unit)}".format(report.totalSales),
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = ShiftColors.Text,
@@ -1695,7 +1703,7 @@ private fun ShiftReportArchivesTab(
                                         )
                                         Spacer(Modifier.height(2.dp))
                                         Text(
-                                            text = stringResource(R.string.msg_2f_sar_13).format(report.madaPayments),
+                                            text = "%.2f ${stringResource(R.string.currency_unit)}".format(report.madaPayments),
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = ShiftColors.NetMadaBlue,
@@ -1712,7 +1720,7 @@ private fun ShiftReportArchivesTab(
                                         )
                                         Spacer(Modifier.height(2.dp))
                                         Text(
-                                            text = stringResource(R.string.msg_2f_sar_13).format(report.netCash),
+                                            text = "%.2f ${stringResource(R.string.currency_unit)}".format(report.netCash),
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.ExtraBold,
                                             color = ShiftColors.NetCashGreen,
@@ -1958,11 +1966,11 @@ private fun ReceiptSummary(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(stringResource(R.string.net_cash), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = ShiftColors.NetCashGreen, letterSpacing = 0.5.sp)
-                    Text(stringResource(R.string.msg_2f_sar_13).format(netCash), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
+                    Text("%.2f ${stringResource(R.string.currency_unit)}".format(netCash), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(stringResource(R.string.net_mada_bank), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = ShiftColors.NetMadaBlue, letterSpacing = 0.5.sp)
-                    Text(stringResource(R.string.msg_2f_sar_13).format(netMada), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetMadaBlue)
+                    Text("%.2f ${stringResource(R.string.currency_unit)}".format(netMada), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetMadaBlue)
                 }
             }
         }
@@ -2015,7 +2023,7 @@ private fun StickySummaryBar(netCash: Double) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(stringResource(R.string.net_cash), fontSize = 12.5.sp, color = ShiftColors.Text, fontWeight = FontWeight.Medium)
-        Text(stringResource(R.string.msg_2f_sar_13).format(netCash), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
+        Text("%.2f ${stringResource(R.string.currency_unit)}".format(netCash), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
     }
 }
 
@@ -2224,38 +2232,38 @@ private fun AddEntryDialog(
         },
         title = { Text(title) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                 when (type) {
                     ModalType.CREDIT -> {
-                        OutlinedTextField(receipt, { receipt = it }, label = { Text(stringResource(R.string.receipt_number)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(receipt, { receipt = it }, label = { Text(stringResource(R.string.receipt_number)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_sar)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_with_currency, stringResource(R.string.currency_unit))) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                     }
                     ModalType.OLD_DUE -> {
-                        OutlinedTextField(receipt, { receipt = it }, label = { Text(stringResource(R.string.receipt_number)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(receipt, { receipt = it }, label = { Text(stringResource(R.string.receipt_number)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_sar)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_with_currency, stringResource(R.string.currency_unit))) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
                         PayTypeSelector(payType) { payType = it }
                     }
                     ModalType.STAFF -> {
-                        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.name_description)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(name, { name = it }, label = { Text(stringResource(R.string.name_description)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_sar)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_with_currency, stringResource(R.string.currency_unit))) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
                         PayTypeSelector(payType) { payType = it }
                     }
                     ModalType.WALKOUT -> {
-                        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.name_description)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(name, { name = it }, label = { Text(stringResource(R.string.name_description)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_sar)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.amount_with_currency, stringResource(R.string.currency_unit))) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                     }
                     ModalType.ITEM -> {
-                        OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.item_description)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(name, { name = it }, label = { Text(stringResource(R.string.item_description)) }, shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(qtyText, { qtyText = it.filter { c -> c.isDigit() } }, label = { Text(stringResource(R.string.quantity)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(qtyText, { qtyText = it.filter { c -> c.isDigit() } }, label = { Text(stringResource(R.string.quantity)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                         Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.unit_price_sar)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
+                        LojiaTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text(stringResource(R.string.price_with_currency, stringResource(R.string.currency_unit))) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), shape = RoundedCornerShape(10.dp), colors = fieldColors(), modifier = Modifier.fillMaxWidth())
                     }
                     ModalType.NONE -> {}
                 }

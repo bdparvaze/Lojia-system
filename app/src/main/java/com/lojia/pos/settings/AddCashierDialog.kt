@@ -1,5 +1,6 @@
 package com.lojia.pos.settings
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -143,7 +144,7 @@ fun AddCashierDialog(
                             color = Color(0xFF334155)
                         )
 
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = nameInput,
                             onValueChange = {
                                 nameInput = it

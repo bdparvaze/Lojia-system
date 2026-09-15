@@ -1,5 +1,7 @@
 package com.lojia.pos.settings
 
+import androidx.compose.foundation.layout.imePadding
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -1025,7 +1027,7 @@ fun SettingsShopSection(
                     // ==========================================
                     // 🌍 COUNTRY TAB (RIGHT TAB - NO TOP CARD)
                     // ==========================================
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = countrySearch,
                         onValueChange = { countrySearch = it },
                         placeholder = { Text(stringResource(R.string.search_country), fontSize = 14.sp) },
@@ -1390,7 +1392,7 @@ fun SettingsShopSection(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.cash_management_1), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = isPayIn,
@@ -1405,14 +1407,14 @@ fun SettingsShopSection(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = payAmount,
                         onValueChange = { payAmount = it },
                         label = { Text(stringResource(R.string.amount_with_currency, currency)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = payReason,
                         onValueChange = { payReason = it },
                         label = { Text(stringResource(R.string.reason_note)) },
@@ -1455,17 +1457,17 @@ fun SettingsShopSection(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.close_shift_2), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                     Text(stringResource(R.string.shift_status_active), fontWeight = FontWeight.Medium, color = Color(0xFF10B981))
                     Text(stringResource(R.string.current_shift_cash_2f).format(activeShift?.startingCash ?: 500.0, currency), fontSize = 13.sp)
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = closeActualCount,
                         onValueChange = { closeActualCount = it },
                         label = { Text(stringResource(R.string.actual_cash_count_currency, currency)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = closeNotes,
                         onValueChange = { closeNotes = it },
                         label = { Text(stringResource(R.string.closing_notes)) },
@@ -1499,8 +1501,8 @@ fun SettingsShopSection(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.printers_configuration), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                    LojiaTextField(
                         value = printerName,
                         onValueChange = { printerName = it },
                         label = { Text(stringResource(R.string.printer_name)) },
@@ -1536,7 +1538,7 @@ fun SettingsShopSection(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.customer_displays_1), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1545,7 +1547,7 @@ fun SettingsShopSection(
                         Text(stringResource(R.string.enable_customer_display), fontSize = 14.sp)
                         Switch(checked = customerDisplayOn, onCheckedChange = { customerDisplayOn = it })
                     }
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = customerGreeting,
                         onValueChange = { customerGreeting = it },
                         label = { Text(stringResource(R.string.welcome_greeting_message)) },
@@ -1565,7 +1567,7 @@ fun SettingsShopSection(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.taxes_vat), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1582,7 +1584,7 @@ fun SettingsShopSection(
                     }
 
                     if (taxEnabledInput) {
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = vatRateInput,
                             onValueChange = { vatRateInput = it },
                             label = { Text(stringResource(R.string.vat_rate)) },
@@ -1609,7 +1611,7 @@ fun SettingsShopSection(
                             )
                         }
 
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = vatNumberInput,
                             onValueChange = { vatNumberInput = it },
                             label = { Text(stringResource(R.string.tax_vat_registration_number)) },
@@ -1685,7 +1687,7 @@ fun SettingsShopSection(
                         .heightIn(max = 500.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = salesSearchQuery,
                         onValueChange = { salesSearchQuery = it },
                         placeholder = { Text("Search invoice #, cashier...") },
@@ -1949,7 +1951,7 @@ fun SettingsShopSection(
             },
             title = { Text("Void & Refund Transaction", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                     Text(
                         "Are you sure you want to void invoice ${targetSale.invoiceNumber} (${MoneyFormat.format(targetSale.totalAmount, currency)})? Inventory will be restored atomically.",
                         fontSize = 13.sp
@@ -1977,7 +1979,7 @@ fun SettingsShopSection(
                         )
                     }
 
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = voidReasonInput,
                         onValueChange = { voidReasonInput = it },
                         label = { Text("Reason for void") },
@@ -2037,8 +2039,8 @@ fun SettingsShopSection(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.general_store_settings), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                    LojiaTextField(
                         value = businessNameInput,
                         onValueChange = { businessNameInput = it },
                         label = { Text(stringResource(R.string.store_business_name)) },
@@ -2073,7 +2075,7 @@ fun SettingsShopSection(
             onDismissRequest = { editFieldDialog = null },
             title = { Text(stringResource(R.string.edit_field_title, fieldName), fontWeight = FontWeight.Bold) },
             text = {
-                OutlinedTextField(
+                LojiaTextField(
                     value = tempVal,
                     onValueChange = { tempVal = it },
                     label = { Text(fieldName) },
@@ -2121,10 +2123,10 @@ fun SettingsShopSection(
             onDismissRequest = { showAddProductDialog = false },
             title = { Text(stringResource(R.string.add_new_product), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = newProdName, onValueChange = { newProdName = it }, label = { Text(stringResource(R.string.product_name_1)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = newProdPrice, onValueChange = { newProdPrice = it }, label = { Text(stringResource(R.string.price_with_currency, currency)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = newProdCategory, onValueChange = { newProdCategory = it }, label = { Text(stringResource(R.string.category)) }, modifier = Modifier.fillMaxWidth())
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                    LojiaTextField(value = newProdName, onValueChange = { newProdName = it }, label = { Text(stringResource(R.string.product_name_1)) }, modifier = Modifier.fillMaxWidth())
+                    LojiaTextField(value = newProdPrice, onValueChange = { newProdPrice = it }, label = { Text(stringResource(R.string.price_with_currency, currency)) }, modifier = Modifier.fillMaxWidth())
+                    LojiaTextField(value = newProdCategory, onValueChange = { newProdCategory = it }, label = { Text(stringResource(R.string.category)) }, modifier = Modifier.fillMaxWidth())
                 }
             },
             confirmButton = {
@@ -2156,7 +2158,7 @@ fun SettingsShopSection(
             onDismissRequest = { showAddCategoryDialog = false },
             title = { Text(stringResource(R.string.add_new_category), fontWeight = FontWeight.Bold) },
             text = {
-                OutlinedTextField(value = newCatName, onValueChange = { newCatName = it }, label = { Text(stringResource(R.string.category_name)) }, modifier = Modifier.fillMaxWidth())
+                LojiaTextField(value = newCatName, onValueChange = { newCatName = it }, label = { Text(stringResource(R.string.category_name)) }, modifier = Modifier.fillMaxWidth())
             },
             confirmButton = {
                 Button(onClick = {
@@ -2177,9 +2179,9 @@ fun SettingsShopSection(
             onDismissRequest = { showAddModifierDialog = false },
             title = { Text(stringResource(R.string.add_modifier_1), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = newModName, onValueChange = { newModName = it }, label = { Text(stringResource(R.string.modifier_name)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = newModPrice, onValueChange = { newModPrice = it }, label = { Text(stringResource(R.string.extra_price_with_currency, currency)) }, modifier = Modifier.fillMaxWidth())
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                    LojiaTextField(value = newModName, onValueChange = { newModName = it }, label = { Text(stringResource(R.string.modifier_name)) }, modifier = Modifier.fillMaxWidth())
+                    LojiaTextField(value = newModPrice, onValueChange = { newModPrice = it }, label = { Text(stringResource(R.string.extra_price_with_currency, currency)) }, modifier = Modifier.fillMaxWidth())
                 }
             },
             confirmButton = {
@@ -2204,9 +2206,9 @@ fun SettingsShopSection(
             onDismissRequest = { showAddDiscountDialog = false },
             title = { Text(stringResource(R.string.add_discount_1), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = newDiscName, onValueChange = { newDiscName = it }, label = { Text(stringResource(R.string.discount_name)) }, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = newDiscVal, onValueChange = { newDiscVal = it }, label = { Text(stringResource(R.string.value_eg_10)) }, modifier = Modifier.fillMaxWidth())
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                    LojiaTextField(value = newDiscName, onValueChange = { newDiscName = it }, label = { Text(stringResource(R.string.discount_name)) }, modifier = Modifier.fillMaxWidth())
+                    LojiaTextField(value = newDiscVal, onValueChange = { newDiscVal = it }, label = { Text(stringResource(R.string.value_eg_10)) }, modifier = Modifier.fillMaxWidth())
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = newDiscIsPercent, onCheckedChange = { newDiscIsPercent = it })
                         Text(stringResource(R.string.percentage_discount))

@@ -1,5 +1,6 @@
 package com.lojia.pos.settings
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -193,7 +194,7 @@ fun SettingsScreen(
                     }
 
                     if (roleTarget == "ADMIN" && !isAdmin) {
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = pinToAdmin,
                             onValueChange = {
                                 if (it.length <= 6 && it.all { c -> c.isDigit() }) {

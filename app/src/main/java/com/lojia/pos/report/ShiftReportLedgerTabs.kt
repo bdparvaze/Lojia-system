@@ -1,5 +1,6 @@
 package com.lojia.pos.report
 
+import com.lojia.pos.ui.common.LojiaTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -143,7 +144,7 @@ fun DueLedgerTab(reports: List<ShiftReport>) {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        OutlinedTextField(
+        LojiaTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = { Text(stringResource(R.string.search_receipt_number)) },
@@ -211,7 +212,7 @@ fun DueLedgerTab(reports: List<ShiftReport>) {
                     )
                 }
                 Text(
-                    stringResource(R.string.msg_2f_sar_13).format(netOutstandingDue),
+                    "%.2f ${stringResource(R.string.currency_unit)}".format(netOutstandingDue),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = ShiftColors.Brass
@@ -282,15 +283,15 @@ fun DueLedgerTab(reports: List<ShiftReport>) {
                         ) {
                             Column {
                                 Text(stringResource(R.string.issued_due), fontSize = 10.sp, color = ShiftColors.TextMuted)
-                                Text(stringResource(R.string.msg_2f_sar_13).format(item.initialDue), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ShiftColors.Danger)
+                                Text("%.2f ${stringResource(R.string.currency_unit)}".format(item.initialDue), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ShiftColors.Danger)
                             }
                             Column {
                                 Text(stringResource(R.string.collected_minus), fontSize = 10.sp, color = ShiftColors.TextMuted)
-                                Text(stringResource(R.string.msg_2f_sar_13).format(item.totalCollected), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ShiftColors.NetCashGreen)
+                                Text("%.2f ${stringResource(R.string.currency_unit)}".format(item.totalCollected), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = ShiftColors.NetCashGreen)
                             }
                             Column {
                                 Text(stringResource(R.string.net_remaining), fontSize = 10.sp, color = ShiftColors.TextMuted)
-                                Text(stringResource(R.string.msg_2f_sar_13).format(item.remainingDue), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.Charcoal)
+                                Text("%.2f ${stringResource(R.string.currency_unit)}".format(item.remainingDue), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.Charcoal)
                             }
                         }
                     }
@@ -407,7 +408,7 @@ fun EmployerLedgerTab(reports: List<ShiftReport>) {
                             Text("${item.cashierName} • ${dateFormat.format(Date(item.dateInMillis))}", fontSize = 11.sp, color = ShiftColors.TextMuted)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(stringResource(R.string.msg_2f_sar_13).format(item.amount), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Purple)
+                            Text("%.2f ${stringResource(R.string.currency_unit)}".format(item.amount), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Purple)
                             Text(item.paymentMode, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = ShiftColors.TextMuted)
                         }
                     }
@@ -514,7 +515,7 @@ fun PaidOutShoppingLedgerTab(reports: List<ShiftReport>) {
                             Text(stringResource(R.string.pcs_at_price, item.qty, item.unitPrice, item.cashierName), fontSize = 11.sp, color = ShiftColors.TextMuted)
                             Text(dateFormat.format(Date(item.dateInMillis)), fontSize = 10.sp, color = ShiftColors.TextMuted)
                         }
-                        Text(stringResource(R.string.msg_2f_sar_13).format(item.totalAmount), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Danger)
+                        Text("%.2f ${stringResource(R.string.currency_unit)}".format(item.totalAmount), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Danger)
                     }
                 }
             }
@@ -612,7 +613,7 @@ fun WalkoutLedgerTab(reports: List<ShiftReport>) {
                             Text(item.description, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Charcoal)
                             Text("${item.cashierName} • ${dateFormat.format(Date(item.dateInMillis))}", fontSize = 11.sp, color = ShiftColors.TextMuted)
                         }
-                        Text(stringResource(R.string.msg_2f_sar_13).format(item.amount), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Danger)
+                        Text("%.2f ${stringResource(R.string.currency_unit)}".format(item.amount), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Danger)
                     }
                 }
             }

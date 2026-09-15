@@ -2,6 +2,7 @@ package com.lojia.pos.ui.common
 
 
 
+import com.lojia.pos.ui.common.LojiaTextField
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 
@@ -184,7 +185,7 @@ fun SecureDeleteModal(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                OutlinedTextField(
+                LojiaTextField(
                     value = passwordInput,
                     onValueChange = { passwordInput = it; errorMsg = null },
                     label = { Text(stringResource(R.string.password_1)) },
@@ -197,7 +198,7 @@ fun SecureDeleteModal(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
+                LojiaTextField(
                     value = answerInput,
                     onValueChange = { answerInput = it; errorMsg = null },
                     label = { Text(stringResource(R.string.security_answer)) },
@@ -345,7 +346,7 @@ fun FormInputField(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        OutlinedTextField(
+        LojiaTextField(
             value = value,
             onValueChange = { input ->
                 val sanitized = if (keyboardType == KeyboardType.Number) {

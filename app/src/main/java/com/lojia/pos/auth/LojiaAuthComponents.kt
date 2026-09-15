@@ -342,12 +342,16 @@ fun LojiaInputField(
                     Spacer(modifier = Modifier.width(9.dp))
                 }
 
-                Box(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
                     if (value.isEmpty()) {
                         Text(
                             text = placeholder,
                             color = Color(0xFF9CA3AF),
-                            fontSize = 13.5.sp
+                            fontSize = 13.5.sp,
+                            lineHeight = 18.sp
                         )
                     }
                     BasicTextField(
@@ -361,6 +365,7 @@ fun LojiaInputField(
                         textStyle = TextStyle(
                             color = Color(0xFF111827),
                             fontSize = 13.5.sp,
+                            lineHeight = 18.sp,
                             fontWeight = FontWeight.Normal
                         ),
                         cursorBrush = SolidColor(Color(0xFF4F3EE8)),

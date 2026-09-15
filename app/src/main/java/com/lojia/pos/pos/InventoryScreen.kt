@@ -1,5 +1,6 @@
 package com.lojia.pos.pos
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -152,7 +153,7 @@ fun InventoryScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = inventorySearchQuery,
                         onValueChange = { inventorySearchQuery = it },
                         placeholder = { Text(stringResource(R.string.search_products)) },

@@ -1,5 +1,9 @@
 package com.lojia.pos.settings
 
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -821,7 +825,7 @@ fun SettingsReportSection(
                     // ==========================================
                     // 🌍 COUNTRY TAB (RIGHT TAB - NO TOP CARD)
                     // ==========================================
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = countrySearch,
                         onValueChange = { countrySearch = it },
                         placeholder = { Text(stringResource(R.string.search_country), fontSize = 14.sp) },
@@ -1000,13 +1004,15 @@ fun SettingsReportSection(
             onDismissRequest = { editFieldDialog = null },
             title = { Text(stringResource(R.string.edit_field_title, fieldName), fontWeight = FontWeight.Bold) },
             text = {
-                OutlinedTextField(
-                    value = tempVal,
-                    onValueChange = { tempVal = it },
-                    label = { Text(fieldName) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                androidx.compose.foundation.layout.Box(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
+                    LojiaTextField(
+                        value = tempVal,
+                        onValueChange = { tempVal = it },
+                        label = { Text(fieldName) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(

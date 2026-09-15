@@ -1,5 +1,6 @@
 package com.lojia.pos.auth
 
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -167,7 +168,7 @@ fun AdminAuthDialog(
                         color = Color(0xFF334155)
                     )
 
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = adminPinInput,
                         onValueChange = {
                             adminPinInput = it

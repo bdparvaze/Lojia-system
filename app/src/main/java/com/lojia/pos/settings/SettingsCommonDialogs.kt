@@ -1,5 +1,9 @@
 package com.lojia.pos.settings
 
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.lojia.pos.ui.common.LojiaTextField
 import com.lojia.pos.R
 import com.lojia.pos.data.*
 import com.lojia.pos.util.*
@@ -124,7 +128,7 @@ fun SettingsCommonDialogs(
             icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
             title = { Text(stringResource(R.string.admin_authorization_required), fontWeight = FontWeight.Bold) },
             text = {
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
                     Text(
                         stringResource(R.string.this_setting_is_protected),
                         fontSize = 13.sp,
@@ -134,7 +138,7 @@ fun SettingsCommonDialogs(
                     Column {
                         Text(stringResource(R.string.msg_admin_pin_required), style = MaterialTheme.typography.labelSmall)
                         Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = enteredPin,
                             onValueChange = { 
                                 if (it.length <= 6) {
@@ -252,20 +256,23 @@ fun SettingsCommonDialogs(
                         Text(stringResource(R.string.our_technical_support_team), fontSize = 13.sp, color = TextSecondaryLight)
                     }
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()
+                    ) {
                         Text(stringResource(R.string.need_help_with_pos), fontSize = 13.sp, color = TextSecondaryLight)
-                        OutlinedTextField(
+                        LojiaTextField(
                             value = subject,
                             onValueChange = { subject = it },
                             label = { Text(stringResource(R.string.subject_eg_printer_setup)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        OutlinedTextField(
+                        LojiaMultilineTextField(
                             value = details,
                             onValueChange = { details = it },
                             label = { Text(stringResource(R.string.describe_the_issue)) },
-                            modifier = Modifier.fillMaxWidth().height(100.dp)
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)
                         )
                     }
                 }
@@ -347,7 +354,7 @@ fun SettingsCommonDialogs(
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
+                    LojiaTextField(
                         value = manualBarcode,
                         onValueChange = { manualBarcode = it },
                         label = { Text(stringResource(R.string.enter_barcode_eg_1001)) },
