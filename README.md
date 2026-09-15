@@ -20,7 +20,7 @@
 *   **Platform:** Android
 *   **Language:** Kotlin
 *   **UI Framework:** Jetpack Compose (Material Design 3)
-*   **Database:** Room Database (SQLite) for robust local persistence
+*   **Database:** Room Database (SQLite) (Version 2.6.1) for robust local persistence
 *   **Architecture:** MVVM (Model-View-ViewModel) with Kotlin Coroutines & Flow
 *   **Build System:** Gradle (Kotlin DSL)
 
@@ -28,7 +28,7 @@
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/yourusername/lojia-system.git
+    git clone https://github.com/bdparvaze/Lojia-system.git
     ```
 2.  **Open the Project:**
     Launch **Android Studio** and select `File > Open`, then choose the cloned `lojia-system` directory.
@@ -85,7 +85,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 *   **প্ল্যাটফর্ম:** অ্যান্ড্রয়েড (Android)
 *   **প্রোগ্রামিং ভাষা:** কোটলিন (Java/Kotlin)
 *   **ইউআই ফ্রেমওয়ার্ক:** জেটপ্যাক কম্পোজ (Jetpack Compose - Material 3)
-*   **ডেটাবেস:** রুম ডেটাবেস (Room Database - SQLite)
+*   **ডেটাবেস:** রুম ডেটাবেস (Room Database - SQLite) (Version 2.6.1)
 *   **আর্কিটেকচার:** MVVM (Model-View-ViewModel)
 *   **বিল্ড সিস্টেম:** গ্রেডল (Gradle)
 
@@ -93,7 +93,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ১. **রিপোজিটরি ক্লোন করুন:**
     ```bash
-    git clone https://github.com/yourusername/lojia-system.git
+    git clone https://github.com/bdparvaze/Lojia-system.git
     ```
 ২. **প্রজেক্ট খুলুন:**
     **Android Studio** চালু করুন, `File > Open` নির্বাচন করুন এবং ক্লোন করা `lojia-system` ফোল্ডারটি সিলেক্ট করুন।

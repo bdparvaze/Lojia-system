@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Lojia"
+rootProject.name = "Lojia-system"
 include(":app")
