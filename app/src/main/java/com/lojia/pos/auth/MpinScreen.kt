@@ -545,6 +545,17 @@ fun MpinInputIndicator(
     hasError: Boolean = false,
     isSuccess: Boolean = false
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "cursorPulse")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "alpha"
+    )
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -553,33 +564,47 @@ fun MpinInputIndicator(
             val isFilled = i < currentLength
             val isCurrent = i == currentLength
 
-            if (isCurrent && !hasError && !isSuccess) {
-                // Active indicator with outer light blue ring and inner blue circle outline
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(Color(0xFFDBEAFE), CircleShape) // Light blue ring
-                        .padding(3.dp)
-                        .border(1.5.dp, Color(0xFF2563EB), CircleShape) // Inner blue border
-                        .background(Color.White, CircleShape)
-                )
-            } else if (isFilled) {
-                // Filled indicator
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .border(1.5.dp, if (hasError) Color(0xFFEF4444) else if (isSuccess) Color(0xFF10B981) else Color(0xFF2563EB), CircleShape)
-                        .padding(4.dp)
-                        .background(if (hasError) Color(0xFFEF4444) else if (isSuccess) Color(0xFF10B981) else Color(0xFF2563EB), CircleShape)
-                )
-            } else {
-                // Unfilled indicator
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .border(1.5.dp, Color(0xFFCBD5E1), CircleShape)
-                        .background(Color.Transparent, CircleShape)
-                )
+            when {
+                hasError -> {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .border(2.dp, Color(0xFFEF4444), CircleShape)
+                            .background(Color(0xFFEF4444), CircleShape)
+                    )
+                }
+                isSuccess -> {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .border(2.dp, Color(0xFF10B981), CircleShape)
+                            .background(Color(0xFF10B981), CircleShape)
+                    )
+                }
+                isFilled -> {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .border(2.dp, Color(0xFF2563EB), CircleShape)
+                            .background(Color(0xFF2563EB), CircleShape)
+                    )
+                }
+                isCurrent -> {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(Color(0xFFDBEAFE).copy(alpha = alpha), CircleShape)
+                            .border(2.dp, Color(0xFF2563EB), CircleShape)
+                    )
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .border(1.5.dp, Color(0xFFCBD5E1), CircleShape)
+                            .background(Color.Transparent, CircleShape)
+                    )
+                }
             }
         }
     }

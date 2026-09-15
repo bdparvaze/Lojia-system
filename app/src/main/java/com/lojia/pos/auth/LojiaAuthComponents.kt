@@ -57,7 +57,8 @@ import androidx.compose.ui.window.DialogProperties
 fun LojiaHeader(
     isBn: Boolean,
     modifier: Modifier = Modifier,
-    headerHeight: Dp? = null
+    headerHeight: Dp? = null,
+    onLanguageClick: (() -> Unit)? = null
 ) {
     Box(
         modifier = modifier
@@ -98,6 +99,25 @@ fun LojiaHeader(
             .testTag("lojiaHeader"),
         contentAlignment = Alignment.Center
     ) {
+        if (onLanguageClick != null) {
+            IconButton(
+                onClick = onLanguageClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.15f))
+                    .testTag("btnLanguageToggle")
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Language,
+                    contentDescription = "Change Language",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -471,10 +491,10 @@ fun LojiaGradientButton(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Icons.Default.ArrowForward,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(10.dp)
+                        modifier = Modifier.size(11.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))

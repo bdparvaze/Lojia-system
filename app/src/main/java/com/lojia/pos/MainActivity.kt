@@ -155,7 +155,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Initialize saved language
         val savedLang = com.lojia.pos.util.LanguagePreferences.getLanguage(this)
         val appLocale = androidx.core.os.LocaleListCompat.forLanguageTags(savedLang)
@@ -200,13 +200,13 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             var showModulePinAuthDialog by remember { mutableStateOf(false) }
             var pendingModuleToSwitch by remember { mutableStateOf<AppModule?>(null) }
 
-            // Auto-lock mechanism: locks app after 1 minute (60,000 ms) of user inactivity
+            // Auto-lock mechanism: locks app after 30 minutes (1,800,000 ms) of user inactivity
             LaunchedEffect(isAuthenticated) {
                 if (isAuthenticated) {
                     lastInteractionTime = System.currentTimeMillis()
                     while (isActive) {
                         delay(1000L)
-                        if (System.currentTimeMillis() - lastInteractionTime >= 60_000L) {
+                        if (System.currentTimeMillis() - lastInteractionTime >= 1_800_000L) {
                             isAuthenticated = false
                             break
                         }
