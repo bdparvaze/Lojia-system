@@ -283,13 +283,13 @@
     <string name="backup">バックアップ</string>
     <string name="backup_and_storage">バックアップ</string>
     <string name="backup_settings">バックアップ設定</string>
-    <string name="backup_settings_desc">レポートとデータベースをクラウドにバックアップし、スマホ変更時にデータを維持します。</string>
-    <string name="backup_desc">データをクラウドにバックアップし、新しいAndroidスマホへの移行時にデータを維持します。</string>
+    <string name="backup_settings_desc">レポートとデータベースをローカルにバックアップし、アーカイブをエクスポートしてデータ損失を防ぎます。</string>
+    <string name="backup_desc">店舗データをデバイスまたはストレージにローカルバックアップします。</string>
     <string name="last_backup">最終バックアップ</string>
     <string name="last_backup_time">最終バックアップ日時</string>
     <string name="backing_up">バックアップ中</string>
-    <string name="please_wait_cloud_sync">クラウド同期中です。しばらくお待ちください</string>
-    <string name="tap_to_start_backup">タップしてすぐにクラウドバックアップを開始</string>
+    <string name="please_wait_cloud_sync">バックアップ処理中です。しばらくお待ちください</string>
+    <string name="tap_to_start_backup">タップしてすぐにバックアップを開始</string>
     <string name="google_account">Googleアカウント</string>
     <string name="auto_backups">自動バックアップ</string>
     <string name="daily">毎日</string>
@@ -305,7 +305,7 @@
     <string name="profile_subtitle">管理者認証情報、連絡先、支店住所</string>
     <string name="cashiers_subtitle">シフトのレジ係とスタッフアカウントの管理</string>
     <string name="security_subtitle">6桁のPIN保護、指紋/顔認証、自動ロック</string>
-    <string name="backup_subtitle">ローカルSQLiteバックアップ、Googleドライブ同期、JSONエクスポート</string>
+    <string name="backup_subtitle">ローカルSQLiteバックアップ、レポートファイル＆JSONエクスポート</string>
     <string name="language_subtitle">アプリの言語</string>
     <string name="about_subtitle">システムバージョン、ソフトウェアライセンス、利用規約、プライバシーポリシー</string>
     <string name="support_subtitle">ヘルプデスク、診断、フィードバック、チケット</string>
@@ -495,10 +495,10 @@
     <string name="save_1">保存</string>
     <string name="cancel_1">キャンセル</string>
     <string name="terms_of_service">利用規約</string>
-    <string name="by_using_lojia_shift">Lojiaシフトレポート＆POSシステムを使用することで、日次売上データをローカルに保存し、暗号化されたクラウドエンドポイントと同期することに同意したことになります。すべての操作ログは安全に保持されます。</string>
+    <string name="by_using_lojia_shift">Lojiaを使用することで、日次売上およびシフト記録はデバイスにローカル保存されます。ローカルバックアップとエクスポートは店舗データを保護します。</string>
     <string name="close_1">閉じる</string>
     <string name="privacy_policy_1">プライバシーポリシー</string>
-    <string name="your_financial_data_shift">財務データ、シフト記録、ユーザー認証情報はデバイス上で暗号化されます。個人を特定できる情報が販売または転送されることはありません。</string>
+    <string name="your_financial_data_shift">財務データ、シフト記録、設定はデバイス上にローカル保存されます。個人情報が追跡または販売されることはありません。</string>
     <string name="close_2">閉じる</string>
     <string name="add_cashier_2">レジ係を追加</string>
     <string name="full_name_1">フルネーム *</string>
@@ -520,30 +520,10 @@
     <string name="unlock">ロック解除</string>
     <string name="cancel_4">キャンセル</string>
     <string name="terms_conditions_1">利用規約</string>
-    <string name="msg_1_license_usagenlojia_system">1. ライセンスと使用
-Lojiaシステムは、商用POSおよびシフト管理のためにライセンスされています。このデバイス上で生成されたすべてのデータは、店主の完全な管理下にあります。
-
-2. シフト元帳の正確性
-レジ係とマネージャーは、正確なドロワーカウント、レシート、現金の動きを入力する責任があります。
-
-3. クラウド同期とバックアップ
-Googleドライブへのクラウドバックアップは暗号化（AES-256）され、選択したGoogleアカウントの資格情報で管理されます。
-
-4. アップデート
-定期的なアップデートには、機能強化、セキュリティパッチ、および規制遵守の更新が含まれる場合があります。</string>
+    <string name="msg_1_license_usagenlojia_system">1. ライセンスと使用\nLojiaはローカルファースト（オフラインファースト）のPOSおよびシフト管理アプリです。このデバイス上で生成されたすべてのデータは店主の完全な管理下にあります。\n\n2. シフト元帳の正確性\nレジ係とマネージャーは、正確なドロワーカウント、レシート、現金の動きを入力する責任があります。\n\n3. ローカルバックアップとエクスポート\nデータバックアップはローカルに作成されます。オプションのエクスポートや連携はユーザーの要求時のみ動作します。\n\n4. アップデート\n定期的なアップデートには、機能強化やセキュリティパッチが含まれる場合があります。</string>
     <string name="i_understand">同意する</string>
     <string name="privacy_policy_2">プライバシーポリシー</string>
-    <string name="msg_1_data_collectionnlojia_system">1. データ収集
-Lojiaシステムは、販売取引、在庫カタログ、レジ係のシフト、およびビジネス連絡先情報をAndroidデバイス上でローカルに処理します。
-
-2. セキュリティと生体認証
-生体認証データ（指紋または顔認証）は、Android BiometricPromptハードウェアキーストアを通じて厳密に認証されます。データベースに生体認証テンプレートは保存されません。
-
-3. サードパーティ統合
-オプションの統合（例：WhatsApp、Googleドライブ、プリンター）は、明示的なユーザー許可がある場合のみ動作します。
-
-4. データ保持
-ローカルデータベースと監査ログは、いつでもエクスポートまたは消去できます。</string>
+    <string name="msg_1_data_collectionnlojia_system">1. データ収集\nLojiaシステムは、販売取引、在庫カタログ、レジ係のシフト、およびビジネス連絡先情報をAndroidデバイス上でローカルに処理します。\n\n2. セキュリティと生体認証\n生体認証はAndroid BiometricPromptを通じて厳密に認証されます。データベースに生体認証テンプレートは保存されません。\n\n3. サードパーティ統合\nオプションの統合（例：WhatsApp共有、外部ストレージ、プリンター）は明示的なユーザー許可がある場合のみ動作します。\n\n4. データ保持\nローカルデータベースと監査ログはいつでもエクスポートまたは消去できます。</string>
     <string name="close_3">閉じる</string>
     <string name="submit_support_ticket">サポートチケットを送信</string>
     <string name="ticket_tk8892_created">チケット #TK-8892 を作成しました！</string>

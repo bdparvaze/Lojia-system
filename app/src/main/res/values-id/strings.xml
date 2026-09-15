@@ -283,13 +283,13 @@
     <string name="backup">Cadangan</string>
     <string name="backup_and_storage">Cadangan</string>
     <string name="backup_settings">Pengaturan cadangan</string>
-    <string name="backup_settings_desc">Cadangkan laporan dan basis data Anda ke cloud agar tidak hilang saat Anda berganti ponsel.</string>
-    <string name="backup_desc">Cadangkan data Anda ke cloud agar tidak hilang saat Anda mendapatkan ponsel Android baru.</string>
+    <string name="backup_settings_desc">Cadangkan laporan dan basis data Anda secara lokal dan ekspor arsip untuk mencegah kehilangan data.</string>
+    <string name="backup_desc">Ekspor dan cadangkan data toko Anda secara lokal pada perangkat atau penyimpanan Anda.</string>
     <string name="last_backup">Cadangan Terakhir</string>
     <string name="last_backup_time">Waktu Cadangan Terakhir</string>
     <string name="backing_up">Sedang mencadangkan</string>
-    <string name="please_wait_cloud_sync">Harap tunggu sementara sinkronisasi cloud berlangsung</string>
-    <string name="tap_to_start_backup">Ketuk untuk memulai cadangan cloud segera</string>
+    <string name="please_wait_cloud_sync">Harap tunggu sementara pencadangan berlangsung</string>
+    <string name="tap_to_start_backup">Ketuk untuk memulai cadangan segera</string>
     <string name="google_account">Akun Google</string>
     <string name="auto_backups">Cadangan Otomatis</string>
     <string name="daily">Harian</string>
@@ -305,7 +305,7 @@
     <string name="profile_subtitle">Kredensial admin, detail kontak, alamat cabang</string>
     <string name="cashiers_subtitle">Kelola akun kasir &amp; staf untuk shift</string>
     <string name="security_subtitle">Perlindungan PIN 6-digit, sidik jari/face ID biometrik, kunci otomatis</string>
-    <string name="backup_subtitle">Cadangan SQLite lokal, sinkronisasi Google Drive &amp; ekspor JSON</string>
+    <string name="backup_subtitle">Cadangan SQLite lokal, ekspor file laporan &amp; arsip JSON</string>
     <string name="language_subtitle">Bahasa aplikasi</string>
     <string name="about_subtitle">Versi sistem, lisensi perangkat lunak, syarat &amp; kebijakan privasi</string>
     <string name="support_subtitle">Help desk, diagnostik, masukan &amp; tiket</string>
@@ -495,10 +495,10 @@
     <string name="save_1">Simpan</string>
     <string name="cancel_1">Batal</string>
     <string name="terms_of_service">Ketentuan Layanan</string>
-    <string name="by_using_lojia_shift">Dengan menggunakan Lojia Shift Report &amp; POS System, Anda setuju untuk menyimpan data penjualan harian secara lokal dan menyinkronkan dengan endpoint cloud terenkripsi. Semua log operasional disimpan dengan aman.</string>
+    <string name="by_using_lojia_shift">Dengan menggunakan Lojia, catatan penjualan dan shift harian disimpan secara lokal di perangkat Anda. Cadangan lokal membantu melindungi data toko Anda.</string>
     <string name="close_1">Tutup</string>
     <string name="privacy_policy_1">Kebijakan Privasi</string>
-    <string name="your_financial_data_shift">Data keuangan, catatan shift, dan kredensial pengguna Anda dienkripsi pada perangkat. Tidak ada informasi identitas pribadi yang dijual atau dialihkan.</string>
+    <string name="your_financial_data_shift">Data keuangan, catatan shift, dan pengaturan Anda disimpan secara lokal di perangkat. Tidak ada data pribadi yang dilacak atau dijual.</string>
     <string name="close_2">Tutup</string>
     <string name="add_cashier_2">Tambah Kasir</string>
     <string name="full_name_1">Nama Lengkap *</string>
@@ -520,30 +520,10 @@
     <string name="unlock">Buka Kunci</string>
     <string name="cancel_4">Batal</string>
     <string name="terms_conditions_1">Syarat &amp; Ketentuan</string>
-    <string name="msg_1_license_usagenlojia_system">1. Lisensi &amp; Penggunaan
-Sistem Lojia dilisensikan untuk POS komersial dan manajemen shift. Semua data yang dihasilkan pada perangkat ini tetap di bawah kendali penuh pemilik toko.
-
-2. Akurasi Buku Kas
-Kasir dan manajer bertanggung jawab untuk memasukkan jumlah laci yang akurat, tanda terima, dan pergerakan uang tunai.
-
-3. Sinkronisasi Cloud &amp; Cadangan
-Cadangan cloud ke Google Drive dienkripsi (AES-256) dan dikelola di bawah kredensial akun Google yang Anda pilih.
-
-4. Pembaruan
-Pembaruan berkala dapat mencakup peningkatan fitur, patch keamanan, dan pembaruan kepatuhan peraturan.</string>
+    <string name="msg_1_license_usagenlojia_system">1. Lisensi &amp; Penggunaan\nLojia adalah aplikasi POS dan manajemen shift berbasis lokal (offline-first). Semua data yang dihasilkan pada perangkat ini tetap di bawah kendali penuh pemilik toko.\n\n2. Akurasi Buku Kas\nKasir dan manajer bertanggung jawab untuk memasukkan jumlah kas, tanda terima, dan pergerakan uang tunai yang akurat.\n\n3. Cadangan Lokal &amp; Ekspor\nCadangan data dibuat secara lokal. Ekspor opsional hanya beroperasi jika dikonfigurasi oleh pengguna.\n\n4. Pembaruan\nPembaruan berkala dapat mencakup peningkatan fitur dan patch keamanan.</string>
     <string name="i_understand">Saya Mengerti</string>
     <string name="privacy_policy_2">Kebijakan Privasi</string>
-    <string name="msg_1_data_collectionnlojia_system">1. Pengumpulan Data
-Sistem Lojia memproses transaksi penjualan, katalog inventaris, shift kasir, dan informasi kontak bisnis secara lokal di perangkat Android Anda.
-
-2. Keamanan &amp; Biometrik
-Data biometrik (sidik jari atau kunci wajah) diautentikasi secara ketat melalui keystore perangkat keras Android BiometricPrompt. Tidak ada template biometrik yang disimpan dalam database.
-
-3. Integrasi Pihak Ketiga
-Integrasi opsional (misalnya WhatsApp, Google Drive, Printer) beroperasi secara eksklusif dengan izin pengguna yang eksplisit.
-
-4. Retensi Data
-Anda dapat mengekspor atau menghapus database lokal dan log audit Anda kapan saja.</string>
+    <string name="msg_1_data_collectionnlojia_system">1. Pengumpulan Data\nSistem Lojia memproses transaksi penjualan, katalog inventaris, shift kasir, dan informasi kontak bisnis secara lokal di perangkat Android Anda.\n\n2. Keamanan &amp; Biometrik\nAutentikasi biometrik ditangani secara ketat melalui Android BiometricPrompt. Tidak ada template biometrik yang disimpan dalam database.\n\n3. Integrasi Pihak Ketiga\nIntegrasi opsional (misalnya berbagi WhatsApp, penyimpanan eksternal, Printer) beroperasi secara eksklusif dengan izin pengguna.\n\n4. Retensi Data\nAnda dapat mengekspor atau menghapus database lokal dan log audit Anda kapan saja.</string>
     <string name="close_3">Tutup</string>
     <string name="submit_support_ticket">Kirim Tiket Dukungan</string>
     <string name="ticket_tk8892_created">Tiket #TK-8892 Dibuat!</string>

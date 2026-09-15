@@ -70,7 +70,7 @@ import androidx.compose.ui.unit.sp
 import com.lojia.pos.data.*
 
 import com.lojia.pos.ui.theme.*
-
+import com.lojia.pos.util.MoneyFormat
 import com.lojia.pos.util.PdfReportGenerator
 
 import java.text.SimpleDateFormat
@@ -90,8 +90,7 @@ fun ShiftReportPreviewDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-        val rawCurrency = businessProfile?.currency ?: "SAR"
-    val currency = if (rawCurrency == "SAR") stringResource(R.string.currency_unit) else rawCurrency
+    val currencyCode = businessProfile?.currency
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     var isExporting by remember { mutableStateOf(false) }
@@ -130,14 +129,14 @@ fun ShiftReportPreviewDialog(
         appendLine("$cashierLabel: ${report.cashierName}")
         appendLine("VAT ID: ${businessProfile?.vatNumber ?: "310123456700003"}")
         appendLine("----------------------------------------")
-        appendLine("$grossCashLabel: ${"%.2f".format(report.grossCash)} $currency")
-        appendLine("$madaLabel: ${"%.2f".format(report.madaPayments)} $currency")
-        appendLine("$walletLabel: ${"%.2f".format(report.digitalWallet)} $currency")
+        appendLine("$grossCashLabel: ${MoneyFormat.format(report.grossCash, currencyCode)}")
+        appendLine("$madaLabel: ${MoneyFormat.format(report.madaPayments, currencyCode)}")
+        appendLine("$walletLabel: ${MoneyFormat.format(report.digitalWallet, currencyCode)}")
         appendLine("----------------------------------------")
-        appendLine("$totalRevenueLabel: ${"%.2f".format(report.totalSales)} $currency")
-        appendLine("$expensesLabel: ${"%.2f".format(report.totalExpenses)} $currency")
-        appendLine("$netCashLabel: ${"%.2f".format(report.netCash)} $currency")
-        appendLine("$netMadaLabel: ${"%.2f".format(report.madaPayments)} $currency")
+        appendLine("$totalRevenueLabel: ${MoneyFormat.format(report.totalSales, currencyCode)}")
+        appendLine("$expensesLabel: ${MoneyFormat.format(report.totalExpenses, currencyCode)}")
+        appendLine("$netCashLabel: ${MoneyFormat.format(report.netCash, currencyCode)}")
+        appendLine("$netMadaLabel: ${MoneyFormat.format(report.madaPayments, currencyCode)}")
         appendLine("----------------------------------------")
         appendLine("$staffMealsLabel: ${report.staffMealsCount}")
         appendLine("$muasselLabel: ${report.muasselQty.toInt()}")
@@ -353,8 +352,7 @@ fun SaleReceiptPreviewDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-        val rawCurrency = businessProfile?.currency ?: "SAR"
-    val currency = if (rawCurrency == "SAR") stringResource(R.string.currency_unit) else rawCurrency
+    val currencyCode = businessProfile?.currency
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     var exportedUri by remember { mutableStateOf<Uri?>(null) }
@@ -378,9 +376,9 @@ fun SaleReceiptPreviewDialog(
         appendLine("VAT ID: ${businessProfile?.vatNumber ?: "310123456700003"}")
         appendLine("${stringResource(R.string.payment_method)}: ${sale.paymentMethod}")
         appendLine("----------------------------------------")
-        appendLine("$subtotalLabel:   ${"%.2f".format(sale.subtotal)} $currency")
-        appendLine("$vatLabel:              ${"%.2f".format(sale.vatAmount)} $currency")
-        appendLine("$totalLabel:              ${"%.2f".format(sale.totalAmount)} $currency")
+        appendLine("$subtotalLabel:   ${MoneyFormat.format(sale.subtotal, currencyCode)}")
+        appendLine("$vatLabel:              ${MoneyFormat.format(sale.vatAmount, currencyCode)}")
+        appendLine("$totalLabel:              ${MoneyFormat.format(sale.totalAmount, currencyCode)}")
         appendLine("========================================")
         appendLine("        $thankYouMsg")
         appendLine("========================================")

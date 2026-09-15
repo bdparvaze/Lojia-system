@@ -283,13 +283,13 @@
     <string name="backup">بیک اپ</string>
     <string name="backup_and_storage">بیک اپ</string>
     <string name="backup_settings">بیک اپ کی ترتیبات</string>
-    <string name="backup_settings_desc">اپنی رپورٹس اور ڈیٹا بیس کا کلاؤڈ پر بیک اپ لیں تاکہ فون تبدیل کرنے پر وہ ضائع نہ ہوں۔</string>
-    <string name="backup_desc">اپنے ڈیٹا کا کلاؤڈ پر بیک اپ لیں تاکہ نیا اینڈرائیڈ فون لینے پر وہ ضائع نہ ہوں۔</string>
+    <string name="backup_settings_desc">ڈیٹا کے ضیاع کو روکنے کے لیے اپنی رپورٹس اور ڈیٹا بیس کا مقامی بیک اپ لیں اور محفوظ کریں۔</string>
+    <string name="backup_desc">اپنے اسٹور ڈیٹا کا اپنے ڈیوائس یا اسٹوریج پر مقامی طور پر بیک اپ لیں۔</string>
     <string name="last_backup">آخری بیک اپ</string>
     <string name="last_backup_time">آخری بیک اپ کا وقت</string>
     <string name="backing_up">بیک اپ لیا جا رہا ہے</string>
-    <string name="please_wait_cloud_sync">براہ کرم انتظار کریں، کلاؤڈ سنک جاری ہے</string>
-    <string name="tap_to_start_backup">فوری کلاؤڈ بیک اپ شروع کرنے کے لیے تھپتھپائیں</string>
+    <string name="please_wait_cloud_sync">براہ کرم بیک اپ مکمل ہونے تک انتظار کریں</string>
+    <string name="tap_to_start_backup">فوری بیک اپ شروع کرنے کے لیے تھپتھپائیں</string>
     <string name="google_account">گوگل اکاؤنٹ</string>
     <string name="auto_backups">خودکار بیک اپ</string>
     <string name="daily">روزانہ</string>
@@ -305,7 +305,7 @@
     <string name="profile_subtitle">ایڈمن اسناد، رابطے کی تفصیلات، برانچ کا پتہ</string>
     <string name="cashiers_subtitle">شفٹس کے لیے کیشیئر اور عملے کے اکاؤنٹس کا نظم کریں</string>
     <string name="security_subtitle">6 ہندسوں کا PIN تحفظ، بائیو میٹرک فنگر پرنٹ/فیس آئی ڈی، آٹو لاک</string>
-    <string name="backup_subtitle">لوکل SQLite بیک اپ، Google Drive مطابقت پذیری اور JSON برآمد</string>
+    <string name="backup_subtitle">لوکل SQLite بیک اپ، رپورٹ فائل اور JSON برآمد</string>
     <string name="language_subtitle">ایپ کی زبان</string>
     <string name="about_subtitle">سسٹم ورژن، سافٹ ویئر لائسنس، شرائط اور رازداری کی پالیسی</string>
     <string name="support_subtitle">ہیلپ ڈیسک، تشخیص، فیڈبک اور ٹکٹس</string>
@@ -495,10 +495,10 @@
     <string name="save_1">محفوظ کریں</string>
     <string name="cancel_1">منسوخ کریں</string>
     <string name="terms_of_service">سروس کی شرائط</string>
-    <string name="by_using_lojia_shift">Lojia شفٹ رپورٹ اور POS سسٹم استعمال کرکے، آپ روزانہ کی فروخت کے ڈیٹا کو مقامی طور پر ذخیرہ کرنے اور انکرپٹڈ کلاؤڈ اینڈ پوائنٹس کے ساتھ ہم آہنگ کرنے سے اتفاق کرتے ہیں۔ تمام آپریشنل لاگز کو محفوظ طریقے سے رکھا جاتا ہے۔</string>
+    <string name="by_using_lojia_shift">Lojia استعمال کرکے، روزانہ کی فروخت اور شفٹ ریکارڈز آپ کے آلے پر مقامی طور پر محفوظ ہوتے ہیں۔ مقامی بیک اپ آپ کے ڈیٹا کے تحفظ میں مدد کرتے ہیں۔</string>
     <string name="close_1">بند کریں</string>
     <string name="privacy_policy_1">رازداری کی پالیسی</string>
-    <string name="your_financial_data_shift">آپ کا مالی ڈیٹا، شفٹ ریکارڈز، اور صارف کی اسناد ڈیوائس پر انکرپٹ کی گئی ہیں۔ کوئی بھی ذاتی طور پر قابل شناخت معلومات فروخت یا منتقل نہیں کی جاتی ہے۔</string>
+    <string name="your_financial_data_shift">آپ کا مالی ڈیٹا، شفٹ ریکارڈز اور ترتیبات ڈیوائس پر مقامی طور پر محفوظ ہیں۔ کوئی ذاتی ڈیٹا ٹریک یا فروخت نہیں کیا جاتا۔</string>
     <string name="close_2">بند کریں</string>
     <string name="add_cashier_2">کیشیئر شامل کریں</string>
     <string name="full_name_1">پورا نام *</string>
@@ -520,30 +520,10 @@
     <string name="unlock">انلاک کریں</string>
     <string name="cancel_4">منسوخ کریں</string>
     <string name="terms_conditions_1">شرائط و ضوابط</string>
-    <string name="msg_1_license_usagenlojia_system">1. لائسنس اور استعمال
-Lojia سسٹم تجارتی POS اور شفٹ مینجمنٹ کے لیے لائسنس یافتہ ہے۔ اس ڈیوائس پر تیار کردہ تمام ڈیٹا اسٹور کے مالک کے مکمل کنٹرول میں رہتا ہے۔
-
-2. شفٹ لیجر کی درستگی
-کیشیئرز اور مینیجرز دراز کی درست گنتی، رسیدیں، اور نقد کی نقل و حرکت درج کرنے کے ذمہ دار ہیں۔
-
-3. کلاؤڈ سنک اور بیک اپ
-گوگل ڈرائیو پر کلاؤڈ بیک اپ انکرپٹڈ (AES-256) ہیں اور آپ کے منتخب کردہ گوگل اکاؤنٹ کی اسناد کے تحت منظم کیے جاتے ہیں۔
-
-4. اپ ڈیٹس
-وقتاً فوقتاً اپ ڈیٹس میں فیچر میں بہتری، سیکیورٹی پیچ، اور ریگولیٹری تعمیل کی اپ ڈیٹس شامل ہوسکتی ہیں۔</string>
+    <string name="msg_1_license_usagenlojia_system">1. لائسنس اور استعمال\nLojia ایک مقامی (آف لائن-فرسٹ) POS اور شفٹ مینجمنٹ ایپلیکیشن ہے۔ اس ڈیوائس پر تیار کردہ تمام ڈیٹا اسٹور کے مالک کے مکمل کنٹرول میں رہتا ہے۔\n\n2. شفٹ لیجر کی درستگی\nکیشیئرز اور مینیجرز نقد کی درست گنتی اور اندراج کے ذمہ دار ہیں۔\n\n3. مقامی بیک اپ اور برآمد\nڈیٹا کا بیک اپ مقامی طور پر بنایا جاتا ہے۔ اختیاری برآمد صرف صارف کی درخواست پر کام کرتی ہے۔\n\n4. اپ ڈیٹس\nوقتاً فوقتاً اپ ڈیٹس میں فیچر میں بہتری اور سیکیورٹی پیچ شامل ہوسکتے ہیں۔</string>
     <string name="i_understand">میں سمجھتا ہوں</string>
     <string name="privacy_policy_2">رازداری کی پالیسی</string>
-    <string name="msg_1_data_collectionnlojia_system">1. ڈیٹا اکٹھا کرنا
-Lojia سسٹم آپ کے اینڈرائیڈ ڈیوائس پر مقامی طور پر سیلز کے لین دین، انوینٹری کیٹلاگز، کیشیئر شفٹس، اور کاروباری رابطے کی معلومات پر کارروائی کرتا ہے۔
-
-2. سیکیورٹی اور بائیو میٹرکس
-بائیو میٹرک ڈیٹا (فنگر پرنٹ یا چہرہ ان لاک) کی تصدیق سختی سے اینڈرائیڈ بائیو میٹرک پرامپٹ ہارڈویئر کی اسٹور کے ذریعے کی جاتی ہے۔ ڈیٹا بیس میں کوئی بائیو میٹرک ٹیمپلیٹ محفوظ نہیں کیا جاتا ہے۔
-
-3. تھرڈ پارٹی انٹیگریشن
-اختیاری انٹیگریشنز (مثلاً واٹس ایپ، گوگل ڈرائیو، پرنٹرز) مکمل طور پر واضح صارف کی اجازت کے ساتھ کام کرتی ہیں۔
-
-4. ڈیٹا کو برقرار رکھنا
-آپ کسی بھی وقت اپنے مقامی ڈیٹا بیس اور آڈٹ لاگز کو برآمد یا حذف کر سکتے ہیں۔</string>
+    <string name="msg_1_data_collectionnlojia_system">1. ڈیٹا اکٹھا کرنا\nLojia سسٹم آپ کے اینڈرائیڈ ڈیوائس پر مقامی طور پر سیلز، انوینٹری اور شفٹ کے ریکارڈ پر کارروائی کرتا ہے۔\n\n2. سیکیورٹی اور بائیو میٹرکس\nبائیو میٹرک تصدیق سختی سے اینڈرائیڈ BiometricPrompt کے ذریعے کی جاتی ہے۔ ڈیٹا بیس میں کوئی بائیو میٹرک ٹیمپلیٹ محفوظ نہیں کیا جاتا۔\n\n3. تھرڈ پارٹی انٹیگریشن\nاختیاری انٹیگریشنز (جیسے واٹس ایپ شیئرنگ، ایکسٹرنل اسٹوریج، پرنٹرز) مکمل طور پر صارف کی اجازت کے ساتھ کام کرتی ہیں۔\n\n4. ڈیٹا کو برقرار رکھنا\nآپ کسی بھی وقت اپنے مقامی ڈیٹا بیس کو برآمد یا حذف کر سکتے ہیں۔</string>
     <string name="close_3">بند کریں</string>
     <string name="submit_support_ticket">سپورٹ ٹکٹ جمع کروائیں</string>
     <string name="ticket_tk8892_created">ٹکٹ #TK-8892 تخلیق ہو گیا!</string>

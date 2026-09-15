@@ -283,13 +283,13 @@
     <string name="backup">Yedekleme</string>
     <string name="backup_and_storage">Yedekleme</string>
     <string name="backup_settings">Yedekleme ayarları</string>
-    <string name="backup_settings_desc">Telefon değiştirdiğinizde kaybolmamaları için raporlarınızı ve veritabanınızı buluta yedekleyin.</string>
-    <string name="backup_desc">Yeni bir Android telefon aldığınızda kaybolmamaları için verilerinizi buluta yedekleyin.</string>
+    <string name="backup_settings_desc">Raporlarınızı ve veritabanınızı yerel olarak yedekleyin ve veri kaybını önlemek için arşivleri dışa aktarın.</string>
+    <string name="backup_desc">Mağaza veritabanınızı cihazınızda veya depolama biriminizde yerel olarak dışa aktarın ve yedekleyin.</string>
     <string name="last_backup">Son Yedekleme</string>
     <string name="last_backup_time">Son Yedekleme Zamanı</string>
     <string name="backing_up">Yedekleniyor</string>
-    <string name="please_wait_cloud_sync">Lütfen bulut senkronizasyonu sürerken bekleyin</string>
-    <string name="tap_to_start_backup">Hemen bulut yedeklemeyi başlatmak için dokunun</string>
+    <string name="please_wait_cloud_sync">Lütfen yedekleme işlemi sürerken bekleyin</string>
+    <string name="tap_to_start_backup">Hemen yerel yedeklemeyi başlatmak için dokunun</string>
     <string name="google_account">Google Hesabı</string>
     <string name="auto_backups">Otomatik Yedeklemeler</string>
     <string name="daily">Günlük</string>
@@ -305,7 +305,7 @@
     <string name="profile_subtitle">Yönetici bilgileri, iletişim detayları, şube adresi</string>
     <string name="cashiers_subtitle">Vardiyalar için kasiyer ve personel hesaplarını yönetin</string>
     <string name="security_subtitle">6 Haneli PIN koruması, biyometrik parmak izi/yüz tanıma, otomatik kilit</string>
-    <string name="backup_subtitle">Yerel SQLite yedeği, Google Drive senkronizasyonu ve JSON dışa aktarma</string>
+    <string name="backup_subtitle">Yerel SQLite yedeği, rapor dosyası dışa aktarma &amp; JSON arşivi</string>
     <string name="language_subtitle">Uygulama dili</string>
     <string name="about_subtitle">Sistem sürümü, yazılım lisansı, şartlar ve gizlilik politikası</string>
     <string name="support_subtitle">Destek masası, tanılama, geri bildirim ve biletler</string>
@@ -495,10 +495,10 @@
     <string name="save_1">Kaydet</string>
     <string name="cancel_1">İptal</string>
     <string name="terms_of_service">Hizmet Şartları</string>
-    <string name="by_using_lojia_shift">Lojia Vardiya Raporu &amp; POS Sistemini kullanarak, günlük satış verilerini yerel olarak saklamayı ve şifrelenmiş bulut uç noktalarıyla senkronize etmeyi kabul etmiş olursunuz. Tüm operasyonel günlükler güvenli bir şekilde saklanır.</string>
+    <string name="by_using_lojia_shift">Lojia\'yı kullanarak, günlük satış ve vardiya kayıtlarının cihazınızda yerel olarak saklanmasını kabul etmiş olursunuz. Yerel yedeklemeler ve dışa aktarmalar verilerinizi korur.</string>
     <string name="close_1">Kapat</string>
     <string name="privacy_policy_1">Gizlilik Politikası</string>
-    <string name="your_financial_data_shift">Finansal verileriniz, vardiya kayıtlarınız ve kullanıcı kimlik bilgileriniz cihaz üzerinde şifrelenir. Kişisel olarak tanımlanabilir hiçbir bilgi satılmaz veya aktarılmaz.</string>
+    <string name="your_financial_data_shift">Mali verileriniz, vardiya kayıtlarınız ve ayarlarınız cihazınızda yerel olarak saklanır. Hiçbir kişisel veri izlenmez veya satılmaz.</string>
     <string name="close_2">Kapat</string>
     <string name="add_cashier_2">Kasiyer Ekle</string>
     <string name="full_name_1">Ad Soyad *</string>
@@ -520,30 +520,10 @@
     <string name="unlock">Kilidi Aç</string>
     <string name="cancel_4">İptal</string>
     <string name="terms_conditions_1">Şartlar &amp; Koşullar</string>
-    <string name="msg_1_license_usagenlojia_system">1. Lisans &amp; Kullanım
-Lojia Sistemi, ticari POS ve vardiya yönetimi için lisanslıdır. Bu cihazda oluşturulan tüm veriler mağaza sahibinin tam kontrolü altındadır.
-
-2. Vardiya Defteri Doğruluğu
-Kasiyerler ve yöneticiler, doğru kasa sayımlarını, fişleri ve nakit hareketlerini girmekten sorumludur.
-
-3. Bulut Senkronizasyonu &amp; Yedekler
-Google Drive\'a yapılan bulut yedeklemeleri şifrelidir (AES-256) ve seçtiğiniz Google hesabı kimlik bilgileri altında yönetilir.
-
-4. Güncellemeler
-Periyodik güncellemeler; özellik iyileştirmeleri, güvenlik yamaları ve yasal uyumluluk güncellemelerini içerebilir.</string>
+    <string name="msg_1_license_usagenlojia_system">1. Lisans &amp; Kullanım\nLojia, yerel (offline-first) bir POS ve vardiya yönetimi uygulamasıdır. Bu cihazda oluşturulan tüm veriler mağaza sahibinin tam kontrolü altındadır.\n\n2. Vardiya Defteri Doğruluğu\nKasiyerler ve yöneticiler, doğru kasa sayımlarını, fişleri ve nakit hareketlerini girmekten sorumludur.\n\n3. Yerel Yedekler &amp; Dışa Aktarma\nVeri yedekleri yerel olarak oluşturulur. İsteğe bağlı dışa aktarma veya paylaşımlar yalnızca kullanıcının isteğiyle çalışır.\n\n4. Güncellemeler\nPeriyodik güncellemeler özellik iyileştirmeleri ve güvenlik yamalarını içerebilir.</string>
     <string name="i_understand">Anladım</string>
     <string name="privacy_policy_2">Gizlilik Politikası</string>
-    <string name="msg_1_data_collectionnlojia_system">1. Veri Toplama
-Lojia Sistemi; satış işlemlerini, envanter kataloglarını, kasiyer vardiyalarını ve iş iletişim bilgilerini Android cihazınızda yerel olarak işler.
-
-2. Güvenlik &amp; Biyometri
-Biyometrik veriler (parmak izi veya yüz tanıma), yalnızca Android BiometricPrompt donanım anahtar deposu aracılığıyla doğrulanır. Veritabanında hiçbir biyometrik şablon saklanmaz.
-
-3. Üçüncü Taraf Entegrasyonları
-İsteğe bağlı entegrasyonlar (örneğin WhatsApp, Google Drive, Yazıcılar), yalnızca açık kullanıcı izinleriyle çalışır.
-
-4. Veri Saklama
-Yerel veritabanlarınızı ve denetim günlüklerinizi istediğiniz zaman dışa aktarabilir veya silebilirsiniz.</string>
+    <string name="msg_1_data_collectionnlojia_system">1. Veri Toplama\nLojia Sistemi; satış işlemlerini, envanter kataloglarını, kasiyer vardiyalarını ve iş iletişim bilgilerini Android cihazınızda yerel olarak işler.\n\n2. Güvenlik &amp; Biyometri\nBiyometrik kimlik doğrulama yalnızca Android BiometricPrompt aracılığıyla yönetilir. Veritabanında hiçbir biyometrik şablon saklanmaz.\n\n3. Üçüncü Taraf Entegrasyonları\nİsteğe bağlı entegrasyonlar (örneğin WhatsApp paylaşımı, harici depolama, Yazıcılar) yalnızca açık kullanıcı izinleriyle çalışır.\n\n4. Veri Saklama\nYerel veritabanlarınızı ve denetim günlüklerinizi istediğiniz zaman dışa aktarabilir veya temizleyebilirsiniz.</string>
     <string name="close_3">Kapat</string>
     <string name="submit_support_ticket">Destek Talebi Gönder</string>
     <string name="ticket_tk8892_created">Talep #TK-8892 Oluşturuldu!</string>

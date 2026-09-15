@@ -49,7 +49,7 @@
 
 ### Prerequisites
 - Android Studio Ladybug (or newer)
-- Android SDK 35 (compileSdk 35, minSdk 26)
+- Android SDK (compileSdk 36, minSdk 24, targetSdk 36)
 - JDK 17 / 21
 
 ### Build Configurations

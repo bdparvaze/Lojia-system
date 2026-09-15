@@ -543,32 +543,32 @@ object PdfReportGenerator {
             appendLine("${pStr.date}: ${dateFormatter.format(Date(report.dateInMillis))}")
             appendLine("${pStr.shift}: ${getLocalizedShiftName(language, report.shift)} | ${pStr.cashier}: ${report.cashierName}")
             appendLine("--------------------------------")
-            appendLine("${pStr.grossTotalSales}: %.2f %s".format(report.totalSales, currency))
-            appendLine("${pStr.grossCash}: %.2f %s".format(report.grossCash, currency))
-            appendLine("${pStr.madaBank}: %.2f %s".format(report.madaPayments, currency))
-            appendLine("${pStr.digitalWallet}: %.2f %s".format(report.digitalWallet, currency))
-            appendLine("${pStr.expenses}: %.2f %s".format(report.totalExpenses, currency))
-            appendLine("${pStr.netCashInDrawer}: %.2f %s".format(report.netCash, currency))
-            appendLine("${pStr.netMadaBank}: %.2f %s".format(report.madaPayments, currency))
+            appendLine("${pStr.grossTotalSales}: ${MoneyFormat.format(report.totalSales, currency)}")
+            appendLine("${pStr.grossCash}: ${MoneyFormat.format(report.grossCash, currency)}")
+            appendLine("${pStr.madaBank}: ${MoneyFormat.format(report.madaPayments, currency)}")
+            appendLine("${pStr.digitalWallet}: ${MoneyFormat.format(report.digitalWallet, currency)}")
+            appendLine("${pStr.expenses}: ${MoneyFormat.format(report.totalExpenses, currency)}")
+            appendLine("${pStr.netCashInDrawer}: ${MoneyFormat.format(report.netCash, currency)}")
+            appendLine("${pStr.netMadaBank}: ${MoneyFormat.format(report.madaPayments, currency)}")
             if (dueCreditEntries.isNotEmpty()) {
                 appendLine("--- ${pStr.dueSales} (${dueCreditEntries.size}) ---")
-                dueCreditEntries.forEach { appendLine("Rcpt ${it.receiptNo} (${it.customerName}): %.2f %s".format(it.amount, currency)) }
+                dueCreditEntries.forEach { appendLine("Rcpt ${it.receiptNo} (${it.customerName}): ${MoneyFormat.format(it.amount, currency)}") }
             }
             if (dueCollectionEntries.isNotEmpty()) {
                 appendLine("--- ${pStr.dueCollection} (${dueCollectionEntries.size}) ---")
-                dueCollectionEntries.forEach { appendLine("Rcpt ${it.receiptNo} (${it.paymentMode}): %.2f %s".format(it.amount, currency)) }
+                dueCollectionEntries.forEach { appendLine("Rcpt ${it.receiptNo} (${it.paymentMode}): ${MoneyFormat.format(it.amount, currency)}") }
             }
             if (staffAdvanceEntries.isNotEmpty()) {
                 appendLine("--- ${pStr.employerAdvances} (${staffAdvanceEntries.size}) ---")
-                staffAdvanceEntries.forEach { appendLine("${it.staffName} (${it.paymentMode}): %.2f %s".format(it.amount, currency)) }
+                staffAdvanceEntries.forEach { appendLine("${it.staffName} (${it.paymentMode}): ${MoneyFormat.format(it.amount, currency)}") }
             }
             if (walkoutEntries.isNotEmpty()) {
                 appendLine("--- ${pStr.walkoutBills} (${walkoutEntries.size}) ---")
-                walkoutEntries.forEach { appendLine("Ref ${it.tableOrOrderRef}: %.2f %s".format(it.amount, currency)) }
+                walkoutEntries.forEach { appendLine("Ref ${it.tableOrOrderRef}: ${MoneyFormat.format(it.amount, currency)}") }
             }
             if (purchasedItems.isNotEmpty()) {
                 appendLine("--- ${pStr.paidOutItems} (${purchasedItems.size}) ---")
-                purchasedItems.forEach { appendLine("${it.itemName} (${it.quantity.toInt()}x): %.2f %s".format(it.totalAmount, currency)) }
+                purchasedItems.forEach { appendLine("${it.itemName} (${it.quantity.toInt()}x): ${MoneyFormat.format(it.totalAmount, currency)}") }
             }
             appendLine("--- ${pStr.operationalMetrics} ---")
             appendLine("${pStr.staffMeals}: ${report.staffMealsCount} | ${pStr.regularMuassel}: ${report.muasselQty.toInt()} | ${pStr.outdoorMuassel}: ${report.outdoorShishaQty.toInt()}")
@@ -603,8 +603,7 @@ object PdfReportGenerator {
         val page = pdfDocument.startPage(pageInfo)
         val canvas = page.canvas
 
-        val rawCurrency = businessProfile?.currency ?: "SAR"
-        val currency = if (rawCurrency == "SAR") context.getString(R.string.currency_unit) else rawCurrency
+        val currency = MoneyFormat.resolveCurrency(businessProfile?.currency)
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         val dateOnlyFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -716,11 +715,11 @@ object PdfReportGenerator {
         val cardHeight = 44f
 
         // Card 1: Total Sales
-        drawKpiCard(canvas, margin, currentY, cardWidth, cardHeight, context.getString(R.string.total_revenue_label), "%.2f %s".format(totalGrossRevenue, currency), Color.rgb(16, 185, 129))
+        drawKpiCard(canvas, margin, currentY, cardWidth, cardHeight, context.getString(R.string.total_revenue_label), MoneyFormat.format(totalGrossRevenue, currency), Color.rgb(16, 185, 129))
         // Card 2: Total Mada / Digital
-        drawKpiCard(canvas, margin + cardWidth + 10f, currentY, cardWidth, cardHeight, context.getString(R.string.mada_cards_label), "%.2f %s".format(totalMada + totalWallet, currency), Color.rgb(99, 102, 241))
+        drawKpiCard(canvas, margin + cardWidth + 10f, currentY, cardWidth, cardHeight, context.getString(R.string.mada_cards_label), MoneyFormat.format(totalMada + totalWallet, currency), Color.rgb(99, 102, 241))
         // Card 3: Net Cash in Drawer
-        drawKpiCard(canvas, margin + (cardWidth * 2) + 20f, currentY, cardWidth, cardHeight, context.getString(R.string.net_cash_in_drawer_label), "%.2f %s".format(totalNet, currency), Color.rgb(30, 58, 138))
+        drawKpiCard(canvas, margin + (cardWidth * 2) + 20f, currentY, cardWidth, cardHeight, context.getString(R.string.net_cash_in_drawer_label), MoneyFormat.format(totalNet, currency), Color.rgb(30, 58, 138))
 
         currentY += cardHeight + 22f
 
@@ -831,8 +830,7 @@ object PdfReportGenerator {
         language: AppLanguage = AppLanguage.ENGLISH
     ): ExportResult {
         val pStr = getPdfStrings(context, language)
-        val rawCurrency = businessProfile?.currency ?: "SAR"
-        val currency = if (rawCurrency == "SAR") context.getString(R.string.currency_unit) else rawCurrency
+        val currency = MoneyFormat.resolveCurrency(businessProfile?.currency)
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
         val dueCreditEntries = parseDueCreditEntries(report.dueCreditEntriesJson)
@@ -1032,13 +1030,13 @@ object PdfReportGenerator {
             currentY += 20f
         }
 
-        drawFinRow(pStr.grossCash, "%.2f %s".format(report.grossCash, currency))
-        drawFinRow(pStr.madaBank, "%.2f %s".format(report.madaPayments, currency))
-        drawFinRow(pStr.digitalWallet, "%.2f %s".format(report.digitalWallet, currency))
-        drawFinRow(pStr.grossTotalSales, "%.2f %s".format(report.totalSales, currency), isBold = true, isHighlight = true)
-        drawFinRow(pStr.expenses, "%.2f %s".format(report.totalExpenses, currency))
-        drawFinRow(pStr.netCashInDrawer, "%.2f %s".format(report.netCash, currency), isBold = true)
-        drawFinRow(pStr.netMadaBank, "%.2f %s".format(report.madaPayments, currency), isBold = true)
+        drawFinRow(pStr.grossCash, MoneyFormat.format(report.grossCash, currency))
+        drawFinRow(pStr.madaBank, MoneyFormat.format(report.madaPayments, currency))
+        drawFinRow(pStr.digitalWallet, MoneyFormat.format(report.digitalWallet, currency))
+        drawFinRow(pStr.grossTotalSales, MoneyFormat.format(report.totalSales, currency), isBold = true, isHighlight = true)
+        drawFinRow(pStr.expenses, MoneyFormat.format(report.totalExpenses, currency))
+        drawFinRow(pStr.netCashInDrawer, MoneyFormat.format(report.netCash, currency), isBold = true)
+        drawFinRow(pStr.netMadaBank, MoneyFormat.format(report.madaPayments, currency), isBold = true)
 
         currentY += 16f
 
@@ -1095,40 +1093,40 @@ object PdfReportGenerator {
         drawSectionTable(
             title = pStr.dueSales,
             headers = listOf(pStr.receiptNo, pStr.customer, pStr.amount),
-            rows = dueCreditEntries.map { listOf(it.receiptNo, it.customerName, "%.2f %s".format(it.amount, currency)) },
-            totalAmountStr = "%.2f %s".format(dueCreditEntries.sumOf { it.amount }, currency)
+            rows = dueCreditEntries.map { listOf(it.receiptNo, it.customerName, MoneyFormat.format(it.amount, currency)) },
+            totalAmountStr = MoneyFormat.format(dueCreditEntries.sumOf { it.amount }, currency)
         )
 
         // Table 2: Due Collection
         drawSectionTable(
             title = pStr.dueCollection,
             headers = listOf(pStr.receiptNo, pStr.mode, pStr.amount),
-            rows = dueCollectionEntries.map { listOf(it.receiptNo, it.paymentMode, "%.2f %s".format(it.amount, currency)) },
-            totalAmountStr = "%.2f %s".format(dueCollectionEntries.sumOf { it.amount }, currency)
+            rows = dueCollectionEntries.map { listOf(it.receiptNo, it.paymentMode, MoneyFormat.format(it.amount, currency)) },
+            totalAmountStr = MoneyFormat.format(dueCollectionEntries.sumOf { it.amount }, currency)
         )
 
         // Table 3: Employer Advances
         drawSectionTable(
             title = pStr.employerAdvances,
             headers = listOf(pStr.staffName, pStr.mode, pStr.amount),
-            rows = staffAdvanceEntries.map { listOf(it.staffName, it.paymentMode, "%.2f %s".format(it.amount, currency)) },
-            totalAmountStr = "%.2f %s".format(staffAdvanceEntries.sumOf { it.amount }, currency)
+            rows = staffAdvanceEntries.map { listOf(it.staffName, it.paymentMode, MoneyFormat.format(it.amount, currency)) },
+            totalAmountStr = MoneyFormat.format(staffAdvanceEntries.sumOf { it.amount }, currency)
         )
 
         // Table 4: Walkout Bills
         drawSectionTable(
             title = pStr.walkoutBills,
             headers = listOf(pStr.customer, pStr.amount),
-            rows = walkoutEntries.map { listOf(it.tableOrOrderRef, "", "%.2f %s".format(it.amount, currency)) },
-            totalAmountStr = "%.2f %s".format(walkoutEntries.sumOf { it.amount }, currency)
+            rows = walkoutEntries.map { listOf(it.tableOrOrderRef, "", MoneyFormat.format(it.amount, currency)) },
+            totalAmountStr = MoneyFormat.format(walkoutEntries.sumOf { it.amount }, currency)
         )
 
         // Table 5: Paid Out Items / Purchases
         drawSectionTable(
             title = pStr.paidOutItems,
             headers = listOf(pStr.item, pStr.qty, pStr.total),
-            rows = purchasedItems.map { listOf(it.itemName, "${it.quantity.toInt()}x", "%.2f %s".format(it.totalAmount, currency)) },
-            totalAmountStr = "%.2f %s".format(purchasedItems.sumOf { it.totalAmount }, currency)
+            rows = purchasedItems.map { listOf(it.itemName, "${it.quantity.toInt()}x", MoneyFormat.format(it.totalAmount, currency)) },
+            totalAmountStr = MoneyFormat.format(purchasedItems.sumOf { it.totalAmount }, currency)
         )
 
         // Operational Metrics Section
@@ -1177,8 +1175,7 @@ object PdfReportGenerator {
         val page = pdfDocument.startPage(pageInfo)
         val canvas = page.canvas
 
-        val rawCurrency = businessProfile?.currency ?: "SAR"
-        val currency = if (rawCurrency == "SAR") context.getString(R.string.currency_unit) else rawCurrency
+        val currency = MoneyFormat.resolveCurrency(businessProfile?.currency)
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
         val primaryPaint = Paint().apply {
@@ -1279,7 +1276,7 @@ object PdfReportGenerator {
             val valPaint = if (isTotal) emeraldPaint else (if (isTotal) textBoldPaint else textPaint)
 
             canvas.drawText(label, margin + 12f, rowY, paint)
-            val value = "%.2f %s".format(amount, currency)
+            val value = MoneyFormat.format(amount, currency)
             val valWidth = valPaint.measureText(value)
             canvas.drawText(value, PAGE_WIDTH - margin - valWidth - 12f, rowY, valPaint)
             currentY += 24f

@@ -283,13 +283,13 @@
     <string name="backup">备份</string>
     <string name="backup_and_storage">备份</string>
     <string name="backup_settings">备份设置</string>
-    <string name="backup_settings_desc">将报表和数据库备份到云端，以免在更换手机时丢失数据。</string>
-    <string name="backup_desc">将您的数据备份到云端，以免在购买新 Android 手机时丢失数据。</string>
+    <string name="backup_settings_desc">在本地备份报表和数据库并导出归档，以防止数据丢失。</string>
+    <string name="backup_desc">在您的设备或存储中本地导出并备份您的门店数据。</string>
     <string name="last_backup">最后备份</string>
     <string name="last_backup_time">最后备份时间</string>
     <string name="backing_up">备份中</string>
-    <string name="please_wait_cloud_sync">请稍候，正在同步至云端</string>
-    <string name="tap_to_start_backup">点击立即开始云备份</string>
+    <string name="please_wait_cloud_sync">请稍候，正在处理备份</string>
+    <string name="tap_to_start_backup">点击立即开始本地备份</string>
     <string name="google_account">Google 账号</string>
     <string name="auto_backups">自动备份</string>
     <string name="daily">每日</string>
@@ -305,7 +305,7 @@
     <string name="profile_subtitle">管理员凭据、联系方式、分店地址</string>
     <string name="cashiers_subtitle">管理轮班的收银员及员工账户</string>
     <string name="security_subtitle">6位PIN码保护、生物识别指纹/面容ID、自动锁定</string>
-    <string name="backup_subtitle">本地SQLite备份、Google Drive同步及JSON导出</string>
+    <string name="backup_subtitle">本地SQLite备份、报表文件导出及JSON归档</string>
     <string name="language_subtitle">应用语言</string>
     <string name="about_subtitle">系统版本、软件许可、条款及隐私政策</string>
     <string name="support_subtitle">帮助中心、诊断、反馈及工单</string>
@@ -495,10 +495,10 @@
     <string name="save_1">保存</string>
     <string name="cancel_1">取消</string>
     <string name="terms_of_service">服务条款</string>
-    <string name="by_using_lojia_shift">使用Lojia班次报告和POS系统，即表示您同意将每日销售数据本地存储并与加密的云端点同步。所有操作日志均得到安全保存。</string>
+    <string name="by_using_lojia_shift">使用Lojia，每日销售和班次记录将保存在您的设备本地。本地备份和导出有助于保护您的门店数据。</string>
     <string name="close_1">关闭</string>
     <string name="privacy_policy_1">隐私政策</string>
-    <string name="your_financial_data_shift">您的财务数据、班次记录和用户凭据均在设备上加密。没有任何个人身份信息会被出售或转让。</string>
+    <string name="your_financial_data_shift">您的财务数据、班次记录和设置均在本地设备上保存。不会跟踪或出售任何个人信息。</string>
     <string name="close_2">关闭</string>
     <string name="add_cashier_2">添加收银员</string>
     <string name="full_name_1">姓名 *</string>
@@ -520,30 +520,10 @@
     <string name="unlock">解锁</string>
     <string name="cancel_4">取消</string>
     <string name="terms_conditions_1">条款与条件</string>
-    <string name="msg_1_license_usagenlojia_system">1. 许可与使用
-Lojia系统已获得商业POS和轮班管理许可。在此设备上生成的所有数据均由店主完全控制。
-
-2. 轮班记录准确性
-收银员和经理负责输入准确的抽屉库存、收据和现金变动。
-
-3. 云同步与备份
-备份至Google云端硬盘的数据已加密 (AES-256)，并由您选择的Google帐户凭据管理。
-
-4. 更新
-定期更新可能包括功能增强、安全补丁和监管合规性更新。</string>
+    <string name="msg_1_license_usagenlojia_system">1. 许可与使用\nLojia 是一款本地优先 (Offline-first) 的 POS 及班次管理应用。在此设备上生成的所有数据均由店主完全控制。\n\n2. 轮班记录准确性\n收银员和经理负责输入准确的抽屉库存、收据和现金变动。\n\n3. 本地备份与导出\n数据备份在本地创建。可选的导出仅在用户需要时运行。\n\n4. 更新\n定期更新可能包括功能增强和安全补丁。</string>
     <string name="i_understand">我已阅读并同意</string>
     <string name="privacy_policy_2">隐私政策</string>
-    <string name="msg_1_data_collectionnlojia_system">1. 数据收集
-Lojia系统在您的Android设备上本地处理销售交易、库存目录、收银轮班和业务联系信息。
-
-2. 安全与生物识别
-生物识别数据（指纹或人脸解锁）严格通过Android BiometricPrompt硬件密钥库进行认证。数据库中不存储任何生物识别模板。
-
-3. 第三方集成
-可选的集成（例如WhatsApp、Google云端硬盘、打印机）仅在获得明确的用户许可后运行。
-
-4. 数据保留
-您可以随时导出或清除本地数据库和审计日志。</string>
+    <string name="msg_1_data_collectionnlojia_system">1. 数据收集\nLojia系统在您的Android设备上本地处理销售交易、库存目录、收银轮班和业务联系信息。\n\n2. 安全与生物识别\n生物识别认证严格通过Android BiometricPrompt进行。数据库中不存储任何生物识别模板。\n\n3. 第三方集成\n可选的集成（例如WhatsApp分享、外部存储、打印机）仅在获得明确的用户许可后运行。\n\n4. 数据保留\n您可以随时导出或清除本地数据库和审计日志。</string>
     <string name="close_3">关闭</string>
     <string name="submit_support_ticket">提交支持工单</string>
     <string name="ticket_tk8892_created">工单 #TK-8892 已创建！</string>
