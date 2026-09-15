@@ -358,9 +358,11 @@ fun SaleReceiptPreviewDialog(
     var exportedUri by remember { mutableStateOf<Uri?>(null) }
     var exportSuccessMessage by remember { mutableStateOf<String?>(null) }
 
-    val taxInvoiceTitle = stringResource(R.string.simplified_tax_invoice)
+    val isVoided = sale.isVoided
+    val taxInvoiceTitle = if (isVoided) "VOIDED / REFUNDED INVOICE" else stringResource(R.string.simplified_tax_invoice)
     val subtotalLabel = stringResource(R.string.subtotal_exclusive_vat)
-    val vatLabel = stringResource(R.string.vat_amount_15)
+    val taxRateStr = if (businessProfile?.vatRate != null && businessProfile.vatRate > 0.0) "${businessProfile.vatRate}%" else ""
+    val vatLabel = if (taxRateStr.isNotEmpty()) "Tax/VAT ($taxRateStr)" else stringResource(R.string.vat_amount_15)
     val totalLabel = stringResource(R.string.total_amount_due_inc_vat)
     val defaultBiz = stringResource(R.string.default_business_name)
     val thankYouMsg = stringResource(R.string.pdf_thank_you_visit, businessProfile?.businessName ?: defaultBiz)
@@ -368,16 +370,36 @@ fun SaleReceiptPreviewDialog(
     val receiptText = buildString {
         appendLine("========================================")
         appendLine("        ${businessProfile?.businessName ?: defaultBiz}")
+        if (!businessProfile?.address.isNullOrBlank()) {
+            appendLine("        ${businessProfile?.address}")
+        }
+        if (!businessProfile?.phone.isNullOrBlank()) {
+            appendLine("        Tel: ${businessProfile?.phone}")
+        }
         appendLine("        $taxInvoiceTitle")
         appendLine("========================================")
+        if (isVoided) {
+            appendLine("*** THIS SALE HAS BEEN VOIDED / REFUNDED ***")
+            if (sale.voidReason.isNotBlank()) {
+                appendLine("Reason: ${sale.voidReason}")
+            }
+            appendLine("----------------------------------------")
+        }
         appendLine("${stringResource(R.string.invoice_number)}: ${sale.invoiceNumber}")
         appendLine("${stringResource(R.string.date_2)}: ${dateFormatter.format(Date(sale.timestamp))}")
         appendLine("${stringResource(R.string.cashier_6)}: ${sale.cashierName}")
-        appendLine("VAT ID: ${businessProfile?.vatNumber ?: "310123456700003"}")
+        if (sale.customerName.isNotBlank() && sale.customerName != "Walk-in Customer") {
+            appendLine("Customer: ${sale.customerName}")
+        }
+        if (!businessProfile?.vatNumber.isNullOrBlank()) {
+            appendLine("Tax ID / VAT: ${businessProfile?.vatNumber}")
+        }
         appendLine("${stringResource(R.string.payment_method)}: ${sale.paymentMethod}")
         appendLine("----------------------------------------")
         appendLine("$subtotalLabel:   ${MoneyFormat.format(sale.subtotal, currencyCode)}")
-        appendLine("$vatLabel:              ${MoneyFormat.format(sale.vatAmount, currencyCode)}")
+        if (businessProfile?.isTaxEnabled != false || sale.vatAmount > 0.0) {
+            appendLine("$vatLabel:              ${MoneyFormat.format(sale.vatAmount, currencyCode)}")
+        }
         appendLine("$totalLabel:              ${MoneyFormat.format(sale.totalAmount, currencyCode)}")
         appendLine("========================================")
         appendLine("        $thankYouMsg")

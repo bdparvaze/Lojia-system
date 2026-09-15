@@ -1247,11 +1247,35 @@ object PdfReportGenerator {
         canvas.drawText(context.getString(R.string.pdf_vat_id_tel, vatNo, businessProfile?.phone ?: context.getString(R.string.pdf_default_phone)), margin + 16f, currentY + 44f, subheaderTextPaint)
         canvas.drawText(businessProfile?.address ?: context.getString(R.string.pdf_default_location), margin + 16f, currentY + 58f, subheaderTextPaint)
 
-        val invoiceTag = context.getString(R.string.simplified_tax_invoice)
-        val tagWidth = subheaderTextPaint.measureText(invoiceTag)
-        canvas.drawText(invoiceTag, logoX - tagWidth - 12f, currentY + 26f, subheaderTextPaint)
+        val isVoided = sale.isVoided
+        val taxRateStr = if (businessProfile?.vatRate != null && businessProfile.vatRate > 0.0) "${businessProfile.vatRate}%" else "15%"
+        val vatLabel = if (businessProfile?.isTaxEnabled == false) "No Tax" else "VAT ($taxRateStr)"
 
-        currentY += headerHeight + 24f
+        val invoiceTag = if (isVoided) "VOIDED / REFUNDED" else context.getString(R.string.simplified_tax_invoice)
+        val tagWidth = subheaderTextPaint.measureText(invoiceTag)
+        val tagPaint = if (isVoided) Paint().apply {
+            color = Color.rgb(220, 38, 38)
+            textSize = 10f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            isAntiAlias = true
+        } else subheaderTextPaint
+        canvas.drawText(invoiceTag, logoX - tagWidth - 12f, currentY + 26f, tagPaint)
+
+        currentY += headerHeight + 16f
+
+        if (isVoided) {
+            val voidBannerRect = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 24f)
+            val voidBgPaint = Paint().apply { color = Color.rgb(254, 226, 226); style = Paint.Style.FILL }
+            val voidBorderPaint = Paint().apply { color = Color.rgb(239, 68, 68); style = Paint.Style.STROKE; strokeWidth = 1f }
+            val voidTextPaint = Paint().apply { color = Color.rgb(185, 28, 28); textSize = 9f; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); isAntiAlias = true }
+            canvas.drawRoundRect(voidBannerRect, 4f, 4f, voidBgPaint)
+            canvas.drawRoundRect(voidBannerRect, 4f, 4f, voidBorderPaint)
+            val reasonText = if (sale.voidReason.isNotBlank()) "VOIDED TRANSACTION: ${sale.voidReason}" else "VOIDED TRANSACTION / REFUNDED"
+            canvas.drawText(reasonText, margin + 12f, currentY + 16f, voidTextPaint)
+            currentY += 32f
+        } else {
+            currentY += 8f
+        }
 
         // Invoice Meta
         canvas.drawText(context.getString(R.string.tax_invoice_details), margin, currentY, titlePaint)
@@ -1262,7 +1286,12 @@ object PdfReportGenerator {
         canvas.drawRoundRect(infoBox, 6f, 6f, Paint().apply { color = Color.rgb(226, 232, 240); style = Paint.Style.STROKE; strokeWidth = 1f })
 
         canvas.drawText(context.getString(R.string.pdf_invoice_number, sale.invoiceNumber), margin + 12f, currentY + 18f, textBoldPaint)
-        canvas.drawText(context.getString(R.string.pdf_cashier_name, sale.cashierName), margin + 12f, currentY + 36f, textPaint)
+        val cashierAndCustomer = if (sale.customerName.isNotBlank() && sale.customerName != "Walk-in Customer") {
+            "${context.getString(R.string.pdf_cashier_name, sale.cashierName)} | Customer: ${sale.customerName}"
+        } else {
+            context.getString(R.string.pdf_cashier_name, sale.cashierName)
+        }
+        canvas.drawText(cashierAndCustomer, margin + 12f, currentY + 36f, textPaint)
         canvas.drawText(context.getString(R.string.pdf_date_val, dateFormatter.format(Date(sale.timestamp))), margin + 260f, currentY + 18f, textPaint)
         canvas.drawText(context.getString(R.string.pdf_payment_method, sale.paymentMethod), margin + 260f, currentY + 36f, textBoldPaint)
 
@@ -1283,7 +1312,7 @@ object PdfReportGenerator {
         }
 
         drawAmountRow(context.getString(R.string.subtotal_exclusive_vat), sale.subtotal)
-        drawAmountRow(context.getString(R.string.vat_amount_15), sale.vatAmount)
+        drawAmountRow(vatLabel, sale.vatAmount)
         drawAmountRow(context.getString(R.string.total_amount_due_inc_vat), sale.totalAmount, isTotal = true)
 
         currentY += 40f

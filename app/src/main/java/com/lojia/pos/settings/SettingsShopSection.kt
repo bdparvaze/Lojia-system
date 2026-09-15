@@ -34,6 +34,8 @@ import androidx.compose.foundation.background
 
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 
 import androidx.compose.foundation.layout.*
@@ -182,9 +184,20 @@ fun SettingsShopSection(
     var autoCut by remember { mutableStateOf(true) }
     var customerDisplayOn by remember { mutableStateOf(true) }
     var customerGreeting by remember { mutableStateOf("Welcome to Lojia Store! 🌟") }
+    var taxEnabledInput by remember(businessProfile) { mutableStateOf(businessProfile?.isTaxEnabled ?: true) }
+    var taxInclusiveInput by remember(businessProfile) { mutableStateOf(businessProfile?.isTaxIncluded ?: true) }
     var vatRateInput by remember(businessProfile) { mutableStateOf((businessProfile?.vatRate ?: 15.0).toString()) }
     var vatNumberInput by remember(businessProfile) { mutableStateOf(businessProfile?.vatNumber ?: "") }
     var businessNameInput by remember(businessProfile) { mutableStateOf(businessProfile?.businessName ?: "Lojia Store") }
+
+    // Sales History & Void states
+    var salesSearchQuery by remember { mutableStateOf("") }
+    var salesFilterTab by remember { mutableStateOf(0) } // 0: All, 1: Completed, 2: Voided
+    var selectedSaleForDetail by remember { mutableStateOf<POSSale?>(null) }
+    var showVoidReasonDialog by remember { mutableStateOf(false) }
+    var voidReasonInput by remember { mutableStateOf("") }
+    var saleToVoid by remember { mutableStateOf<POSSale?>(null) }
+    var showReceiptPreviewForSale by remember { mutableStateOf<POSSale?>(null) }
 
     // Language Search
     var langSearch by remember { mutableStateOf("") }
@@ -1553,31 +1566,70 @@ fun SettingsShopSection(
             title = { Text(stringResource(R.string.taxes_vat), fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = vatRateInput,
-                        onValueChange = { vatRateInput = it },
-                        label = { Text(stringResource(R.string.vat_rate)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = vatNumberInput,
-                        onValueChange = { vatNumberInput = it },
-                        label = { Text(stringResource(R.string.tax_vat_registration_number)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.taxes_vat), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Text("Enable tax calculation on POS sales", fontSize = 12.sp, color = TextSecondaryLight)
+                        }
+                        Switch(
+                            checked = taxEnabledInput,
+                            onCheckedChange = { taxEnabledInput = it }
+                        )
+                    }
+
+                    if (taxEnabledInput) {
+                        OutlinedTextField(
+                            value = vatRateInput,
+                            onValueChange = { vatRateInput = it },
+                            label = { Text(stringResource(R.string.vat_rate)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text("Tax Pricing Mode", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = taxInclusiveInput,
+                                onClick = { taxInclusiveInput = true },
+                                label = { Text("Tax Included") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = !taxInclusiveInput,
+                                onClick = { taxInclusiveInput = false },
+                                label = { Text("Tax Added (Exclusive)") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        OutlinedTextField(
+                            value = vatNumberInput,
+                            onValueChange = { vatNumberInput = it },
+                            label = { Text(stringResource(R.string.tax_vat_registration_number)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        val rate = vatRateInput.toDoubleOrNull() ?: 15.0
+                        val rate = vatRateInput.toDoubleOrNull() ?: 0.0
                         val current = businessProfile ?: BusinessProfile()
                         reportViewModel.saveBusinessProfile(
                             current.copy(
                                 vatRate = rate,
-                                vatNumber = vatNumberInput,
-                                isTaxEnabled = true,
-                                isTaxIncluded = true
+                                vatNumber = vatNumberInput.trim(),
+                                isTaxEnabled = taxEnabledInput,
+                                isTaxIncluded = taxInclusiveInput
                             )
                         )
                         Toast.makeText(context, context.getString(R.string.tax_settings_saved), Toast.LENGTH_SHORT).show()
@@ -1590,6 +1642,391 @@ fun SettingsShopSection(
             dismissButton = {
                 TextButton(onClick = { activeSubDialog = null }) { Text(stringResource(R.string.cancel_18)) }
             }
+        )
+    }
+
+    // 9B. Sales History & Void Dialog
+    if (activeSubDialog == "sales_history") {
+        val filteredSales = remember(salesHistory, salesSearchQuery, salesFilterTab) {
+            salesHistory.filter { sale ->
+                val matchesQuery = salesSearchQuery.isBlank() ||
+                        sale.invoiceNumber.contains(salesSearchQuery, ignoreCase = true) ||
+                        sale.cashierName.contains(salesSearchQuery, ignoreCase = true) ||
+                        sale.customerName.contains(salesSearchQuery, ignoreCase = true)
+                val matchesTab = when (salesFilterTab) {
+                    1 -> !sale.isVoided
+                    2 -> sale.isVoided
+                    else -> true
+                }
+                matchesQuery && matchesTab
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = { activeSubDialog = null },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Sales History & Refunds", fontWeight = FontWeight.Bold)
+                    Text(
+                        "${filteredSales.size} sales",
+                        fontSize = 12.sp,
+                        color = TextSecondaryLight
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 500.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedTextField(
+                        value = salesSearchQuery,
+                        onValueChange = { salesSearchQuery = it },
+                        placeholder = { Text("Search invoice #, cashier...") },
+                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (salesSearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { salesSearchQuery = "" }) {
+                                    Icon(Icons.Outlined.Clear, contentDescription = null)
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FilterChip(
+                            selected = salesFilterTab == 0,
+                            onClick = { salesFilterTab = 0 },
+                            label = { Text("All (${salesHistory.size})", fontSize = 11.sp) }
+                        )
+                        FilterChip(
+                            selected = salesFilterTab == 1,
+                            onClick = { salesFilterTab = 1 },
+                            label = { Text("Completed (${salesHistory.count { !it.isVoided }})", fontSize = 11.sp) }
+                        )
+                        FilterChip(
+                            selected = salesFilterTab == 2,
+                            onClick = { salesFilterTab = 2 },
+                            label = { Text("Voided (${salesHistory.count { it.isVoided }})", fontSize = 11.sp) }
+                        )
+                    }
+
+                    if (filteredSales.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No transactions found", color = TextSecondaryLight)
+                        }
+                    } else {
+                        val dateFormatter = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f, fill = false),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filteredSales, key = { it.id }) { sale ->
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (sale.isVoided) Color(0xFFFEF2F2) else Color(0xFFF8FAFC),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (sale.isVoided) Color(0xFFFCA5A5) else Color(0xFFE2E8F0)
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedSaleForDetail = sale }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    sale.invoiceNumber,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 13.sp,
+                                                    color = if (sale.isVoided) Color(0xFF991B1B) else Color(0xFF0F172A)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                if (sale.isVoided) {
+                                                    Surface(
+                                                        color = Color(0xFFEF4444),
+                                                        shape = RoundedCornerShape(4.dp)
+                                                    ) {
+                                                        Text(
+                                                            "VOIDED",
+                                                            color = Color.White,
+                                                            fontSize = 9.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Text(
+                                                "${dateFormatter.format(Date(sale.timestamp))} • ${sale.cashierName} • ${sale.paymentMethod}",
+                                                fontSize = 11.sp,
+                                                color = TextSecondaryLight
+                                            )
+                                            if (sale.isVoided && sale.voidReason.isNotBlank()) {
+                                                Text(
+                                                    "Reason: ${sale.voidReason}",
+                                                    fontSize = 11.sp,
+                                                    color = Color(0xFFDC2626),
+                                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            MoneyFormat.format(sale.totalAmount, currency),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 14.sp,
+                                            color = if (sale.isVoided) Color(0xFF991B1B) else LoyverseGreenDark
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { activeSubDialog = null }) { Text("Close") }
+            }
+        )
+    }
+
+    // Detail & Void Modal for a selected sale
+    if (selectedSaleForDetail != null) {
+        val sale = selectedSaleForDetail!!
+        val dateFormatter = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
+
+        AlertDialog(
+            onDismissRequest = { selectedSaleForDetail = null },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(sale.invoiceNumber, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    if (sale.isVoided) {
+                        Surface(
+                            color = Color(0xFFEF4444),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                "VOIDED",
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (sale.isVoided) {
+                        Surface(
+                            color = Color(0xFFFEE2E2),
+                            shape = RoundedCornerShape(6.dp),
+                            border = BorderStroke(1.dp, Color(0xFFEF4444)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("Transaction Voided & Refunded", fontWeight = FontWeight.Bold, color = Color(0xFF991B1B), fontSize = 12.sp)
+                                if (sale.voidReason.isNotBlank()) {
+                                    Text("Reason: ${sale.voidReason}", color = Color(0xFFB91C1C), fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    Text("Date: ${dateFormatter.format(Date(sale.timestamp))}", fontSize = 12.sp)
+                    Text("Cashier: ${sale.cashierName}", fontSize = 12.sp)
+                    if (sale.customerName.isNotBlank()) {
+                        Text("Customer: ${sale.customerName}", fontSize = 12.sp)
+                    }
+                    Text("Payment Method: ${sale.paymentMethod}", fontSize = 12.sp)
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Subtotal:", fontSize = 13.sp, color = TextSecondaryLight)
+                        Text(MoneyFormat.format(sale.subtotal, currency), fontSize = 13.sp)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Tax / VAT:", fontSize = 13.sp, color = TextSecondaryLight)
+                        Text(MoneyFormat.format(sale.vatAmount, currency), fontSize = 13.sp)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total Amount:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(MoneyFormat.format(sale.totalAmount, currency), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (sale.isVoided) Color(0xFFDC2626) else LoyverseGreenDark)
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Button(
+                        onClick = {
+                            showReceiptPreviewForSale = sale
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Outlined.Receipt, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("View / Print Receipt")
+                    }
+
+                    if (!sale.isVoided) {
+                        OutlinedButton(
+                            onClick = {
+                                onRestrictedClick {
+                                    saleToVoid = sale
+                                    voidReasonInput = ""
+                                    showVoidReasonDialog = true
+                                }
+                            },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626)),
+                            border = BorderStroke(1.dp, Color(0xFFDC2626)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Outlined.Cancel, contentDescription = null, tint = Color(0xFFDC2626))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Void & Refund Sale")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedSaleForDetail = null }) { Text("Done") }
+            }
+        )
+    }
+
+    // Void Reason Prompt Modal
+    if (showVoidReasonDialog && saleToVoid != null) {
+        val targetSale = saleToVoid!!
+        AlertDialog(
+            onDismissRequest = {
+                showVoidReasonDialog = false
+                saleToVoid = null
+            },
+            title = { Text("Void & Refund Transaction", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Are you sure you want to void invoice ${targetSale.invoiceNumber} (${MoneyFormat.format(targetSale.totalAmount, currency)})? Inventory will be restored atomically.",
+                        fontSize = 13.sp
+                    )
+
+                    Text("Select or enter reason:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FilterChip(
+                            selected = voidReasonInput == "Customer Return",
+                            onClick = { voidReasonInput = "Customer Return" },
+                            label = { Text("Return", fontSize = 10.sp) }
+                        )
+                        FilterChip(
+                            selected = voidReasonInput == "Defective Item",
+                            onClick = { voidReasonInput = "Defective Item" },
+                            label = { Text("Defective", fontSize = 10.sp) }
+                        )
+                        FilterChip(
+                            selected = voidReasonInput == "Cashier Mistake",
+                            onClick = { voidReasonInput = "Cashier Mistake" },
+                            label = { Text("Mistake", fontSize = 10.sp) }
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = voidReasonInput,
+                        onValueChange = { voidReasonInput = it },
+                        label = { Text("Reason for void") },
+                        placeholder = { Text("e.g. Customer return, wrong item") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val reason = voidReasonInput.ifBlank { "Voided by Admin" }
+                        posViewModel.voidSale(
+                            saleId = targetSale.id,
+                            reason = reason,
+                            performedBy = fullName,
+                            onComplete = { success ->
+                                if (success) {
+                                    showVoidReasonDialog = false
+                                    saleToVoid = null
+                                    selectedSaleForDetail = null
+                                }
+                            }
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
+                ) {
+                    Text("Confirm Void")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showVoidReasonDialog = false
+                    saleToVoid = null
+                }) {
+                    Text(stringResource(R.string.cancel_18))
+                }
+            }
+        )
+    }
+
+    // Receipt Preview Dialog from Sales History
+    if (showReceiptPreviewForSale != null) {
+        SaleReceiptPreviewDialog(
+            sale = showReceiptPreviewForSale!!,
+            businessProfile = businessProfile,
+            language = language,
+            onDismiss = { showReceiptPreviewForSale = null }
         )
     }
 

@@ -81,6 +81,9 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
     val receiptConfig: StateFlow<ShopReceiptConfig?> = reportDao.getReceiptConfig()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    val businessProfile: StateFlow<BusinessProfile?> = reportDao.getBusinessProfile()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     // POS Cart State
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
@@ -190,9 +193,9 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val cartSubtotal: StateFlow<Double> = combine(_cartItems, appliedDiscount) { items, discount ->
+    val cartSubtotal: StateFlow<Double> = combine(_cartItems, appliedDiscount, businessProfile) { items, discount, profile ->
         val rawSubtotal = items.sumOf { it.lineTotal }
-        val calculated = if (discount != null) {
+        val discounted = if (discount != null) {
             if (discount.isPercentage) {
                 rawSubtotal * (1.0 - (discount.percentage / 100.0)).coerceAtLeast(0.0)
             } else {
@@ -201,15 +204,70 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             rawSubtotal
         }
-        Math.round(calculated * 100.0) / 100.0
+        val taxEnabled = profile?.isTaxEnabled ?: false
+        val taxRate = profile?.vatRate ?: 0.0
+        val taxInclusive = profile?.isTaxIncluded ?: true
+
+        val sub = if (taxEnabled && taxRate > 0.0 && taxInclusive) {
+            discounted / (1.0 + (taxRate / 100.0))
+        } else {
+            discounted
+        }
+        Math.round(sub * 100.0) / 100.0
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    val cartVat: StateFlow<Double> = cartSubtotal.map { sub ->
-        Math.round(sub * 0.15 * 100.0) / 100.0
+    val cartVat: StateFlow<Double> = combine(_cartItems, appliedDiscount, businessProfile) { items, discount, profile ->
+        val rawSubtotal = items.sumOf { it.lineTotal }
+        val discounted = if (discount != null) {
+            if (discount.isPercentage) {
+                rawSubtotal * (1.0 - (discount.percentage / 100.0)).coerceAtLeast(0.0)
+            } else {
+                (rawSubtotal - discount.fixedAmount).coerceAtLeast(0.0)
+            }
+        } else {
+            rawSubtotal
+        }
+        val taxEnabled = profile?.isTaxEnabled ?: false
+        val taxRate = profile?.vatRate ?: 0.0
+        val taxInclusive = profile?.isTaxIncluded ?: true
+
+        val vat = if (taxEnabled && taxRate > 0.0) {
+            if (taxInclusive) {
+                discounted - (discounted / (1.0 + (taxRate / 100.0)))
+            } else {
+                discounted * (taxRate / 100.0)
+            }
+        } else {
+            0.0
+        }
+        Math.round(vat * 100.0) / 100.0
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    val cartTotal: StateFlow<Double> = combine(cartSubtotal, cartVat) { sub, vat ->
-        Math.round((sub + vat) * 100.0) / 100.0
+    val cartTotal: StateFlow<Double> = combine(_cartItems, appliedDiscount, businessProfile) { items, discount, profile ->
+        val rawSubtotal = items.sumOf { it.lineTotal }
+        val discounted = if (discount != null) {
+            if (discount.isPercentage) {
+                rawSubtotal * (1.0 - (discount.percentage / 100.0)).coerceAtLeast(0.0)
+            } else {
+                (rawSubtotal - discount.fixedAmount).coerceAtLeast(0.0)
+            }
+        } else {
+            rawSubtotal
+        }
+        val taxEnabled = profile?.isTaxEnabled ?: false
+        val taxRate = profile?.vatRate ?: 0.0
+        val taxInclusive = profile?.isTaxIncluded ?: true
+
+        val total = if (taxEnabled && taxRate > 0.0) {
+            if (taxInclusive) {
+                discounted
+            } else {
+                discounted + (discounted * (taxRate / 100.0))
+            }
+        } else {
+            discounted
+        }
+        Math.round(total * 100.0) / 100.0
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     private val _completedSale = MutableStateFlow<POSSale?>(null)
@@ -320,12 +378,13 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
 
+                val curr = businessProfile.value?.currency ?: "USD"
                 // Audit
                 reportDao.insertAuditLog(
                     AuditLog(
-                        username = cashierName.ifBlank { "Cashier" },
+                        username = effectiveCashier,
                         action = "POS_SALE",
-                        details = "Processed $invoiceNo ($paymentMethod) for $total SAR"
+                        details = "Processed $invoiceNo ($paymentMethod) for ${MoneyFormat.format(total, curr)}"
                     )
                 )
 
@@ -336,6 +395,31 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
                 onComplete(finalizedSale)
             } catch (e: Exception) {
                 _uiToast.emit(UiText.DynamicString("Checkout failed: ${e.localizedMessage ?: "Database error"}"))
+            }
+        }
+    }
+
+    fun voidSale(saleId: Int, reason: String, performedBy: String = "", onComplete: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                val effectiveUser = if (performedBy.isNotBlank()) performedBy else activeCashier.value.ifBlank { "Admin" }
+                val success = posDao.processVoidSaleTransaction(saleId, reason)
+                if (success) {
+                    reportDao.insertAuditLog(
+                        AuditLog(
+                            username = effectiveUser,
+                            action = "VOID_SALE",
+                            details = "Voided sale #$saleId with reason: $reason"
+                        )
+                    )
+                    _uiToast.emit(UiText.DynamicString("Sale #$saleId voided and stock restored successfully."))
+                } else {
+                    _uiToast.emit(UiText.DynamicString("Could not void sale #$saleId (may already be voided)."))
+                }
+                onComplete(success)
+            } catch (e: Exception) {
+                _uiToast.emit(UiText.DynamicString("Void operation failed: ${e.localizedMessage ?: "Unknown error"}"))
+                onComplete(false)
             }
         }
     }

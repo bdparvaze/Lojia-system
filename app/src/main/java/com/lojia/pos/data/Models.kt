@@ -3,6 +3,7 @@ package com.lojia.pos.data
 import androidx.annotation.StringRes
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.lojia.pos.R
 import com.lojia.pos.auth.DevCredentials
@@ -208,7 +209,14 @@ data class BusinessProfile(
     val isTaxEnabled: Boolean = false,
     val isTaxIncluded: Boolean = true,
     val logoUri: String = ""
-)
+) {
+    @get:Ignore
+    val taxEnabled: Boolean get() = isTaxEnabled
+    @get:Ignore
+    val taxRatePercent: Double get() = vatRate
+    @get:Ignore
+    val taxInclusive: Boolean get() = isTaxIncluded
+}
 
 @Entity(tableName = "app_settings")
 data class AppSetting(
@@ -274,7 +282,9 @@ data class POSSale(
     val vatAmount: Double,
     val totalAmount: Double,
     val paymentMethod: String = "CASH", // CASH, CARD, DIGITAL_WALLET, SPLIT
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isVoided: Boolean = false,
+    val voidReason: String = ""
 )
 
 @Entity(tableName = "pos_sale_items")

@@ -67,8 +67,14 @@ interface POSDao {
     @Query("SELECT * FROM pos_sales WHERE timestamp >= :startTime AND timestamp <= :endTime ORDER BY timestamp DESC")
     fun getSalesInRange(startTime: Long, endTime: Long): Flow<List<POSSale>>
 
+    @Query("SELECT * FROM pos_sales WHERE id = :saleId LIMIT 1")
+    suspend fun getSaleById(saleId: Int): POSSale?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSale(sale: POSSale): Long
+
+    @Update
+    suspend fun updateSale(sale: POSSale)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSaleItems(items: List<POSSaleItem>)
@@ -85,6 +91,21 @@ interface POSDao {
             updateStock(item.productId, -item.quantity)
         }
         return saleId
+    }
+
+    @Transaction
+    suspend fun processVoidSaleTransaction(
+        saleId: Int,
+        reason: String
+    ): Boolean {
+        val sale = getSaleById(saleId) ?: return false
+        if (sale.isVoided) return false
+        val items = getSaleItems(saleId)
+        for (item in items) {
+            updateStock(item.productId, item.quantity)
+        }
+        updateSale(sale.copy(isVoided = true, voidReason = reason))
+        return true
     }
 
     @Query("SELECT * FROM pos_sale_items WHERE saleId = :saleId")

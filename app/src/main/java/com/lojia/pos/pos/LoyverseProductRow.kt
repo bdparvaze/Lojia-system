@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.lojia.pos.R
 import com.lojia.pos.data.POSProduct
 import com.lojia.pos.ui.theme.*
+import com.lojia.pos.util.MoneyFormat
 
 /**
  * Clean product row matching the exact Loyverse POS design.
@@ -78,7 +79,7 @@ fun LoyverseProductRow(
                 }
 
                 Text(
-                    text = stringResource(R.string.msg_2f_s_21).format(product.price, currency),
+                    text = MoneyFormat.format(product.price, currency),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Normal,
                     color = LoyverseTextDark
