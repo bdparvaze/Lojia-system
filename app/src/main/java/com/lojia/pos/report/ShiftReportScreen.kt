@@ -2068,7 +2068,7 @@ private fun NumberField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(38.dp)
+                .height(48.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(if (enabled) Color.White else Color(0xFFF1F5F9))
                 .border(
@@ -2105,20 +2105,27 @@ private fun NumberField(
                 singleLine = true,
                 textStyle = TextStyle(
                     fontSize = 13.sp,
+                    lineHeight = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (enabled) ShiftColors.Charcoal else Color(0xFF94A3B8)
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = if (isInteger) KeyboardType.Number else KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 decorationBox = @Composable { innerTextField: @Composable () -> Unit ->
-                    if (value.isEmpty()) {
-                        Text(
-                            text = if (isInteger) "0" else "0.00",
-                            fontSize = 13.sp,
-                            color = Color(0xFF94A3B8)
-                        )
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = if (isInteger) "0" else "0.00",
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp,
+                                color = Color(0xFF94A3B8)
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
                 }
             )
         }
