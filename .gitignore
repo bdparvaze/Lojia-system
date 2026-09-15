@@ -1,10 +1,49 @@
+# Gradle and build artifacts
 .gradle/
 build/
+*/build/
+out/
+bin/
+gen/
+
+# Generated output files
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Android Studio / IntelliJ IDEA
 .idea/
-local.properties
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
 *.iml
+*.iws
+
+# Local configuration files
+local.properties
+# gradle.properties # Optional: Uncomment to ignore global gradle properties
+
+# Python artifacts
 __pycache__/
-*.pyc
-*.jks
-*.keystore
+*.py[cod]
+*$py.class
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+
+# Keystores (Uncomment to ignore release keystores)
+# *.jks
+# *.keystore
 /tmp
