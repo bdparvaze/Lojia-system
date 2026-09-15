@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_title">Lojia System</string>
+    <string name="app_title">Lojia</string>
     <string name="shop_module">Shop Module</string>
     <string name="shift_report_module">Shift Report Module</string>
     <string name="switch_module">Switch Module</string>
@@ -284,13 +284,13 @@
     <string name="backup">Backup</string>
     <string name="backup_and_storage">Backup</string>
     <string name="backup_settings">Backup settings</string>
-    <string name="backup_settings_desc">Back up your reports and database to the cloud so you don\'t lose them when you change phones.</string>
-    <string name="backup_desc">Back up your data to the cloud so you don\'t lose them when you get a new Android phone.</string>
+    <string name="backup_settings_desc">Back up your reports and database locally and export archives to prevent data loss.</string>
+    <string name="backup_desc">Export and back up your store database locally on your device or storage.</string>
     <string name="last_backup">Last Backup</string>
     <string name="last_backup_time">Last Backup Time</string>
     <string name="backing_up">Backing up</string>
-    <string name="please_wait_cloud_sync">Please wait while cloud sync is in progress</string>
-    <string name="tap_to_start_backup">Tap to start immediate cloud backup</string>
+    <string name="please_wait_cloud_sync">Please wait while backup is in progress</string>
+    <string name="tap_to_start_backup">Tap to start immediate backup</string>
     <string name="google_account">Google Account</string>
     <string name="auto_backups">Automatic Backups</string>
     <string name="daily">Daily</string>
@@ -306,7 +306,7 @@
     <string name="profile_subtitle">Admin credentials, contact details, branch address</string>
     <string name="cashiers_subtitle">Manage cashier &amp; staff accounts for shifts</string>
     <string name="security_subtitle">6-Digit PIN protection, biometric fingerprint/face ID, auto-lock</string>
-    <string name="backup_subtitle">Local SQLite backup, Google Drive sync &amp; JSON export</string>
+    <string name="backup_subtitle">Local Room SQLite backup, report file export &amp; JSON archive</string>
     <string name="language_subtitle">App language</string>
     <string name="about_subtitle">System version, software license, terms &amp; privacy policy</string>
     <string name="support_subtitle">Help desk, diagnostics, feedback &amp; tickets</string>
@@ -496,10 +496,10 @@
     <string name="save_1">Save</string>
     <string name="cancel_1">Cancel</string>
     <string name="terms_of_service">Terms of Service</string>
-    <string name="by_using_lojia_shift">By using Lojia Shift Report &amp; POS System, you agree to store daily sales data locally and sync with encrypted cloud endpoints. All operational logs are preserved safely.</string>
+    <string name="by_using_lojia_shift">By using Lojia, daily sales and shift records are stored locally on your device. Local backups and exports help safeguard store data.</string>
     <string name="close_1">Close</string>
     <string name="privacy_policy_1">Privacy Policy</string>
-    <string name="your_financial_data_shift">Your financial data, shift records, and user credentials are encrypted on-device. No personal identifiable information is sold or transferred.</string>
+    <string name="your_financial_data_shift">Your financial data, shift records, and settings are stored locally on-device. No personal data is tracked or sold.</string>
     <string name="close_2">Close</string>
     <string name="add_cashier_2">Add Cashier</string>
     <string name="full_name_1">Full Name *</string>
@@ -521,10 +521,10 @@
     <string name="unlock">Unlock</string>
     <string name="cancel_4">Cancel</string>
     <string name="terms_conditions_1">Terms &amp; Conditions</string>
-    <string name="msg_1_license_usagenlojia_system">1. License &amp; Usage\nLojia System is licensed for commercial POS and shift management. All data generated on this device remains under the full control of the store owner.\n\n2. Shift Ledger Accuracy\nCashiers and managers are responsible for entering accurate drawer counts, receipts, and cash movements.\n\n3. Cloud Sync &amp; Backups\nCloud backups to Google Drive are encrypted (AES-256) and managed under your selected Google account credentials.\n\n4. Updates\nPeriodic updates may include feature enhancements, security patches, and regulatory compliance updates.</string>
+    <string name="msg_1_license_usagenlojia_system">1. License &amp; Usage\nLojia is an offline-first POS and shift management application. All data generated on this device is stored locally under the full control of the store owner.\n\n2. Shift Ledger Accuracy\nCashiers and managers are responsible for entering accurate drawer counts, receipts, and cash movements.\n\n3. Local Backups &amp; Export\nData backups are created locally. Optional cloud exports or integrations operate only when configured by the user.\n\n4. Updates\nPeriodic updates may include feature enhancements, security patches, and improvements.</string>
     <string name="i_understand">I Understand</string>
     <string name="privacy_policy_2">Privacy Policy</string>
-    <string name="msg_1_data_collectionnlojia_system">1. Data Collection\nLojia System processes sales transactions, inventory catalogs, cashier shifts, and business contact information locally on your Android device.\n\n2. Security &amp; Biometrics\nBiometric data (fingerprint or face unlock) is authenticated strictly through Android BiometricPrompt hardware keystore. No biometric templates are stored in the database.\n\n3. Third-Party Integrations\nOptional integrations (e.g. WhatsApp, Google Drive, Printers) operate exclusively with explicit user permissions.\n\n4. Data Retention\nYou may export or purge your local databases and audit logs at any time.</string>
+    <string name="msg_1_data_collectionnlojia_system">1. Data Collection\nLojia processes sales transactions, inventory catalogs, cashier shifts, and business contact information locally on your Android device.\n\n2. Security &amp; Biometrics\nBiometric authentication is handled strictly through the Android BiometricPrompt system. No biometric templates are stored in the application database.\n\n3. Third-Party Integrations\nOptional integrations (e.g. WhatsApp sharing, external storage, Printers) operate exclusively with explicit user permissions.\n\n4. Data Retention\nYou may export or clear your local databases and records at any time.</string>
     <string name="close_3">Close</string>
     <string name="submit_support_ticket">Submit Support Ticket</string>
     <string name="ticket_tk8892_created">Ticket #TK-8892 Created!</string>
@@ -739,8 +739,8 @@
     <string name="finance_auditor_official_seal">Finance Auditor / Official Seal</string>
     <string name="lojia_pos_system_v10">Lojia POS System v1.0 • Confidential Business Financial Report • Page 1 of 1</string>
     <string name="tax_invoice_details">TAX INVOICE DETAILS</string>
-    <string name="this_is_an_official">This is an official simplified tax invoice in compliance with ZATCA regulations.</string>
-    <string name="lojia_system_shift_reports">Lojia System - Shift Reports Summary</string>
+    <string name="this_is_an_official">This is an official simplified tax invoice in compliance with store regulations.</string>
+    <string name="lojia_system_shift_reports">Lojia - Shift Reports Summary</string>
     <string name="cashier_6">Cashier</string>
     <string name="shift_2">Shift</string>
     <string name="total_sales">Total Sales</string>
@@ -961,7 +961,7 @@
     <string name="desc_hardware_settings">Receipt printers, customer displays, VAT &amp; tax configuration</string>
     <string name="desc_business_profile">Business &amp; owner profile, address, contact information</string>
     <string name="desc_security_settings">6-Digit security PIN, biometrics lock, auto-lock timeout</string>
-    <string name="desc_cloud_back_office">Cloud back office hub, inventory sync, multi-store management</string>
+    <string name="desc_cloud_back_office">Local store database, reports archive, and backup tools</string>
     <string name="desc_system_about">System version, software details, terms &amp; privacy policy</string>
     <string name="desc_customer_support">Customer support &amp; WhatsApp live chat</string>
     <string name="desc_switch_module">Switch between POS Shop Module and Shift Report Module</string>
@@ -1024,7 +1024,7 @@
     <string name="desc_currently_active_shift_report">Currently Active (Reports, Analytics &amp; Cash Audit)</string>
     <string name="desc_currently_active_shop">Currently Active (POS Register, Items &amp; Sales)</string>
     <string name="desc_customer_display_system">Display order details &amp; payments to customers</string>
-    <string name="desc_gdpr_cloud_security">GDPR &amp; Cloud data security compliance</string>
+    <string name="desc_gdpr_cloud_security">Local data privacy and on-device storage policy</string>
     <string name="desc_kitchen_display_system">Send kitchen orders automatically</string>
     <string name="desc_loyverse_dashboard">Instant sales analytics and inventory tracking</string>
     <string name="desc_manage_back_office">Manage employees, inventory, and comprehensive sales reports</string>
@@ -1032,8 +1032,8 @@
     <string name="desc_search_shift_reports">Search historical cashier shift reports &amp; export PDF</string>
     <string name="desc_switch_to_shift_report">Tap to switch to Shift Report &amp; Analytics Module</string>
     <string name="desc_switch_to_shop">Tap to switch to Shop POS Register Module</string>
-    <string name="desc_sync_data_back_office">Last sync: Just now • All store data up to date</string>
-    <string name="desc_system_architecture">Encrypted Local Storage • Multi-Store POS Sync Engine</string>
+    <string name="desc_sync_data_back_office">Local database synced • All store data up to date</string>
+    <string name="desc_system_architecture">On-Device Local Database • Offline-First Architecture</string>
     <string name="desc_view_complete_sales">View complete list of transactions and sales receipts</string>
     <string name="desc_whatsapp_support">Instant live chat with customer service</string>
     <string name="label_total_combined">Total Combined</string>
@@ -1055,8 +1055,8 @@
     <string name="title_general">General</string>
     <string name="title_header_text">Header Text</string>
     <string name="title_kitchen_display_system">Kitchen Display System (KDS)</string>
-    <string name="title_lojia_pos_shift_system">Lojia POS &amp; Shift System</string>
-    <string name="title_loyverse_dashboard">Loyverse Dashboard</string>
+    <string name="title_lojia_pos_shift_system">Lojia</string>
+    <string name="title_loyverse_dashboard">Sales &amp; Analytics Dashboard</string>
     <string name="title_security_answer">Security Answer</string>
     <string name="title_security_question">Security Question</string>
     <string name="title_shift_report_module">Shift report</string>
@@ -1064,7 +1064,7 @@
     <string name="title_shop_module">Shop</string>
     <string name="title_show_cashier_name">Show Cashier Name</string>
     <string name="title_show_tax_number">Show Tax Number</string>
-    <string name="title_sync_data_back_office">Sync Data with Back Office</string>
+    <string name="title_sync_data_back_office">Local Store Data Archive</string>
     <string name="title_system_architecture">System Architecture</string>
     <string name="title_taxes">Taxes</string>
     <string name="title_whatsapp_support">WhatsApp Support</string>

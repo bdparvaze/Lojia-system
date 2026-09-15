@@ -202,10 +202,10 @@ data class BusinessProfile(
     val email: String = "contact@lojia.local",
     val address: String = "Demo City",
     val workingHours: String = "08:00 AM - 10:00 PM",
-    val currency: String = "SAR",
-    val country: String = "Saudi Arabia",
-    val vatRate: Double = 15.0,
-    val isTaxEnabled: Boolean = true,
+    val currency: String = "USD",
+    val country: String = "United States",
+    val vatRate: Double = 0.0,
+    val isTaxEnabled: Boolean = false,
     val isTaxIncluded: Boolean = true,
     val logoUri: String = ""
 )

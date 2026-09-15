@@ -1652,7 +1652,7 @@ fun BiometricLockScreen(
                                             withStyle(SpanStyle(color = LojiaColors.P500, fontWeight = FontWeight.SemiBold)) {
                                                 append("গোপনীয়তা নীতি")
                                             }
-                                            append(" মেনে চলছি এবং ব্যবসায়িক নিয়ম মেনে Lojia System ব্যবহার করার অঙ্গীকার করছি।")
+                                            append(" মেনে চলছি এবং ব্যবসায়িক নিয়ম মেনে Lojia ব্যবহার করার অঙ্গীকার করছি।")
                                         } else {
                                             append("I agree to the ")
                                             withStyle(SpanStyle(color = LojiaColors.P500, fontWeight = FontWeight.SemiBold)) {
@@ -1662,7 +1662,7 @@ fun BiometricLockScreen(
                                             withStyle(SpanStyle(color = LojiaColors.P500, fontWeight = FontWeight.SemiBold)) {
                                                 append("Privacy Policy")
                                             }
-                                            append(", and certify I will use Lojia System in compliance with business policies.")
+                                            append(", and certify I will use Lojia in compliance with business policies.")
                                         }
                                     }
                                 }

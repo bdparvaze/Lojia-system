@@ -1,24 +1,22 @@
 package com.lojia.pos.util
 
-import java.util.Locale
-
 /**
- * Centralized Currency Utilities.
- * Formats money and resolves currency display symbol across all screens.
+ * Currency utility methods delegating to [MoneyFormat] as the single source of truth.
  */
 object CurrencyUtils {
     /**
-     * Formats an amount with the provided currency code or symbol.
+     * Formats an amount with the provided currency code or symbol using [MoneyFormat].
      */
     fun formatMoney(amount: Double, currency: String): String {
-        return String.format(Locale.US, "%.2f %s", amount, currency.trim())
+        return MoneyFormat.format(amount, currency)
     }
 
     /**
-     * Normalizes currency string. If empty, defaults to "SAR".
+     * Normalizes currency string. If empty, defaults to [defaultCurrency] or "USD".
      */
-    fun resolveCurrency(businessCurrency: String?, defaultCurrency: String = "SAR"): String {
+    fun resolveCurrency(businessCurrency: String?, defaultCurrency: String = MoneyFormat.DEFAULT_CURRENCY_CODE): String {
         val trimmed = businessCurrency?.trim().orEmpty()
         return if (trimmed.isNotEmpty()) trimmed else defaultCurrency
     }
 }
+

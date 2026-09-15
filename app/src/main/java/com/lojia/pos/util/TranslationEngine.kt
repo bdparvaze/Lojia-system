@@ -18,13 +18,13 @@ import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Universal High-Performance Real-Time Dynamic Translation Engine.
+ * High-Performance Dynamic Translation Helper with Offline Caching.
  * 
  * Multi-Tier Translation Architecture:
- * 1. In-Memory Concurrent Cache (0ms instant return)
- * 2. Instant Preloaded Core Seed Dictionary (0ms offline fallback for essential POS/Shift keywords)
- * 3. Room Database Persistent Cache (persists all dynamically translated text offline across app restarts)
- * 4. Cloud Dynamic Translation API (Google Translate / ML Kit Endpoint) supporting 195+ world languages
+ * 1. In-Memory Concurrent Cache (0ms instant lookup)
+ * 2. Instant Preloaded Core Seed Dictionary (offline fallback for essential POS/Shift keywords)
+ * 3. Room Database Persistent Cache (persists dynamically cached translations across app restarts)
+ * 4. Configurable translation endpoints for expanded localization
  */
 object TranslationEngine {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

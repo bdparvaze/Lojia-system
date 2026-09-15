@@ -139,10 +139,10 @@ abstract class AppDatabase : RoomDatabase() {
                         email = "contact@lojia.local",
                         address = "Demo City",
                         workingHours = "08:00 AM - 10:00 PM",
-                        currency = "SAR",
-                        country = "Saudi Arabia",
-                        vatRate = 15.0,
-                        isTaxEnabled = true,
+                        currency = "USD",
+                        country = "United States",
+                        vatRate = 0.0,
+                        isTaxEnabled = false,
                         isTaxIncluded = true,
                         logoUri = ""
                     )
@@ -250,7 +250,7 @@ abstract class AppDatabase : RoomDatabase() {
                 reportDao.insertShiftReport(ShiftReport(cashierName = "Sultan Al-Ghamdi", shift = "Morning", dateInMillis = now - (2 * oneDay), grossCash = 16800.0, madaPayments = 34500.0, digitalWallet = 9200.0, staffMealsCount = 3, totalExpenses = 1500.0, muasselQty = 0.0, notes = "Morning rush handled"))
                 reportDao.insertShiftReport(ShiftReport(cashierName = "Demo Staff", shift = "Evening", dateInMillis = now - (1 * oneDay), grossCash = 27500.0, madaPayments = 64000.0, digitalWallet = 18500.0, staffMealsCount = 8, totalExpenses = 4500.0, muasselQty = 0.0, notes = "Superb sales volume"))
 
-                reportDao.insertAuditLog(AuditLog(username = "System", action = "INITIALIZATION", details = "Lojia System database initialized with dual Shop & Shift Report modules"))
+                reportDao.insertAuditLog(AuditLog(username = "System", action = "INITIALIZATION", details = "Lojia database initialized with dual Shop & Shift Report modules"))
             } else {
                 reportDao.saveUserProfile(
                     UserProfile(
