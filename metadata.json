@@ -1,0 +1,8 @@
+{
+  "name": "Smart POS",
+  "description": "Global-scale POS and Shift Report System with dynamic runtime translation engine supporting 195+ world languages and offline Room cache.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

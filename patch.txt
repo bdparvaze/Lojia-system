@@ -1,0 +1,54 @@
+        // =========================================================================
+        // 1. PROFILE
+        // =========================================================================
+        if (expandedMenu == "profile") {
+            ShopMenuCard(
+                title = "Profile",
+                subtitle = "Full Name, Username, Email, Password, Number, Address",
+                icon = Icons.Default.Person,
+                iconTint = Color(0xFF3B82F6),
+                isExpanded = true,
+                onClick = {}
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = { Text("Full name") },
+                        leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_fullname_input")
+                    )
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Username") },
+                        leadingIcon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_username_input")
+                    )
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_email_input")
+                    )
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_password_input")
+                    )
+                    Button(
+                        onClick = { expandedMenu = null },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Text("Save Changes")
+                    }
+                }
+            }
+        }
