@@ -1,6 +1,5 @@
 package com.lojia.pos.ui.common
 
-import com.lojia.pos.ui.common.LojiaTextField
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,7 +41,7 @@ fun LojiaTextField(
     shape: Shape = RoundedCornerShape(10.dp),
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors()
 ) {
-    LojiaTextField(
+    OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.defaultMinSize(minHeight = 56.dp),
