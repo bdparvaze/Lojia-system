@@ -399,19 +399,32 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun voidSale(saleId: Int, reason: String, performedBy: String = "", onComplete: (Boolean) -> Unit = {}) {
+    fun voidSale(
+        saleId: Int,
+        reason: String,
+        performedBy: String = "",
+        isAdminUser: Boolean = false,
+        onComplete: (Boolean) -> Unit = {}
+    ) {
         viewModelScope.launch {
             try {
-                val effectiveUser = if (performedBy.isNotBlank()) performedBy else activeCashier.value.ifBlank { "Admin" }
-                val success = posDao.processVoidSaleTransaction(saleId, reason)
+                val userProfile = reportDao.getUserProfileOnce()
+                val role = userProfile?.currentRole ?: "ADMIN"
+                val isAdmin = isAdminUser || role == "ADMIN"
+
+                if (!isAdmin) {
+                    _uiToast.emit(UiText.DynamicString("Permission denied: Cashiers cannot void sales. Admin authorization required."))
+                    onComplete(false)
+                    return@launch
+                }
+
+                val effectiveUser = if (performedBy.isNotBlank()) performedBy else userProfile?.fullName?.ifBlank { "Admin" } ?: activeCashier.value.ifBlank { "Admin" }
+                val success = posDao.processVoidSaleTransaction(
+                    saleId = saleId,
+                    username = effectiveUser,
+                    reason = reason
+                )
                 if (success) {
-                    reportDao.insertAuditLog(
-                        AuditLog(
-                            username = effectiveUser,
-                            action = "VOID_SALE",
-                            details = "Voided sale #$saleId with reason: $reason"
-                        )
-                    )
                     _uiToast.emit(UiText.DynamicString("Sale #$saleId voided and stock restored successfully."))
                 } else {
                     _uiToast.emit(UiText.DynamicString("Could not void sale #$saleId (may already be voided)."))

@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
         TranslationCacheEntity::class,
         ShopReceiptConfig::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -64,6 +64,12 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {}
         }
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE pos_sales ADD COLUMN isVoided INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE pos_sales ADD COLUMN voidReason TEXT NOT NULL DEFAULT ''")
+            }
+        }
 
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -72,7 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "lojia_system_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
 
                 if (BuildConfig.DEBUG) {
                     builder.fallbackToDestructiveMigration()

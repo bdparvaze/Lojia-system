@@ -93,9 +93,13 @@ interface POSDao {
         return saleId
     }
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAuditLog(log: AuditLog): Long
+
     @Transaction
     suspend fun processVoidSaleTransaction(
         saleId: Int,
+        username: String,
         reason: String
     ): Boolean {
         val sale = getSaleById(saleId) ?: return false
@@ -105,6 +109,13 @@ interface POSDao {
             updateStock(item.productId, item.quantity)
         }
         updateSale(sale.copy(isVoided = true, voidReason = reason))
+        insertAuditLog(
+            AuditLog(
+                username = username,
+                action = "VOID_SALE",
+                details = "Sale #$saleId | Amount: ${sale.totalAmount} | Reason: $reason"
+            )
+        )
         return true
     }
 

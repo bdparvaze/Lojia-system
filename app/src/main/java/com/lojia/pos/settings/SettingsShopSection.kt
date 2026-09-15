@@ -1995,6 +1995,7 @@ fun SettingsShopSection(
                             saleId = targetSale.id,
                             reason = reason,
                             performedBy = fullName,
+                            isAdminUser = isAdmin,
                             onComplete = { success ->
                                 if (success) {
                                     showVoidReasonDialog = false
