@@ -29,7 +29,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.XYZBusiness">
+        android:theme="@style/Theme.Lojia">
         
         <activity
             android:name=".MainActivity"
@@ -44,8 +44,7 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:host="oauth2callback" android:scheme="com.example.ajoya"/>
-                <data android:host="oauth2callback" android:scheme="com.aistudio.ajoyareport.zqxkvb"/>
+                <data android:host="oauth2callback" android:scheme="com.lojia.pos"/>
             </intent-filter>
         </activity>
 

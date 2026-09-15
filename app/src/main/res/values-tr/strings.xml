@@ -453,7 +453,7 @@
     <string name="saved_successfully">Başarıyla kaydedildi!</string>
     <string name="open">Aç</string>
     <string name="launch">Başlat</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">Ortalama Vardiya Satışı</string>
     <string name="total_reports_count">Toplam Rapor Sayısı</string>
     <string name="payment_distribution">Ödeme Dağılımı</string>
@@ -547,7 +547,7 @@ Yerel veritabanlarınızı ve denetim günlüklerinizi istediğiniz zaman dışa
     <string name="close_3">Kapat</string>
     <string name="submit_support_ticket">Destek Talebi Gönder</string>
     <string name="ticket_tk8892_created">Talep #TK-8892 Oluşturuldu!</string>
-    <string name="our_technical_support_team">Teknik destek ekibimiz kısa süre içinde bdparvaze.backup@gmail.com adresi üzerinden sizinle iletişime geçecektir.</string>
+    <string name="our_technical_support_team">Teknik destek ekibimiz kısa süre içinde support@lojia.local adresi üzerinden sizinle iletişime geçecektir.</string>
     <string name="need_help_with_pos">POS, yazıcı bağlantısı veya vardiya raporları ile ilgili yardıma mı ihtiyacınız var? 7/24 hizmet veren ekibimize bildirin:</string>
     <string name="subject_eg_printer_setup">Konu (örn: Yazıcı Kurulumu)</string>
     <string name="describe_the_issue">Sorunu açıklayın...</string>
@@ -759,7 +759,7 @@ Yerel veritabanlarınızı ve denetim günlüklerinizi istediğiniz zaman dışa
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">Yönetici / Denetçi İmzası</string>
     <string name="finance_auditor_official_seal">Mali Denetçi / Resmi Mühür</string>
-    <string name="ajoya_pos_system_v10">Ajoya POS Sistemi v1.0 • Gizli Finansal İş Raporu • Sayfa 1/1</string>
+    <string name="lojia_pos_system_v10">Lojia POS Sistemi v1.0 • Gizli Finansal İş Raporu • Sayfa 1/1</string>
     <string name="tax_invoice_details">VERGİ FATURASI DETAYLARI</string>
     <string name="this_is_an_official">Bu, ZATCA düzenlemelerine uygun resmi basitleştirilmiş vergi faturasıdır.</string>
     <string name="lojia_system_shift_reports">Lojia Sistemi - Vardiya Raporları Özeti</string>
@@ -802,7 +802,7 @@ Yerel veritabanlarınızı ve denetim günlüklerinizi istediğiniz zaman dışa
     <string name="pdf_thank_you_visit">%1$s\'i ziyaret ettiğiniz için teşekkür ederiz!</string>
     <string name="pdf_default_address">Olaya, Riyad, Suudi Arabistan</string>
     <string name="pdf_default_location">Riyad, Suudi Arabistan</string>
-    <string name="pdf_default_business">Ajoya Kafe</string>
+    <string name="pdf_default_business">Lojia Kafe</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">Kalan stok sadece %1$d %2$s (Eşik: %3$d %4$s). Lütfen yeniden sipariş verin.</string>
     <string name="notif_drawer_closed">Para çekmecesi kapandı. Kasa farkı: %1$s</string>

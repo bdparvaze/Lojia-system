@@ -453,7 +453,7 @@
     <string name="saved_successfully">正常に保存されました</string>
     <string name="open">開く</string>
     <string name="launch">起動</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">シフト平均売上</string>
     <string name="total_reports_count">レポート合計数</string>
     <string name="payment_distribution">支払い分布</string>
@@ -547,7 +547,7 @@ Lojiaシステムは、販売取引、在庫カタログ、レジ係のシフト
     <string name="close_3">閉じる</string>
     <string name="submit_support_ticket">サポートチケットを送信</string>
     <string name="ticket_tk8892_created">チケット #TK-8892 を作成しました！</string>
-    <string name="our_technical_support_team">テクニカルサポートチームより、bdparvaze.backup@gmail.com 宛てに折り返しご連絡いたします。</string>
+    <string name="our_technical_support_team">テクニカルサポートチームより、support@lojia.local 宛てに折り返しご連絡いたします。</string>
     <string name="need_help_with_pos">POS、プリンター接続、シフトレポートについてサポートが必要ですか？24時間年中無休のチームにお問い合わせください：</string>
     <string name="subject_eg_printer_setup">件名（例：プリンター設定）</string>
     <string name="describe_the_issue">問題の詳細を入力してください...</string>
@@ -759,7 +759,7 @@ Lojiaシステムは、販売取引、在庫カタログ、レジ係のシフト
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">マネージャー/スーパーバイザーの署名</string>
     <string name="finance_auditor_official_seal">財務監査役/公式印</string>
-    <string name="ajoya_pos_system_v10">Ajoya POSシステム v1.0 • 機密ビジネス財務報告書 • 1ページ / 1ページ</string>
+    <string name="lojia_pos_system_v10">Lojia POSシステム v1.0 • 機密ビジネス財務報告書 • 1ページ / 1ページ</string>
     <string name="tax_invoice_details">税務請求書詳細</string>
     <string name="this_is_an_official">これはZATCA規制に準拠した公式の簡易税務請求書です。</string>
     <string name="lojia_system_shift_reports">Lojiaシステム - シフト報告書サマリー</string>
@@ -802,7 +802,7 @@ Lojiaシステムは、販売取引、在庫カタログ、レジ係のシフト
     <string name="pdf_thank_you_visit">%1$sにご来店いただきありがとうございます！</string>
     <string name="pdf_default_address">オラヤ地区、リヤド、サウジアラビア</string>
     <string name="pdf_default_location">サウジアラビア、リヤド</string>
-    <string name="pdf_default_business">アジョヤ・カフェ</string>
+    <string name="pdf_default_business">ロジア・カフェ</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">在庫残数が %1$d %2$s になりました（しきい値: %3$d %4$s）。再注文してください。</string>
     <string name="notif_drawer_closed">ドロワーを閉じました。現金差異: %1$s</string>

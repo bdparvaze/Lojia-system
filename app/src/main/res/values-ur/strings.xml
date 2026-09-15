@@ -453,7 +453,7 @@
     <string name="saved_successfully">کامیابی سے محفوظ ہو گیا!</string>
     <string name="open">کھولیں</string>
     <string name="launch">لانچ کریں</string>
-    <string name="app_name">سمارٹ پی او ایس</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">اوسط شفٹ سیلز</string>
     <string name="total_reports_count">کل رپورٹس کی تعداد</string>
     <string name="payment_distribution">ادائیگی کی تقسیم</string>
@@ -547,7 +547,7 @@ Lojia سسٹم آپ کے اینڈرائیڈ ڈیوائس پر مقامی طور 
     <string name="close_3">بند کریں</string>
     <string name="submit_support_ticket">سپورٹ ٹکٹ جمع کروائیں</string>
     <string name="ticket_tk8892_created">ٹکٹ #TK-8892 تخلیق ہو گیا!</string>
-    <string name="our_technical_support_team">ہماری تکنیکی سپورٹ ٹیم جلد ہی آپ سے bdparvaze.backup@gmail.com پر رابطہ کرے گی۔</string>
+    <string name="our_technical_support_team">ہماری تکنیکی سپورٹ ٹیم جلد ہی آپ سے support@lojia.local پر رابطہ کرے گی۔</string>
     <string name="need_help_with_pos">POS، پرنٹر کنکشن، یا شفٹ رپورٹس کے ساتھ مدد چاہیے؟ ہماری 24/7 ٹیم کو بتائیں:</string>
     <string name="subject_eg_printer_setup">موضوع (مثال: پرنٹر سیٹ اپ)</string>
     <string name="describe_the_issue">مسئلے کی وضاحت کریں...</string>
@@ -759,7 +759,7 @@ Lojia سسٹم آپ کے اینڈرائیڈ ڈیوائس پر مقامی طور 
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">مینیجر / سپروائزر کے دستخط</string>
     <string name="finance_auditor_official_seal">فنانس آڈیٹر / سرکاری مہر</string>
-    <string name="ajoya_pos_system_v10">اجویا پی او ایس سسٹم v1.0 • خفیہ کاروباری مالیاتی رپورٹ • صفحہ 1 کا 1</string>
+    <string name="lojia_pos_system_v10">لوجیا پی او ایس سسٹم v1.0 • خفیہ کاروباری مالیاتی رپورٹ • صفحہ 1 کا 1</string>
     <string name="tax_invoice_details">ٹیکس انوائس کی تفصیلات</string>
     <string name="this_is_an_official">یہ ZATCA کے ضوابط کی تعمیل میں ایک سرکاری آسان ٹیکس انوائس ہے۔</string>
     <string name="lojia_system_shift_reports">لوجیا سسٹم - شفٹ رپورٹس کا خلاصہ</string>
@@ -802,7 +802,7 @@ Lojia سسٹم آپ کے اینڈرائیڈ ڈیوائس پر مقامی طور 
     <string name="pdf_thank_you_visit">%1$s پر آنے کا شکریہ!</string>
     <string name="pdf_default_address">اولیا، ریاض، سعودی عرب</string>
     <string name="pdf_default_location">ریاض، سعودی عرب</string>
-    <string name="pdf_default_business">اجویا کیفے</string>
+    <string name="pdf_default_business">لوجیا کیفے</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">بقیہ اسٹاک صرف %1$d %2$s ہے (حد: %3$d %4$s)۔ براہ کرم دوبارہ آرڈر کریں۔</string>
     <string name="notif_drawer_closed">کیش دراز بند ہے۔ نقد رقم میں فرق: %1$s</string>

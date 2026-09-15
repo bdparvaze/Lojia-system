@@ -453,7 +453,7 @@
     <string name="saved_successfully">保存成功！</string>
     <string name="open">打开</string>
     <string name="launch">启动</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">平均班次销售额</string>
     <string name="total_reports_count">报告总数</string>
     <string name="payment_distribution">支付分布</string>
@@ -547,7 +547,7 @@ Lojia系统在您的Android设备上本地处理销售交易、库存目录、�
     <string name="close_3">关闭</string>
     <string name="submit_support_ticket">提交支持工单</string>
     <string name="ticket_tk8892_created">工单 #TK-8892 已创建！</string>
-    <string name="our_technical_support_team">我们的技术支持团队很快会通过 bdparvaze.backup@gmail.com 与您联系。</string>
+    <string name="our_technical_support_team">我们的技术支持团队很快会通过 support@lojia.local 与您联系。</string>
     <string name="need_help_with_pos">需要 POS、打印机连接或班次报告方面的帮助？请联系我们的 24/7 支持团队：</string>
     <string name="subject_eg_printer_setup">主题（例如：打印机设置）</string>
     <string name="describe_the_issue">描述问题...</string>
@@ -759,7 +759,7 @@ Lojia系统在您的Android设备上本地处理销售交易、库存目录、�
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">经理 / 主管签名</string>
     <string name="finance_auditor_official_seal">财务审计师 / 官方印章</string>
-    <string name="ajoya_pos_system_v10">Ajoya POS系统 v1.0 • 机密商业财务报告 • 第1页，共1页</string>
+    <string name="lojia_pos_system_v10">Lojia POS系统 v1.0 • 机密商业财务报告 • 第1页，共1页</string>
     <string name="tax_invoice_details">税务发票明细</string>
     <string name="this_is_an_official">此为符合ZATCA规定的官方简易税务发票。</string>
     <string name="lojia_system_shift_reports">Lojia系统 - 班次报告摘要</string>
@@ -802,7 +802,7 @@ Lojia系统在您的Android设备上本地处理销售交易、库存目录、�
     <string name="pdf_thank_you_visit">感谢您光临 %1$s！</string>
     <string name="pdf_default_address">沙特利雅得奥拉亚区</string>
     <string name="pdf_default_location">利雅得，沙特阿拉伯</string>
-    <string name="pdf_default_business">Ajoya 咖啡厅</string>
+    <string name="pdf_default_business">Lojia 咖啡厅</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">库存剩余仅为 %1$d %2$s（阈值：%3$d %4$s）。请重新订货。</string>
     <string name="notif_drawer_closed">钱箱已关闭。现金差异：%1$s</string>

@@ -454,7 +454,7 @@
     <string name="saved_successfully">Enregistré avec succès !</string>
     <string name="open">Ouvrir</string>
     <string name="launch">Lancement</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">Ventes moyennes par équipes</string>
     <string name="total_reports_count">Nombre total de rapports</string>
     <string name="payment_distribution">Répartition des paiements</string>
@@ -528,7 +528,7 @@
     <string name="close_3">Fermer</string>
     <string name="submit_support_ticket">Soumettre un ticket d\'assistance</string>
     <string name="ticket_tk8892_created">Billet #TK-8892 Créé !</string>
-    <string name="our_technical_support_team">Notre équipe d\'assistance technique vous contactera sous peu à bdparvaze.backup@gmail.com.</string>
+    <string name="our_technical_support_team">Notre équipe d\'assistance technique vous contactera sous peu à support@lojia.local.</string>
     <string name="need_help_with_pos">Besoin d\'aide avec le point de vente, la connexion d\'une imprimante ou les rapports de quart de travail ? Faites savoir à notre équipe 24h/24 et 7j/7 :</string>
     <string name="subject_eg_printer_setup">Objet (par exemple, configuration de l\'imprimante)</string>
     <string name="describe_the_issue">Décrivez le problème...</string>
@@ -737,7 +737,7 @@
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">Signature du gestionnaire/superviseur</string>
     <string name="finance_auditor_official_seal">Auditeur financier / Sceau officiel</string>
-    <string name="ajoya_pos_system_v10">Système Ajoya POS v1.0 • Rapport financier confidentiel de l\'entreprise • Page 1 sur 1</string>
+    <string name="lojia_pos_system_v10">Système Lojia POS v1.0 • Rapport financier confidentiel de l\'entreprise • Page 1 sur 1</string>
     <string name="tax_invoice_details">DÉTAILS DE LA FACTURE FISCALE</string>
     <string name="this_is_an_official">Il s\'agit d\'une facture fiscale simplifiée officielle conforme à la réglementation ZATCA.</string>
     <string name="lojia_system_shift_reports">Système Lojia - Résumé des rapports de quart de travail</string>
@@ -780,7 +780,7 @@
     <string name="pdf_thank_you_visit">Merci pour votre visite sur %1$s !</string>
     <string name="pdf_default_address">Olaya, Riyad, Arabie Saoudite</string>
     <string name="pdf_default_location">Riyad, Arabie Saoudite</string>
-    <string name="pdf_default_business">Café Ajoya</string>
+    <string name="pdf_default_business">Café Lojia</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">Le stock restant est seulement de %1$d %2$s (Seuil : %3$d %4$s). Veuillez commander à nouveau.</string>
     <string name="notif_drawer_closed">Tiroir fermé. Écart de trésorerie : %1$s</string>

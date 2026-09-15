@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example"
+    namespace = "com.lojia.pos"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.aistudio.ajoyareport.pzpqow"
+        applicationId = "com.lojia.pos"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -21,11 +21,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -34,11 +37,16 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         abortOnError = false
-        disable.add("MissingTranslation")
+        warning.add("MissingTranslation")
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

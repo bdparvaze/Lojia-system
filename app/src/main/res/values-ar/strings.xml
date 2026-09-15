@@ -454,7 +454,7 @@
     <string name="saved_successfully">تم الحفظ بنجاح!</string>
     <string name="open">فتح</string>
     <string name="launch">تشغيل</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">متوسط مبيعات الوردية</string>
     <string name="total_reports_count">إجمالي عدد التقارير</string>
     <string name="payment_distribution">توزيع طرق الدفع</string>
@@ -737,7 +737,7 @@
     <string name="msg_2f_s_19" formatted="false">%.2f %s</string>
     <string name="manager_supervisor_signature">توقيع المدير / المشرف</string>
     <string name="finance_auditor_official_seal">الختم الرسمي / المدقق المالي</string>
-    <string name="ajoya_pos_system_v10">نظام أجوا للبيع v1.0 • تقرير مالي سري</string>
+    <string name="lojia_pos_system_v10">نظام لوجيا للبيع v1.0 • تقرير مالي سري</string>
     <string name="tax_invoice_details">تفاصيل الفاتورة الضريبية</string>
     <string name="this_is_an_official">هذه فاتورة ضريبية مبسطة رسمية متوافقة مع هيئة الزكاة والضريبة والجمارك.</string>
     <string name="lojia_system_shift_reports">نظام لوجيا - ملخص تقارير الورديات</string>
@@ -780,7 +780,7 @@
     <string name="pdf_thank_you_visit">شكراً لزيارتكم %1$s!</string>
     <string name="pdf_default_address">العليا، الرياض، السعودية</string>
     <string name="pdf_default_location">الرياض، المملكة العربية السعودية</string>
-    <string name="pdf_default_business">مقهى أجوا</string>
+    <string name="pdf_default_business">مقهى لوجيا</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">المخزون المتبقي %1$d %2$s (الحد: %3$d %4$s). يرجى إعادة الطلب.</string>
     <string name="notif_drawer_closed">تم إغلاق الدرج. فرق النقد: %1$s</string>

@@ -453,7 +453,7 @@
     <string name="saved_successfully">Успешно сохранено!</string>
     <string name="open">Открыть</string>
     <string name="launch">Запустить</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">Средние продажи за смену</string>
     <string name="total_reports_count">Общее количество отчетов</string>
     <string name="payment_distribution">Распределение платежей</string>
@@ -547,7 +547,7 @@
     <string name="close_3">Закрыть</string>
     <string name="submit_support_ticket">Отправить запрос в поддержку</string>
     <string name="ticket_tk8892_created">Тикет #TK-8892 создан!</string>
-    <string name="our_technical_support_team">Наша служба технической поддержки свяжется с вами по адресу bdparvaze.backup@gmail.com в ближайшее время.</string>
+    <string name="our_technical_support_team">Наша служба технической поддержки свяжется с вами по адресу support@lojia.local в ближайшее время.</string>
     <string name="need_help_with_pos">Нужна помощь с POS, подключением принтера или отчетами по сменам? Сообщите нашей круглосуточной команде:</string>
     <string name="subject_eg_printer_setup">Тема (например: Настройка принтера)</string>
     <string name="describe_the_issue">Опишите проблему...</string>
@@ -759,7 +759,7 @@
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">Подпись менеджера / супервайзера</string>
     <string name="finance_auditor_official_seal">Финансовый аудитор / Официальная печать</string>
-    <string name="ajoya_pos_system_v10">Ajoya POS System v1.0 • Конфиденциальный финансовый отчет • Страница 1 из 1</string>
+    <string name="lojia_pos_system_v10">Lojia POS System v1.0 • Конфиденциальный финансовый отчет • Страница 1 из 1</string>
     <string name="tax_invoice_details">ДЕТАЛИ НАЛОГОВОЙ НАКЛАДНОЙ</string>
     <string name="this_is_an_official">Это официальная упрощенная налоговая накладная, соответствующая требованиям ZATCA.</string>
     <string name="lojia_system_shift_reports">Система Lojia - Сводка отчетов по смене</string>
@@ -802,7 +802,7 @@
     <string name="pdf_thank_you_visit">Спасибо за визит в %1$s!</string>
     <string name="pdf_default_address">Олая, Эр-Рияд, КСА</string>
     <string name="pdf_default_location">Эр-Рияд, Саудовская Аравия</string>
-    <string name="pdf_default_business">Кафе Ajoya</string>
+    <string name="pdf_default_business">Кафе Lojia</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">Остаток на складе: %1$d %2$s (Порог: %3$d %4$s). Пожалуйста, сделайте заказ.</string>
     <string name="notif_drawer_closed">Денежный ящик закрыт. Разница в кассе: %1$s</string>

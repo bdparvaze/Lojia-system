@@ -454,7 +454,7 @@
     <string name="saved_successfully">Saved successfully!</string>
     <string name="open">Open</string>
     <string name="launch">Launch</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">Average Shift Sales</string>
     <string name="total_reports_count">Total Reports Count</string>
     <string name="payment_distribution">Payment Distribution</string>
@@ -528,7 +528,7 @@
     <string name="close_3">Close</string>
     <string name="submit_support_ticket">Submit Support Ticket</string>
     <string name="ticket_tk8892_created">Ticket #TK-8892 Created!</string>
-    <string name="our_technical_support_team">Our technical support team will contact you at bdparvaze.backup@gmail.com shortly.</string>
+    <string name="our_technical_support_team">Our technical support team will contact you at support@lojia.local shortly.</string>
     <string name="need_help_with_pos">Need help with POS, printer connection, or shift reports? Let our 24/7 team know:</string>
     <string name="subject_eg_printer_setup">Subject (e.g. Printer Setup)</string>
     <string name="describe_the_issue">Describe the issue...</string>
@@ -737,7 +737,7 @@
     <string name="msg_2f_s_19" formatted="false">%.2f %s</string>
     <string name="manager_supervisor_signature">Manager / Supervisor Signature</string>
     <string name="finance_auditor_official_seal">Finance Auditor / Official Seal</string>
-    <string name="ajoya_pos_system_v10">Ajoya POS System v1.0 • Confidential Business Financial Report • Page 1 of 1</string>
+    <string name="lojia_pos_system_v10">Lojia POS System v1.0 • Confidential Business Financial Report • Page 1 of 1</string>
     <string name="tax_invoice_details">TAX INVOICE DETAILS</string>
     <string name="this_is_an_official">This is an official simplified tax invoice in compliance with ZATCA regulations.</string>
     <string name="lojia_system_shift_reports">Lojia System - Shift Reports Summary</string>
@@ -780,7 +780,7 @@
     <string name="pdf_thank_you_visit">Thank you for your visit to %1$s!</string>
     <string name="pdf_default_address">Olaya, Riyadh, KSA</string>
     <string name="pdf_default_location">Riyadh, Saudi Arabia</string>
-    <string name="pdf_default_business">Ajoya Cafe</string>
+    <string name="pdf_default_business">Lojia Cafe</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">Remaining stock is only %1$d %2$s (Threshold: %3$d %4$s). Please reorder.</string>
     <string name="notif_drawer_closed">Drawer closed. Cash variance: %1$s</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.XYZBusiness" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.Lojia" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowBackground">@color/background</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
@@ -13,7 +13,7 @@
         <item name="textAppearanceHeadline1">@style/TextH1</item>
     </style>
 
-    <style name="AppTheme" parent="Theme.XYZBusiness" />
+    <style name="AppTheme" parent="Theme.Lojia" />
 
     <style name="PrimaryButton" parent="Widget.Material3.Button">
         <item name="android:textColor">#ffffffff</item>

@@ -453,7 +453,7 @@
     <string name="saved_successfully">Berhasil disimpan!</string>
     <string name="open">Buka</string>
     <string name="launch">Luncurkan</string>
-    <string name="app_name">Smart POS</string>
+    <string name="app_name">Lojia</string>
     <string name="average_shift_sales">Rata-rata Penjualan Shift</string>
     <string name="total_reports_count">Total Jumlah Laporan</string>
     <string name="payment_distribution">Distribusi Pembayaran</string>
@@ -547,7 +547,7 @@ Anda dapat mengekspor atau menghapus database lokal dan log audit Anda kapan saj
     <string name="close_3">Tutup</string>
     <string name="submit_support_ticket">Kirim Tiket Dukungan</string>
     <string name="ticket_tk8892_created">Tiket #TK-8892 Dibuat!</string>
-    <string name="our_technical_support_team">Tim dukungan teknis kami akan segera menghubungi Anda di bdparvaze.backup@gmail.com.</string>
+    <string name="our_technical_support_team">Tim dukungan teknis kami akan segera menghubungi Anda di support@lojia.local.</string>
     <string name="need_help_with_pos">Butuh bantuan dengan POS, koneksi printer, atau laporan shift? Beri tahu tim 24/7 kami:</string>
     <string name="subject_eg_printer_setup">Subjek (contoh: Pengaturan Printer)</string>
     <string name="describe_the_issue">Jelaskan masalahnya...</string>
@@ -759,7 +759,7 @@ Anda dapat mengekspor atau menghapus database lokal dan log audit Anda kapan saj
     <string name="msg_2f_s_19">%1 %2</string>
     <string name="manager_supervisor_signature">Tanda Tangan Manajer / Supervisor</string>
     <string name="finance_auditor_official_seal">Auditor Keuangan / Stempel Resmi</string>
-    <string name="ajoya_pos_system_v10">Sistem POS Ajoya v1.0 • Laporan Keuangan Bisnis Rahasia • Halaman 1 dari 1</string>
+    <string name="lojia_pos_system_v10">Sistem POS Lojia v1.0 • Laporan Keuangan Bisnis Rahasia • Halaman 1 dari 1</string>
     <string name="tax_invoice_details">DETAIL FAKTUR PAJAK</string>
     <string name="this_is_an_official">Ini adalah faktur pajak resmi yang disederhanakan sesuai dengan regulasi ZATCA.</string>
     <string name="lojia_system_shift_reports">Sistem Lojia - Ringkasan Laporan Shift</string>
@@ -802,7 +802,7 @@ Anda dapat mengekspor atau menghapus database lokal dan log audit Anda kapan saj
     <string name="pdf_thank_you_visit">Terima kasih telah berkunjung ke %1$s!</string>
     <string name="pdf_default_address">Olaya, Riyadh, Arab Saudi</string>
     <string name="pdf_default_location">Riyadh, Arab Saudi</string>
-    <string name="pdf_default_business">Kafe Ajoya</string>
+    <string name="pdf_default_business">Kafe Lojia</string>
     <string name="pdf_default_phone">+966 54 123 4567</string>
     <string name="notif_low_stock">Stok tersisa hanya %1$d %2$s (Ambang batas: %3$d %4$s). Harap pesan kembali.</string>
     <string name="notif_drawer_closed">Laci kas tertutup. Selisih kas: %1$s</string>
