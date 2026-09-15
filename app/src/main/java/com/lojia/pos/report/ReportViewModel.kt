@@ -188,7 +188,7 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     private val _backupProgress = MutableStateFlow(0f)
     val backupProgress: StateFlow<Float> = _backupProgress.asStateFlow()
 
-    var googleAccount: MutableStateFlow<String> = MutableStateFlow(prefs.getString("google_account", "bdparvaze.backup@gmail.com") ?: "bdparvaze.backup@gmail.com")
+    var googleAccount: MutableStateFlow<String> = MutableStateFlow(prefs.getString("google_account", "") ?: "")
     var autoBackupFrequency: MutableStateFlow<String> = MutableStateFlow(prefs.getString("auto_backup_freq", "Daily") ?: "Daily")
     var backupUsingCellular: MutableStateFlow<Boolean> = MutableStateFlow(prefs.getBoolean("backup_cellular", true))
     var lastBackupTime: MutableStateFlow<Long> = MutableStateFlow(prefs.getLong("last_backup_time", System.currentTimeMillis() - 3600000L))

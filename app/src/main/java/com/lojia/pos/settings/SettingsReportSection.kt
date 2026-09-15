@@ -728,9 +728,9 @@ fun SettingsReportSection(
                 LoyverseMenuItemRow(
                     icon = Icons.Outlined.AccountCircle,
                     title = stringResource(R.string.google_account),
-                    subtitle = googleAccount ?: "bdparvaze.backup@gmail.com",
+                    subtitle = googleAccount ?: "",
                     onClick = {
-                        editFieldDialog = "Google Account" to (googleAccount ?: "bdparvaze.backup@gmail.com")
+                        editFieldDialog = "Google Account" to (googleAccount ?: "")
                     }
                 )
                 LoyverseMenuItemRow(

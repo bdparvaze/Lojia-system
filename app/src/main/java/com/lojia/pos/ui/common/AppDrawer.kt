@@ -96,7 +96,7 @@ fun MainAppDrawer(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = userProfile?.fullName?.ifBlank { "Md. Parvaze" } ?: "Md. Parvaze",
+                        text = userProfile?.fullName?.ifBlank { "Demo Owner" } ?: "Demo Owner",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = PureWhite.copy(alpha = 0.85f),
                             fontSize = 11.sp
