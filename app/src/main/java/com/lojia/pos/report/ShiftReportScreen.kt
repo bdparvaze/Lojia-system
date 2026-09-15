@@ -2152,7 +2152,6 @@ private fun LabeledDropdown(
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.White)
                     .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(8.dp))
-                    .clickable { expanded = !expanded }
                     .padding(horizontal = 10.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
@@ -2170,12 +2169,7 @@ private fun LabeledDropdown(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                        tint = ShiftColors.TextMuted,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
             }
             ExposedDropdownMenu(
@@ -2185,7 +2179,10 @@ private fun LabeledDropdown(
                 options.forEach { opt ->
                     DropdownMenuItem(
                         text = { Text(opt, fontSize = 13.sp) },
-                        onClick = { onSelected(opt); expanded = false },
+                        onClick = {
+                            onSelected(opt)
+                            expanded = false
+                        },
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
