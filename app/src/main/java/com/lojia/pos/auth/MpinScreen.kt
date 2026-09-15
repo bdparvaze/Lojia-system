@@ -64,6 +64,7 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 
 
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Fingerprint
 
 
 import androidx.compose.material3.*
@@ -545,33 +546,41 @@ fun MpinInputIndicator(
     isSuccess: Boolean = false
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (i in 0 until pinLength) {
             val isFilled = i < currentLength
             val isCurrent = i == currentLength
 
-            val borderColor = when {
-                hasError -> Color(0xFFEF4444)
-                isSuccess -> Color(0xFF10B981)
-                isFilled -> Color(0xFF2563EB)
-                isCurrent -> Color(0xFF93C5FD)
-                else -> Color(0xFFCBD5E1)
+            if (isCurrent && !hasError && !isSuccess) {
+                // Active indicator with outer light blue ring and inner blue circle outline
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(Color(0xFFDBEAFE), CircleShape) // Light blue ring
+                        .padding(3.dp)
+                        .border(1.5.dp, Color(0xFF2563EB), CircleShape) // Inner blue border
+                        .background(Color.White, CircleShape)
+                )
+            } else if (isFilled) {
+                // Filled indicator
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .border(1.5.dp, if (hasError) Color(0xFFEF4444) else if (isSuccess) Color(0xFF10B981) else Color(0xFF2563EB), CircleShape)
+                        .padding(4.dp)
+                        .background(if (hasError) Color(0xFFEF4444) else if (isSuccess) Color(0xFF10B981) else Color(0xFF2563EB), CircleShape)
+                )
+            } else {
+                // Unfilled indicator
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .border(1.5.dp, Color(0xFFCBD5E1), CircleShape)
+                        .background(Color.Transparent, CircleShape)
+                )
             }
-
-            val fillColor = when {
-                isFilled -> if (hasError) Color(0xFFEF4444) else if (isSuccess) Color(0xFF10B981) else Color(0xFF2563EB)
-                else -> Color.Transparent
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .border(2.dp, borderColor, CircleShape)
-                    .padding(3.dp)
-                    .background(fillColor, CircleShape)
-            )
         }
     }
 }
@@ -717,13 +726,14 @@ fun AlRajhi3DShieldGraphic(modifier: Modifier = Modifier) {
 fun AlRajhiKeypad(
     onDigitClick: (String) -> Unit,
     onBackspaceClick: () -> Unit,
+    onFingerprintClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val rows = listOf(
         listOf("1", "2", "3"),
         listOf("4", "5", "6"),
         listOf("7", "8", "9"),
-        listOf("", "0", "DEL")
+        listOf("FINGERPRINT", "0", "DEL")
     )
 
     Column(
@@ -738,13 +748,30 @@ fun AlRajhiKeypad(
             ) {
                 for (item in row) {
                     when (item) {
-                        "" -> {
-                            Box(modifier = Modifier.size(68.dp, 48.dp))
+                        "FINGERPRINT" -> {
+                            if (onFingerprintClick != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(68.dp, 68.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .clickable { onFingerprintClick() },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Fingerprint,
+                                        contentDescription = "Fingerprint",
+                                        tint = Color(0xFF16A34A),
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                            } else {
+                                Box(modifier = Modifier.size(68.dp, 68.dp))
+                            }
                         }
                         "DEL" -> {
                             Box(
                                 modifier = Modifier
-                                    .size(68.dp, 48.dp)
+                                    .size(68.dp, 68.dp)
                                     .clip(RoundedCornerShape(14.dp))
                                     .clickable { onBackspaceClick() },
                                 contentAlignment = Alignment.Center
@@ -752,23 +779,23 @@ fun AlRajhiKeypad(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Outlined.Backspace,
                                     contentDescription = rememberTranslatedString("Delete"),
-                                    tint = Color(0xFF334155),
-                                    modifier = Modifier.size(22.dp)
+                                    tint = Color(0xFF0F172A),
+                                    modifier = Modifier.size(26.dp)
                                 )
                             }
                         }
                         else -> {
                             Box(
                                 modifier = Modifier
-                                    .size(68.dp, 48.dp)
+                                    .size(68.dp, 68.dp)
                                     .clip(RoundedCornerShape(14.dp))
                                     .clickable { onDigitClick(item) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = item,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0F172A)
                                 )
                             }

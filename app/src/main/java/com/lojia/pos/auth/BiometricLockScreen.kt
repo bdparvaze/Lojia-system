@@ -585,26 +585,26 @@ fun BiometricLockScreen(
                                                     .weight(1f)
                                                     .testTag("tabQuickLogin"),
                                                 shape = RoundedCornerShape(10.dp),
-                                                color = if (isQuick) Color.White else Color.Transparent,
+                                                color = if (isQuick) Color(0xFF1E1B4B) else Color.Transparent, // Dark blue when active
                                                 shadowElevation = if (isQuick) 2.dp else 0.dp
                                             ) {
                                                 Row(
-                                                    modifier = Modifier.padding(vertical = 10.dp),
+                                                    modifier = Modifier.padding(vertical = 12.dp),
                                                     horizontalArrangement = Arrangement.Center,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Default.Bolt,
                                                         contentDescription = null,
-                                                        tint = if (isQuick) LojiaColors.P600 else LojiaColors.N500,
+                                                        tint = if (isQuick) Color.White else LojiaColors.N600,
                                                         modifier = Modifier.size(16.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(6.dp))
                                                     Text(
                                                         text = if (isBn) "কুইক লগইন" else "Quick Login",
-                                                        fontSize = 13.sp,
-                                                        fontWeight = if (isQuick) FontWeight.Bold else FontWeight.Medium,
-                                                        color = if (isQuick) LojiaColors.P600 else LojiaColors.N600
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (isQuick) Color.White else LojiaColors.N700
                                                     )
                                                 }
                                             }
@@ -619,26 +619,26 @@ fun BiometricLockScreen(
                                                     .weight(1f)
                                                     .testTag("tabPasswordLogin"),
                                                 shape = RoundedCornerShape(10.dp),
-                                                color = if (isPass) Color.White else Color.Transparent,
+                                                color = if (isPass) Color(0xFF1E1B4B) else Color.Transparent,
                                                 shadowElevation = if (isPass) 2.dp else 0.dp
                                             ) {
                                                 Row(
-                                                    modifier = Modifier.padding(vertical = 10.dp),
+                                                    modifier = Modifier.padding(vertical = 12.dp),
                                                     horizontalArrangement = Arrangement.Center,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Default.Key,
                                                         contentDescription = null,
-                                                        tint = if (isPass) LojiaColors.P600 else LojiaColors.N500,
+                                                        tint = if (isPass) Color.White else LojiaColors.N600,
                                                         modifier = Modifier.size(16.dp)
                                                     )
                                                     Spacer(modifier = Modifier.width(6.dp))
                                                     Text(
-                                                        text = if (isBn) "পাসওয়ার্ড লগইন" else "Password",
-                                                        fontSize = 13.sp,
-                                                        fontWeight = if (isPass) FontWeight.Bold else FontWeight.Medium,
-                                                        color = if (isPass) LojiaColors.P600 else LojiaColors.N600
+                                                        text = if (isBn) "পাসওয়ার্ড লগইন" else "Password Login",
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (isPass) Color.White else LojiaColors.N700
                                                     )
                                                 }
                                             }
@@ -646,138 +646,27 @@ fun BiometricLockScreen(
 
                                         if (loginMethod == LoginMethod.QUICK) {
                                             // ============================================
-                                            // ⚡ QUICK LOGIN (6-DIGIT PIN & BIOMETRIC)
+                                            // ⚡ QUICK LOGIN (6-DIGIT PIN)
                                             // ============================================
-                                            val displayName = userProfile?.fullName?.ifBlank { null }
-                                                ?: userProfile?.username?.ifBlank { null }
-                                                ?: loginUser.ifBlank { "Merchant Account" }
-
-                                            // User Identity Badge
-                                            Surface(
-                                                shape = RoundedCornerShape(12.dp),
-                                                color = LojiaColors.P50,
-                                                border = BorderStroke(1.dp, LojiaColors.P100),
-                                                modifier = Modifier.fillMaxWidth()
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(40.dp)
-                                                            .clip(CircleShape)
-                                                            .background(LojiaColors.P500),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Text(
-                                                            text = displayName.take(1).uppercase(),
-                                                            color = Color.White,
-                                                            fontSize = 17.sp,
-                                                            fontWeight = FontWeight.Bold
-                                                        )
-                                                    }
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Column(modifier = Modifier.weight(1f)) {
-                                                        Text(
-                                                            text = displayName,
-                                                            fontSize = 14.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = LojiaColors.N900
-                                                        )
-                                                        Text(
-                                                            text = if (businessProfile?.businessName?.isNotBlank() == true) businessProfile.businessName else "@${userProfile?.username ?: loginUser}",
-                                                            fontSize = 11.5.sp,
-                                                            color = LojiaColors.N500
-                                                        )
-                                                    }
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .clip(RoundedCornerShape(8.dp))
-                                                            .background(Color(0xFFE0F2FE))
-                                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                                    ) {
-                                                        Text(
-                                                            text = "PIN / Bio",
-                                                            fontSize = 11.sp,
-                                                            fontWeight = FontWeight.SemiBold,
-                                                            color = Color(0xFF0284C7)
-                                                        )
-                                                    }
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.height(18.dp))
-
-                                            // Biometric Fingerprint Button (if enabled)
-                                            if (userProfile?.isBiometricEnabled ?: true) {
-                                                Surface(
-                                                    onClick = { launchBiometricPrompt() },
-                                                    shape = RoundedCornerShape(12.dp),
-                                                    color = Color(0xFFF0FDF4),
-                                                    border = BorderStroke(1.dp, Color(0xFF86EFAC)),
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .testTag("btnQuickBiometric")
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.Center
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Outlined.Fingerprint,
-                                                            contentDescription = "Fingerprint",
-                                                            tint = Color(0xFF16A34A),
-                                                            modifier = Modifier.size(24.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(10.dp))
-                                                        Text(
-                                                            text = if (isBn) "ফিঙ্গারপ্রিন্ট দিয়ে আনলক করুন" else "Unlock with Fingerprint",
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = Color(0xFF15803D),
-                                                            fontSize = 13.5.sp
-                                                        )
-                                                    }
-                                                }
-
-                                                Spacer(modifier = Modifier.height(16.dp))
-
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    HorizontalDivider(modifier = Modifier.weight(1f), color = LojiaColors.N200)
-                                                    Text(
-                                                        text = if (isBn) " অথবা পিন কোড " else " OR ENTER PIN ",
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = LojiaColors.N400,
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    )
-                                                    HorizontalDivider(modifier = Modifier.weight(1f), color = LojiaColors.N200)
-                                                }
-
-                                                Spacer(modifier = Modifier.height(14.dp))
-                                            }
+                                            Spacer(modifier = Modifier.height(32.dp))
 
                                             // PIN Header & Instruction
                                             Text(
                                                 text = if (isBn) "কুইক পিন প্রবেশ করুন" else "Enter Quick PIN",
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = LojiaColors.N900,
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = Color.Black,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                             Text(
-                                                text = if (isBn) "আপনার ৬-সংখ্যার সিকিউরিটি পিন দিন" else "Enter your 6-digit security PIN to unlock",
-                                                fontSize = 11.5.sp,
-                                                color = LojiaColors.N500,
+                                                text = if (isBn) "আপনার ৬-সংখ্যার সিকিউরিটি পিন দিন" else "Enter your 6-digit security PIN",
+                                                fontSize = 14.sp,
+                                                color = Color.DarkGray,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(top = 2.dp, bottom = 14.dp)
+                                                    .padding(top = 6.dp, bottom = 24.dp)
                                             )
 
                                             // 6 Dots PIN Indicator
@@ -806,56 +695,31 @@ fun BiometricLockScreen(
                                                         border = BorderStroke(1.dp, Color(0xFFFECACA)),
                                                         modifier = Modifier
                                                             .fillMaxWidth()
-                                                            .padding(top = 10.dp)
+                                                            .padding(top = 16.dp)
                                                     ) {
                                                         Text(
                                                             text = msg,
                                                             color = Color(0xFFDC2626),
-                                                            fontSize = 12.sp,
+                                                            fontSize = 13.sp,
                                                             fontWeight = FontWeight.Medium,
                                                             textAlign = TextAlign.Center,
-                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                                         )
                                                     }
                                                 }
                                             }
 
-                                            Spacer(modifier = Modifier.height(14.dp))
+                                            Spacer(modifier = Modifier.height(24.dp))
 
                                             // AlRajhi Bank Style Numeric Keypad
                                             AlRajhiKeypad(
                                                 onDigitClick = { onQuickPinDigit(it) },
                                                 onBackspaceClick = { onQuickPinBackspace() },
+                                                onFingerprintClick = if (userProfile?.isBiometricEnabled != false) { { launchBiometricPrompt() } } else null,
                                                 modifier = Modifier.fillMaxWidth()
                                             )
 
                                             Spacer(modifier = Modifier.height(12.dp))
-
-                                            // Switch to Password Action
-                                            TextButton(
-                                                onClick = {
-                                                    loginMethod = LoginMethod.PASSWORD
-                                                    loginErrorMessage = null
-                                                },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .testTag("btnSwitchToPassword")
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Key,
-                                                    contentDescription = null,
-                                                    tint = LojiaColors.P600,
-                                                    modifier = Modifier.size(15.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text(
-                                                    text = if (isBn) "ইউজারনেম ও পাসওয়ার্ড দিয়ে লগইন করুন" else "Log in with Username & Password",
-                                                    fontSize = 12.5.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = LojiaColors.P600
-                                                )
-                                            }
-
                                         } else {
                                             // ============================================
                                             // 🔑 PASSWORD LOGIN
@@ -980,44 +844,7 @@ fun BiometricLockScreen(
                                                 )
                                             }
 
-                                            // Developer Access Hint & Auto-fill Chip (Debug mode only)
-                                            if (BuildConfig.DEBUG) {
-                                                Spacer(modifier = Modifier.height(10.dp))
-                                                Surface(
-                                                    shape = RoundedCornerShape(8.dp),
-                                                    color = LojiaColors.P50,
-                                                    border = BorderStroke(1.dp, LojiaColors.P100),
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .clickable {
-                                                            loginUser = DevCredentials.DEFAULT_USERNAME
-                                                            loginPass = DevCredentials.DEFAULT_PASSWORD
-                                                            loginErrorMessage = null
-                                                        }
-                                                        .testTag("btnDevFill")
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Outlined.Key,
-                                                            contentDescription = null,
-                                                            tint = LojiaColors.P500,
-                                                            modifier = Modifier.size(15.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(6.dp))
-                                                        Text(
-                                                            text = if (isBn) "ডেভলপার অ্যাক্সেস: ${DevCredentials.DEFAULT_USERNAME} / ${DevCredentials.DEFAULT_PASSWORD}" else "Dev Credentials: ${DevCredentials.DEFAULT_USERNAME} / ${DevCredentials.DEFAULT_PASSWORD}",
-                                                            fontSize = 11.5.sp,
-                                                            fontWeight = FontWeight.Medium,
-                                                            color = LojiaColors.P600
-                                                        )
-                                                    }
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.height(14.dp))
+                                            Spacer(modifier = Modifier.height(16.dp))
 
                                             // Sign In Button
                                             LojiaGradientButton(
@@ -1026,34 +853,6 @@ fun BiometricLockScreen(
                                                 isLoading = isSigningIn,
                                                 testTag = "btnLogin"
                                             )
-
-                                            Spacer(modifier = Modifier.height(8.dp))
-
-                                            // Switch to Quick PIN button
-                                            TextButton(
-                                                onClick = {
-                                                    loginMethod = LoginMethod.QUICK
-                                                    quickPin = ""
-                                                    quickPinError = null
-                                                },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .testTag("btnSwitchToQuick")
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Bolt,
-                                                    contentDescription = null,
-                                                    tint = LojiaColors.P600,
-                                                    modifier = Modifier.size(15.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text(
-                                                    text = if (isBn) "⚡ কুইক পিন বা বায়োমেট্রিক দিয়ে লগইন করতে চান?" else "⚡ Use Quick PIN or Biometric Login",
-                                                    fontSize = 12.5.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = LojiaColors.P600
-                                                )
-                                            }
                                         }
                                     }
 
