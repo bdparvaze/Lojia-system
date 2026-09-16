@@ -12,6 +12,7 @@ import com.lojia.pos.settings.*
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -55,7 +57,7 @@ import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun LojiaHeader(
-    isBn: Boolean,
+    isBn: Boolean = false,
     modifier: Modifier = Modifier,
     headerHeight: Dp? = null,
     onLanguageClick: (() -> Unit)? = null
@@ -63,39 +65,8 @@ fun LojiaHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (headerHeight != null) Modifier.height(headerHeight) else Modifier)
-            .clipToBounds()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        LojiaColors.P800,
-                        LojiaColors.P600,
-                        LojiaColors.P500
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                )
-            )
-            .drawBehind {
-                // Circle 1: width: 240px, height: 240px, top: -70px, right: -60px, rgba(255,255,255,.04)
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.04f),
-                    radius = 120.dp.toPx(),
-                    center = Offset(size.width + 60.dp.toPx() - 120.dp.toPx(), -70.dp.toPx() + 120.dp.toPx())
-                )
-                // Circle 2: width: 140px, height: 140px, bottom: -45px, left: -35px, rgba(251,191,36,.07)
-                drawCircle(
-                    color = LojiaColors.A400.copy(alpha = 0.07f),
-                    radius = 70.dp.toPx(),
-                    center = Offset(-35.dp.toPx() + 70.dp.toPx(), size.height + 45.dp.toPx() - 70.dp.toPx())
-                )
-            }
-            .padding(
-                top = 22.dp,
-                bottom = 30.dp,
-                start = 20.dp,
-                end = 20.dp
-            )
+            .then(if (headerHeight != null) Modifier.height(headerHeight) else Modifier.height(230.dp))
+            .background(Color(0xFF3858F6))
             .testTag("lojiaHeader"),
         contentAlignment = Alignment.Center
     ) {
@@ -104,6 +75,7 @@ fun LojiaHeader(
                 onClick = onLanguageClick,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
+                    .padding(8.dp)
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.15f))
@@ -124,33 +96,61 @@ fun LojiaHeader(
             verticalArrangement = Arrangement.Center
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center
             ) {
+                // Stylized white 'L' with 'ojia' nested inside
+                Box(
+                    contentAlignment = Alignment.BottomStart
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .height(58.dp)
+                            .width(84.dp)
+                    ) {
+                        val strokeW = 10.dp.toPx()
+                        // Vertical bar of L
+                        drawRect(
+                            color = Color.White,
+                            topLeft = Offset(0f, 0f),
+                            size = Size(strokeW, size.height)
+                        )
+                        // Bottom horizontal bar of L
+                        drawRect(
+                            color = Color.White,
+                            topLeft = Offset(0f, size.height - strokeW),
+                            size = Size(size.width, strokeW)
+                        )
+                    }
+
+                    Text(
+                        text = "ojia",
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(start = 13.dp, bottom = 10.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
                 Text(
-                    text = "Lojia ",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    letterSpacing = (-0.3).sp,
-                    lineHeight = 22.sp
-                )
-                Text(
-                    text = "System",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = LojiaColors.A400,
-                    letterSpacing = (-0.3).sp,
-                    lineHeight = 22.sp
+                    text = "system",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFACC15),
+                    modifier = Modifier.padding(bottom = 10.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(2.dp))
+
+            Spacer(modifier = Modifier.height(6.dp))
+
             Text(
-                text = LojiaStrings.get("tagline", isBn),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White.copy(alpha = 0.42f),
-                letterSpacing = 1.4.sp
+                text = "SECURE BUSINESS LEDGER",
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.95f),
+                letterSpacing = 1.8.sp
             )
         }
     }

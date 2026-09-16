@@ -128,7 +128,7 @@ abstract class AppDatabase : RoomDatabase() {
                         dateOfBirthOrJoin = "01 Jan 2024",
                         emergencyContact = "",
                         pin = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN),
-                        isBiometricEnabled = true,
+                        isBiometricEnabled = false,
                         autoLockMinutes = 5,
                         currentRole = "ADMIN",
                         registeredAt = System.currentTimeMillis(),

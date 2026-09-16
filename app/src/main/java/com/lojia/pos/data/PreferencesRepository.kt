@@ -222,8 +222,8 @@ class PreferencesRepository private constructor(context: Context) {
     fun getSavedFullName(): String = prefs.getString(KEY_SAVED_FULL_NAME, "") ?: ""
     fun getSavedEmail(): String = prefs.getString(KEY_SAVED_EMAIL, "") ?: ""
     fun isRememberMe(): Boolean = prefs.getBoolean(KEY_REMEMBER_ME, true)
-    fun isQuickLoginEnabled(): Boolean = prefs.getBoolean(KEY_QUICK_LOGIN_ENABLED, true)
-    fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, true)
+    fun isQuickLoginEnabled(): Boolean = prefs.getBoolean(KEY_QUICK_LOGIN_ENABLED, false)
+    fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
     fun getStoredPinHash(): String? = prefs.getString(KEY_STORED_PIN_HASH, null)
     fun hasPinConfigured(): Boolean = prefs.getBoolean(KEY_HAS_PIN_CONFIGURED, false)
 

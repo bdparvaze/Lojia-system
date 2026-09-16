@@ -152,7 +152,7 @@ fun SettingsShopSection(
     var address by remember(userProfile) { mutableStateOf(userProfile?.address ?: "Demo City") }
 
     // Security state
-    var biometricEnabled by remember(userProfile) { mutableStateOf(userProfile?.isBiometricEnabled ?: true) }
+    var biometricEnabled by remember(userProfile) { mutableStateOf(userProfile?.isBiometricEnabled ?: false) }
     var pinValue by remember(userProfile) { mutableStateOf(userProfile?.pin.orEmpty()) }
     var showChangePinModal by remember { mutableStateOf(false) }
 
