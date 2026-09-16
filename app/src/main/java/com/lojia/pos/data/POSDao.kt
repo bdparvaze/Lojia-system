@@ -20,6 +20,12 @@ interface POSDao {
     @Query("SELECT * FROM pos_products WHERE active = 1")
     suspend fun getAllProductsOnce(): List<POSProduct>
 
+    @Query("SELECT * FROM pos_products WHERE stockQuantity <= minStockAlert AND active = 1 ORDER BY name ASC")
+    suspend fun getLowStockProductsOnce(): List<POSProduct>
+
+    @Query("SELECT * FROM pos_products WHERE stockQuantity <= minStockAlert AND active = 1 ORDER BY name ASC")
+    fun getLowStockProducts(): Flow<List<POSProduct>>
+
     @Query("SELECT * FROM pos_products WHERE categoryId = :catId AND active = 1 ORDER BY name ASC")
     fun getProductsByCategory(catId: Int): Flow<List<POSProduct>>
 

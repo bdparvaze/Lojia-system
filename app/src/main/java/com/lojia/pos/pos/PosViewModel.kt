@@ -392,6 +392,7 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
                 _completedSale.value = finalizedSale
                 _uiToast.emit(UiText.StringResource(R.string.payment_success))
                 clearCart()
+                InventoryCheckScheduler.triggerImmediateCheck(context)
                 onComplete(finalizedSale)
             } catch (e: Exception) {
                 _uiToast.emit(UiText.DynamicString("Checkout failed: ${e.localizedMessage ?: "Database error"}"))
@@ -469,6 +470,7 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
                     username = username
                 )
             )
+            InventoryCheckScheduler.triggerImmediateCheck(context)
             _uiToast.emit(
                 UiText.StringResource(
                     R.string.toast_stock_adjusted,

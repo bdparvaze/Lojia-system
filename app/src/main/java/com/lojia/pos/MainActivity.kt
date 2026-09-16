@@ -172,6 +172,12 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             requireWifiOnly = false
         )
 
+        // Schedule periodic background inventory level check via WorkManager
+        com.lojia.pos.util.InventoryCheckScheduler.schedulePeriodicCheck(
+            context = applicationContext,
+            intervalMinutes = 60L
+        )
+
         setContent {
             val currentLanguage by reportViewModel.currentLanguage.collectAsState()
             val userProfile by reportViewModel.userProfile.collectAsState()

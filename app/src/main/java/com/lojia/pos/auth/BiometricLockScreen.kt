@@ -130,7 +130,7 @@ fun BiometricLockScreen(
     // -------------------------------------------------------------
     // LOGIN SCREEN STATES
     // -------------------------------------------------------------
-    var isLoadingSkeleton by remember { mutableStateOf(true) }
+    var isLoadingSkeleton by remember { mutableStateOf(false) }
     var loginUser by remember {
         mutableStateOf(
             sessionUser.ifEmpty {
@@ -157,8 +157,8 @@ fun BiometricLockScreen(
                 (userProfile != null && (!userProfile.pin.isNullOrBlank() || userProfile.isBiometricEnabled))
         }
     }
-    var loginMethod by remember(hasValidSecurityState) {
-        mutableStateOf(if (hasValidSecurityState) LoginMethod.QUICK else LoginMethod.PASSWORD)
+    var loginMethod by remember {
+        mutableStateOf(LoginMethod.PASSWORD)
     }
     var quickPin by remember { mutableStateOf("") }
     var quickPinError by remember { mutableStateOf<String?>(null) }
@@ -252,9 +252,8 @@ fun BiometricLockScreen(
         }
     }
 
-    // Skeleton shimmer effect: 600ms matching HTML spec
+    // Skeleton shimmer effect: instantly ready
     LaunchedEffect(Unit) {
-        delay(600)
         isLoadingSkeleton = false
     }
 
@@ -413,15 +412,8 @@ fun BiometricLockScreen(
         )
     }
 
-    LaunchedEffect(loginMethod, userProfile?.isBiometricEnabled) {
-        val bioActive = userProfile?.isBiometricEnabled ?: true
-        if (loginMethod == LoginMethod.QUICK && bioActive) {
-            val status = BiometricAuthManager.checkBiometricAvailability(context)
-            if (status == BiometricStatus.AVAILABLE) {
-                delay(350)
-                launchBiometricPrompt()
-            }
-        }
+    LaunchedEffect(loginMethod) {
+        // Auto biometric prompt disabled for web preview emulator to prevent freezing
     }
 
     // Handle Login
@@ -589,8 +581,7 @@ fun BiometricLockScreen(
                 ) {
                     // Curved Gradient Header (.bh: flex-shrink: 0, padding: 22px 20px 30px)
                     LojiaHeader(
-                        isBn = isBn,
-                        onLanguageClick = { showLanguageDialog = true }
+                        isBn = isBn
                     )
 
                     // #pgLogin .body (flex: 1, justify-content: center, margin-top: -8px, padding: 0 14px 24px)
@@ -634,7 +625,7 @@ fun BiometricLockScreen(
                                                     .weight(1f)
                                                     .testTag("tabQuickLogin"),
                                                 shape = RoundedCornerShape(10.dp),
-                                                color = if (isQuick) LojiaColors.P600 else Color.Transparent,
+                                                color = if (isQuick) Color(0xFF0F172A) else Color.Transparent,
                                                 shadowElevation = if (isQuick) 2.dp else 0.dp
                                             ) {
                                                 Row(
@@ -668,7 +659,7 @@ fun BiometricLockScreen(
                                                     .weight(1f)
                                                     .testTag("tabPasswordLogin"),
                                                 shape = RoundedCornerShape(10.dp),
-                                                color = if (isPass) LojiaColors.P600 else Color.Transparent,
+                                                color = if (isPass) Color(0xFF0F172A) else Color.Transparent,
                                                 shadowElevation = if (isPass) 2.dp else 0.dp
                                             ) {
                                                 Row(
@@ -701,7 +692,7 @@ fun BiometricLockScreen(
 
                                             // PIN Header & Instruction
                                             Text(
-                                                text = if (isBn) "কুইক লগইন পিন দিন" else "Enter Quick Login PIN",
+                                                text = if (isBn) "পিন দিন" else "Enter PIN",
                                                 fontSize = 20.sp,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = Color.Black,
@@ -709,7 +700,7 @@ fun BiometricLockScreen(
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                             Text(
-                                                text = if (isBn) "আপনার ৬-সংখ্যার সিকিউরিটি পিন দিন" else "Enter your 6-digit security PIN",
+                                                text = if (isBn) "আপনার পিন দিন" else "Enter your pin",
                                                 fontSize = 13.sp,
                                                 color = Color.DarkGray,
                                                 textAlign = TextAlign.Center,
@@ -758,30 +749,7 @@ fun BiometricLockScreen(
                                                 }
                                             }
 
-                                            // Quick Biometric button if available
-                                            if (userProfile?.isBiometricEnabled != false) {
-                                                Spacer(modifier = Modifier.height(10.dp))
-                                                TextButton(
-                                                    onClick = { launchBiometricPrompt() },
-                                                    modifier = Modifier
-                                                        .align(Alignment.CenterHorizontally)
-                                                        .testTag("btnQuickBiometricPrompt")
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Fingerprint,
-                                                        contentDescription = null,
-                                                        tint = LojiaColors.P600,
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(6.dp))
-                                                    Text(
-                                                        text = if (isBn) "বায়োমেট্রিক দিয়ে আনলক করুন" else "Unlock with Biometrics",
-                                                        fontSize = 13.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = LojiaColors.P600
-                                                    )
-                                                }
-                                            }
+
 
                                             Spacer(modifier = Modifier.height(16.dp))
 
@@ -899,7 +867,7 @@ fun BiometricLockScreen(
                                                 }
 
                                                 Text(
-                                                    text = if (isBn) "অ্যাডমিনের সাথে যোগাযোগ করুন" else "Contact Admin",
+                                                    text = LojiaStrings.get("forgotPw", isBn),
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.SemiBold,
                                                     color = LojiaColors.P500,

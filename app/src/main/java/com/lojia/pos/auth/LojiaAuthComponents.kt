@@ -491,7 +491,7 @@ fun LojiaGradientButton(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowForward,
+                        imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(11.dp)
