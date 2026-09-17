@@ -65,31 +65,11 @@ fun LojiaHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (headerHeight != null) Modifier.height(headerHeight) else Modifier.height(230.dp))
+            .then(if (headerHeight != null) Modifier.height(headerHeight) else Modifier.height(260.dp))
             .background(Color(0xFF3858F6))
             .testTag("lojiaHeader"),
         contentAlignment = Alignment.Center
     ) {
-        if (onLanguageClick != null) {
-            IconButton(
-                onClick = onLanguageClick,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.15f))
-                    .testTag("btnLanguageToggle")
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Language,
-                    contentDescription = "Change Language",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -105,10 +85,10 @@ fun LojiaHeader(
                 ) {
                     Canvas(
                         modifier = Modifier
-                            .height(58.dp)
-                            .width(84.dp)
+                            .height(64.dp)
+                            .width(92.dp)
                     ) {
-                        val strokeW = 10.dp.toPx()
+                        val strokeW = 12.dp.toPx()
                         // Vertical bar of L
                         drawRect(
                             color = Color.White,
@@ -125,10 +105,10 @@ fun LojiaHeader(
 
                     Text(
                         text = "ojia",
-                        fontSize = 36.sp,
+                        fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        modifier = Modifier.padding(start = 13.dp, bottom = 10.dp)
+                        modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
                     )
                 }
 
@@ -136,21 +116,21 @@ fun LojiaHeader(
 
                 Text(
                     text = "system",
-                    fontSize = 36.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFACC15),
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "SECURE BUSINESS LEDGER",
-                fontSize = 11.5.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.95f),
-                letterSpacing = 1.8.sp
+                letterSpacing = 2.sp
             )
         }
     }
@@ -216,13 +196,13 @@ fun LojiaSectionHeader(
             Column {
                 Text(
                     text = title,
-                    fontSize = 13.5.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = LojiaColors.N900
                 )
                 Text(
                     text = subtitle,
-                    fontSize = 10.8.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 10.8.sp,
                     color = LojiaColors.N500,
                     modifier = Modifier.padding(top = 1.dp)
                 )
@@ -272,14 +252,14 @@ fun LojiaInputField(
             ) {
                 Text(
                     text = label,
-                    fontSize = 11.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = LojiaColors.N600
                 )
                 if (isRequired) {
                     Text(
                         text = " *",
-                        fontSize = 11.sp,
+                        fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isValid) LojiaColors.G500 else LojiaColors.R500
                     )
@@ -296,7 +276,7 @@ fun LojiaInputField(
                     ) {
                         Text(
                             text = "?",
-                            fontSize = 8.5.sp,
+                            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = LojiaColors.N600
                         )
@@ -316,7 +296,7 @@ fun LojiaInputField(
             ) {
                 Text(
                     text = infoTooltip,
-                    fontSize = 10.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 10.sp,
                     color = Color.White,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -370,7 +350,7 @@ fun LojiaInputField(
                         Text(
                             text = placeholder,
                             color = Color(0xFF9CA3AF),
-                            fontSize = 13.5.sp,
+                            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.5.sp,
                             lineHeight = 18.sp
                         )
                     }
@@ -384,7 +364,7 @@ fun LojiaInputField(
                         keyboardActions = keyboardActions,
                         textStyle = TextStyle(
                             color = Color(0xFF111827),
-                            fontSize = 13.5.sp,
+                            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.5.sp,
                             lineHeight = 18.sp,
                             fontWeight = FontWeight.Normal
                         ),
@@ -408,21 +388,21 @@ fun LojiaInputField(
             Text(
                 text = errorMessage,
                 color = Color(0xFFEF4444),
-                fontSize = 11.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 11.sp,
                 modifier = Modifier.padding(top = 3.dp, start = 2.dp)
             )
         } else if (validationState == FieldValidationState.SUCCESS && !successMessage.isNullOrBlank()) {
             Text(
                 text = successMessage,
                 color = Color(0xFF10B981),
-                fontSize = 11.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 11.sp,
                 modifier = Modifier.padding(top = 3.dp, start = 2.dp)
             )
         } else if (!hintMessage.isNullOrBlank()) {
             Text(
                 text = hintMessage,
                 color = Color(0xFF6B7280),
-                fontSize = 11.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 11.sp,
                 modifier = Modifier.padding(top = 3.dp, start = 2.dp)
             )
         }
@@ -474,7 +454,7 @@ fun LojiaGradientButton(
                 Text(
                     text = text,
                     color = Color.White,
-                    fontSize = 14.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -501,7 +481,7 @@ fun LojiaGradientButton(
                 Text(
                     text = text,
                     color = Color.White,
-                    fontSize = 14.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.4.sp
                 )
@@ -567,7 +547,7 @@ fun LojiaPasswordStrengthMeter(
         ) {
             Text(
                 text = LojiaStrings.get("pwStrengthLabel", isBn),
-                fontSize = 11.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 11.sp,
                 color = LojiaColors.N500
             )
             Surface(
@@ -576,7 +556,7 @@ fun LojiaPasswordStrengthMeter(
             ) {
                 Text(
                     text = badgeText,
-                    fontSize = 10.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = badgeColor,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
@@ -611,13 +591,13 @@ private fun ReqIndicator(label: String, isMet: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = if (isMet) "✓ " else "✗ ",
-            fontSize = 10.sp,
+            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = if (isMet) LojiaColors.G500 else LojiaColors.N400
         )
         Text(
             text = label,
-            fontSize = 10.sp,
+            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 10.sp,
             color = if (isMet) LojiaColors.G500 else LojiaColors.N400
         )
     }
@@ -725,7 +705,7 @@ fun LojiaCountryPickerDialog(
                 ) {
                     Text(
                         text = if (isBn) "দেশ ও কোড নির্বাচন করুন" else "Select Country & Dial Code",
-                        fontSize = 15.sp,
+                        fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = LojiaColors.N900
                     )
@@ -760,7 +740,7 @@ fun LojiaCountryPickerDialog(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
                             singleLine = true,
-                            textStyle = TextStyle(color = LojiaColors.N900, fontSize = 13.sp),
+                            textStyle = TextStyle(color = LojiaColors.N900, fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.sp),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -789,18 +769,18 @@ fun LojiaCountryPickerDialog(
                                 .padding(horizontal = 16.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = country.flag, fontSize = 16.sp)
+                            Text(text = country.flag, fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 16.sp)
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = country.dial,
-                                fontSize = 13.sp,
+                                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = LojiaColors.N900,
                                 modifier = Modifier.width(52.dp)
                             )
                             Text(
                                 text = country.name,
-                                fontSize = 13.sp,
+                                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.sp,
                                 color = LojiaColors.N700,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,

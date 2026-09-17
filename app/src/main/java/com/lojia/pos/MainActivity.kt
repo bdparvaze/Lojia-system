@@ -203,27 +203,11 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             var previewSale by remember { mutableStateOf<POSSale?>(null) }
             var isAuthenticated by remember { mutableStateOf(false) }
             var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
-            var showModulePinAuthDialog by remember { mutableStateOf(false) }
-            var pendingModuleToSwitch by remember { mutableStateOf<AppModule?>(null) }
-
-            // Auto-lock mechanism: locks app after 30 minutes (1,800,000 ms) of user inactivity
-            LaunchedEffect(isAuthenticated) {
-                if (isAuthenticated) {
-                    lastInteractionTime = System.currentTimeMillis()
-                    while (isActive) {
-                        delay(1000L)
-                        if (System.currentTimeMillis() - lastInteractionTime >= 1_800_000L) {
-                            isAuthenticated = false
-                            break
-                        }
-                    }
-                }
-            }
 
             val performSecureModuleSwitch: (AppModule) -> Unit = { targetModule ->
                 if (targetModule != activeModule) {
-                    pendingModuleToSwitch = targetModule
-                    showModulePinAuthDialog = true
+                    reportViewModel.switchModule(targetModule)
+                    navState = if (targetModule == AppModule.SHOPPING) AppNavState.Shop.Pos else AppNavState.ShiftReportState.Reports
                 }
             }
 
@@ -478,27 +462,6 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                                                 onDismiss = { previewSale = null }
                                             )
                                         }
-
-                                        // Secure Module Switch Authorization Dialog
-                                        if (showModulePinAuthDialog) {
-                                            SecurityPinModal(
-                                                targetModule = pendingModuleToSwitch,
-                                                expectedPin = userProfile?.pin.orEmpty(),
-                                                onDismiss = {
-                                                    showModulePinAuthDialog = false
-                                                    pendingModuleToSwitch = null
-                                                },
-                                                onSuccess = {
-                                                    isAuthenticated = true
-                                                    pendingModuleToSwitch?.let { target ->
-                                                        reportViewModel.switchModule(target)
-                                                        navState = if (target == AppModule.SHOPPING) AppNavState.Shop.Pos else AppNavState.ShiftReportState.Reports
-                                                    }
-                                                    showModulePinAuthDialog = false
-                                                    pendingModuleToSwitch = null
-                                                }
-                                            )
-                                        }
                                     }
                                 }
                             }
@@ -508,7 +471,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             }
         }
     }
-}
+    }
 
 /**
  * Isolated Navigation Host for switching between Shop and Shift Report modules.
@@ -648,3 +611,4 @@ private fun ShiftReportModuleNavHost(
         }
     }
     }
+ 

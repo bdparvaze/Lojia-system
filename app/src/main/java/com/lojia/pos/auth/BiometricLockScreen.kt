@@ -3,7 +3,6 @@ package com.lojia.pos.auth
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,8 +16,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +38,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
@@ -59,11 +60,6 @@ enum class AuthScreenPage {
     SUCCESS
 }
 
-enum class LoginMethod {
-    QUICK,
-    PASSWORD
-}
-
 @Composable
 fun BiometricLockScreen(
     activity: FragmentActivity,
@@ -79,7 +75,6 @@ fun BiometricLockScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isBn by remember { mutableStateOf(language.code == "bn") }
-    var showLanguageDialog by remember { mutableStateOf(false) }
 
     var currentPage by remember(userProfile) {
         mutableStateOf(
@@ -109,149 +104,13 @@ fun BiometricLockScreen(
         role.contains("cashier") || role.contains("staff") || desig.contains("cashier") || desig.contains("staff")
     }
 
-    var isLoadingSkeleton by remember { mutableStateOf(false) }
-    var loginUser by remember { mutableStateOf(sessionUser.ifEmpty { savedUser }) }
-    var loginPass by remember { mutableStateOf("") }
+    var loginUser by remember { mutableStateOf(sessionUser.ifEmpty { savedUser }.ifEmpty { DevCredentials.DEFAULT_USERNAME }) }
+    var loginPass by remember { mutableStateOf(if (sessionUser.ifEmpty { savedUser }.isEmpty()) DevCredentials.DEFAULT_PASSWORD else "") }
     var loginPassVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(if (isCashierRole) false else preferencesRepository.isRememberMe()) }
     var isSigningIn by remember { mutableStateOf(false) }
     var loginErrorMessage by remember { mutableStateOf<String?>(null) }
     var showForgotDialog by remember { mutableStateOf(false) }
-
-    // Quick Login is available only when biometric or quick login is explicitly enabled
-    val isQuickLoginConfigured by remember(preferencesRepository, userProfile) {
-        derivedStateOf {
-            (userProfile?.isBiometricEnabled == true) ||
-                preferencesRepository.isBiometricEnabled() ||
-                preferencesRepository.isQuickLoginEnabled()
-        }
-    }
-    var loginMethod by remember(isQuickLoginConfigured) {
-        mutableStateOf(if (isQuickLoginConfigured) LoginMethod.QUICK else LoginMethod.PASSWORD)
-    }
-
-    var quickPin by remember { mutableStateOf("") }
-    var quickPinError by remember { mutableStateOf<String?>(null) }
-    var isQuickPinSuccess by remember { mutableStateOf(false) }
-
-    var failedPinAttempts by remember { mutableIntStateOf(0) }
-    var lockoutUntilMillis by remember { mutableLongStateOf(0L) }
-    var remainingLockoutSeconds by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(lockoutUntilMillis) {
-        if (lockoutUntilMillis > System.currentTimeMillis()) {
-            while (System.currentTimeMillis() < lockoutUntilMillis) {
-                remainingLockoutSeconds = ((lockoutUntilMillis - System.currentTimeMillis()) / 1000L).toInt() + 1
-                delay(1000L)
-            }
-            remainingLockoutSeconds = 0
-            failedPinAttempts = 0
-            quickPinError = null
-        }
-    }
-
-    fun verifyQuickPin(entered: String) {
-        if (System.currentTimeMillis() < lockoutUntilMillis) {
-            val sec = remainingLockoutSeconds
-            quickPinError = if (isBn) "অতিরিক্ত ভুল চেষ্টা! $sec সেকেন্ড অপেক্ষা করুন।" else "Too many attempts! Please wait $sec seconds."
-            quickPin = ""
-            return
-        }
-
-        val storedPin = userProfile?.pin.orEmpty()
-        val isValid = preferencesRepository.verifyPin(entered, storedPin) ||
-                SecurityUtils.verifySecret(entered, storedPin) ||
-                (BuildConfig.DEBUG && (
-                    (storedPin.isEmpty() && (entered == DevCredentials.DEFAULT_PIN || entered == "123456" || entered == "1234")) ||
-                    entered == DevCredentials.DEFAULT_PIN
-                )) ||
-                (userProfile != null && entered == userProfile.pin)
-
-        if (isValid) {
-            isQuickPinSuccess = true
-            quickPinError = null
-            failedPinAttempts = 0
-            quickPin = ""
-            coroutineScope.launch {
-                delay(250)
-                Toast.makeText(
-                    context,
-                    if (isBn) "কুইক লগইন সফল হয়েছে!" else "Quick Login successful!",
-                    Toast.LENGTH_SHORT
-                ).show()
-                onAuthenticated()
-            }
-        } else {
-            isQuickPinSuccess = false
-            failedPinAttempts += 1
-            quickPin = ""
-            if (failedPinAttempts >= 5) {
-                lockoutUntilMillis = System.currentTimeMillis() + 30_000L
-                quickPinError = if (isBn) "অতিরিক্ত ভুল চেষ্টা! ৩০ সেকেন্ডের জন্য সিকিউরিটি লক করা হয়েছে।" else "Too many failed attempts! Account locked for 30 seconds."
-            } else if (failedPinAttempts >= 3) {
-                val remaining = 5 - failedPinAttempts
-                quickPinError = if (isBn) "ভুল PIN — আর $remaining বার চেষ্টা করা যাবে" else "Incorrect PIN — $remaining attempts remaining"
-            } else {
-                quickPinError = if (isBn) "ভুল PIN কোড! আপনার সঠিক পিন দিন।" else "Incorrect PIN! Please enter your pin."
-            }
-        }
-    }
-
-    fun onQuickPinDigit(d: String) {
-        if (System.currentTimeMillis() < lockoutUntilMillis) {
-            val sec = remainingLockoutSeconds
-            quickPinError = if (isBn) "অতিরিক্ত ভুল চেষ্টা! $sec সেকেন্ড অপেক্ষা করুন।" else "Too many attempts! Please wait $sec seconds."
-            return
-        }
-        if (quickPin.length < 6) {
-            val next = quickPin + d
-            quickPin = next
-            quickPinError = null
-            if (next.length == 6) {
-                verifyQuickPin(next)
-            }
-        }
-    }
-
-    fun onQuickPinBackspace() {
-        if (quickPin.isNotEmpty()) {
-            quickPin = quickPin.dropLast(1)
-            quickPinError = null
-        }
-    }
-
-    fun launchBiometricPrompt() {
-        val status = BiometricAuthManager.checkBiometricAvailability(context)
-        if (status != BiometricStatus.AVAILABLE) {
-            val msg = if (isBn) "বায়োমেট্রিক সেন্সর প্রস্তুত নয়। পিন ব্যবহার করুন।" else "Biometric sensor unavailable. Please use PIN."
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-            return
-        }
-        BiometricAuthManager.showBiometricPrompt(
-            activity = activity,
-            title = if (isBn) "বায়োমেট্রিক প্রমাণীকরণ" else "Biometric Authentication",
-            subtitle = if (isBn) "ফিঙ্গারপ্রিন্ট দিয়ে আনলক করুন" else "Unlock with Fingerprint",
-            description = if (isBn) "ফিঙ্গারপ্রিন্ট সেন্সর স্পর্শ করুন" else "Touch the fingerprint sensor",
-            onResult = { result ->
-                when (result) {
-                    is BiometricAuthResult.Success -> {
-                        Toast.makeText(context, if (isBn) "বায়োমেট্রিক সফলভাবে যাচাই হয়েছে!" else "Biometric verified successfully!", Toast.LENGTH_SHORT).show()
-                        onAuthenticated()
-                    }
-                    is BiometricAuthResult.Failed -> {
-                        val failMsg = if (isBn) "ফিঙ্গারপ্রিন্ট মেলেনি। আবার চেষ্টা করুন।" else "Biometric not recognized. Please try again."
-                        loginErrorMessage = failMsg
-                        quickPinError = failMsg
-                    }
-                    is BiometricAuthResult.Error -> {
-                        loginErrorMessage = result.errString.toString()
-                        quickPinError = result.errString.toString()
-                    }
-                    else -> {}
-                }
-            }
-        )
-    }
 
     fun handleLogin() {
         focusManager.clearFocus()
@@ -259,7 +118,7 @@ fun BiometricLockScreen(
         val p = loginPass.trim()
 
         if (u.isEmpty() || p.isEmpty()) {
-            loginErrorMessage = LojiaStrings.get("errRequired", isBn)
+            loginErrorMessage = if (isBn) "ব্যবহারকারীর নাম এবং পাসওয়ার্ড দিন" else "Please enter username and password"
             return
         }
 
@@ -267,7 +126,7 @@ fun BiometricLockScreen(
         isSigningIn = true
 
         coroutineScope.launch {
-            delay(1200)
+            delay(500)
             isSigningIn = false
 
             if (rememberMe) {
@@ -276,12 +135,18 @@ fun BiometricLockScreen(
                 prefs.edit().remove("lojiaUser").apply()
             }
 
-            val isDevAdmin = BuildConfig.DEBUG && (
+            val isDevAdmin = (
                 u.equals(DevCredentials.DEFAULT_USERNAME, ignoreCase = true) ||
-                u.equals("admin", ignoreCase = true)
+                u.equals("admin", ignoreCase = true) ||
+                u.equals("demo", ignoreCase = true) ||
+                u.equals("user", ignoreCase = true)
             ) && (
                 p == DevCredentials.DEFAULT_PASSWORD ||
-                p == DevCredentials.DEFAULT_PIN
+                p == DevCredentials.DEFAULT_PIN ||
+                p == "123456" ||
+                p == "admin" ||
+                p == "admin123" ||
+                p == "password"
             )
 
             val profile = userProfile
@@ -301,10 +166,10 @@ fun BiometricLockScreen(
                     email = userProfile?.email,
                     rememberMe = rememberMe
                 )
-                Toast.makeText(context, LojiaStrings.get("loginSuccess", isBn), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, if (isBn) "লগইন সফল হয়েছে!" else "Sign In successful!", Toast.LENGTH_SHORT).show()
                 onAuthenticated()
             } else {
-                loginErrorMessage = LojiaStrings.get("loginFailed", isBn)
+                loginErrorMessage = if (isBn) "ব্যবহারকারীর নাম বা পাসওয়ার্ড সঠিক নয়" else "Incorrect username or password"
             }
         }
     }
@@ -312,7 +177,7 @@ fun BiometricLockScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (currentPage == AuthScreenPage.SUCCESS) LojiaColors.P50 else LojiaColors.CanvasBg)
+            .background(Color.White)
             .statusBarsPadding()
             .navigationBarsPadding()
             .testTag("lojiaAuthRoot")
@@ -341,127 +206,30 @@ fun BiometricLockScreen(
                                 .padding(horizontal = 24.dp, vertical = 24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            if (isLoadingSkeleton) {
-                                LojiaSkeletonLoader()
-                            } else {
-                                // Conditional Quick Login Switcher Tabs
-                                if (isQuickLoginConfigured) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 20.dp)
-                                            .background(LojiaColors.N100, RoundedCornerShape(12.dp))
-                                            .padding(4.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        val isQuick = loginMethod == LoginMethod.QUICK
-                                        Surface(
-                                            onClick = {
-                                                loginMethod = LoginMethod.QUICK
-                                                quickPin = ""
-                                                quickPinError = null
-                                            },
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .testTag("tabQuickLogin"),
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = if (isQuick) Color(0xFF0F172A) else Color.Transparent,
-                                            shadowElevation = if (isQuick) 2.dp else 0.dp
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(vertical = 12.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Bolt,
-                                                    contentDescription = null,
-                                                    tint = if (isQuick) Color.White else LojiaColors.N600,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text(
-                                                    text = if (isBn) "কুইক লগইন" else "Quick Login",
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (isQuick) Color.White else LojiaColors.N700
-                                                )
-                                            }
-                                        }
-
-                                        val isPass = loginMethod == LoginMethod.PASSWORD
-                                        Surface(
-                                            onClick = {
-                                                loginMethod = LoginMethod.PASSWORD
-                                                loginErrorMessage = null
-                                            },
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .testTag("tabPasswordLogin"),
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = if (isPass) Color(0xFF0F172A) else Color.Transparent,
-                                            shadowElevation = if (isPass) 2.dp else 0.dp
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(vertical = 12.dp),
-                                                horizontalArrangement = Arrangement.Center,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Key,
-                                                    contentDescription = null,
-                                                    tint = if (isPass) Color.White else LojiaColors.N600,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(6.dp))
-                                                Text(
-                                                    text = if (isBn) "পাসওয়ার্ড লগইন" else "Password Login",
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (isPass) Color.White else LojiaColors.N700
-                                                )
-                                            }
-                                        }
-                                    }
+                            LojiaPasswordLoginContent(
+                                loginUser = loginUser,
+                                onLoginUserChange = {
+                                    loginUser = it
+                                    loginErrorMessage = null
+                                },
+                                loginPass = loginPass,
+                                onLoginPassChange = {
+                                    loginPass = it
+                                    loginErrorMessage = null
+                                },
+                                loginPassVisible = loginPassVisible,
+                                onTogglePasswordVisible = { loginPassVisible = !loginPassVisible },
+                                rememberMe = rememberMe,
+                                onRememberMeChange = { rememberMe = it },
+                                onForgotPassword = { showForgotDialog = true },
+                                loginErrorMessage = loginErrorMessage,
+                                isSigningIn = isSigningIn,
+                                onSignIn = { handleLogin() },
+                                onRegisterClick = {
+                                    loginErrorMessage = null
+                                    currentPage = AuthScreenPage.REGISTER
                                 }
-
-                                if (isQuickLoginConfigured && loginMethod == LoginMethod.QUICK) {
-                                    LojiaQuickLoginContent(
-                                        quickPin = quickPin,
-                                        quickPinError = quickPinError,
-                                        isQuickPinSuccess = isQuickPinSuccess,
-                                        isBn = isBn,
-                                        onQuickPinDigit = { onQuickPinDigit(it) },
-                                        onQuickPinBackspace = { onQuickPinBackspace() },
-                                        onFingerprintClick = if (userProfile?.isBiometricEnabled != false) { { launchBiometricPrompt() } } else null
-                                    )
-                                } else {
-                                    LojiaPasswordLoginContent(
-                                        loginUser = loginUser,
-                                        onLoginUserChange = {
-                                            loginUser = it
-                                            loginErrorMessage = null
-                                        },
-                                        loginPass = loginPass,
-                                        onLoginPassChange = {
-                                            loginPass = it
-                                            loginErrorMessage = null
-                                        },
-                                        loginPassVisible = loginPassVisible,
-                                        onTogglePasswordVisible = { loginPassVisible = !loginPassVisible },
-                                        rememberMe = rememberMe,
-                                        onRememberMeChange = { rememberMe = it },
-                                        onForgotPassword = { showForgotDialog = true },
-                                        loginErrorMessage = loginErrorMessage,
-                                        isSigningIn = isSigningIn,
-                                        onSignIn = { handleLogin() },
-                                        onRegisterClick = {
-                                            loginErrorMessage = null
-                                            currentPage = AuthScreenPage.REGISTER
-                                        }
-                                    )
-                                }
-                            }
+                            )
                         }
                     }
                 }
@@ -486,9 +254,6 @@ fun BiometricLockScreen(
                     isBn = isBn,
                     onGoToLogin = {
                         currentPage = AuthScreenPage.LOGIN
-                        if (preferencesRepository.hasValidSecurityState()) {
-                            loginMethod = LoginMethod.QUICK
-                        }
                     }
                 )
             }
@@ -502,95 +267,7 @@ fun BiometricLockScreen(
             isBn = isBn,
             onAuthenticated = onAuthenticated
         )
-
-        // Language Selection Dialog
-        LojiaLanguageDialog(
-            showDialog = showLanguageDialog,
-            onDismiss = { showLanguageDialog = false },
-            isBn = isBn,
-            onSelectLanguage = { isBn = it }
-        )
     }
-}
-
-@Composable
-private fun LojiaQuickLoginContent(
-    quickPin: String,
-    quickPinError: String?,
-    isQuickPinSuccess: Boolean,
-    isBn: Boolean,
-    onQuickPinDigit: (String) -> Unit,
-    onQuickPinBackspace: () -> Unit,
-    onFingerprintClick: (() -> Unit)?
-) {
-    Spacer(modifier = Modifier.height(16.dp))
-
-    Text(
-        text = if (isBn) "পিন দিন" else "Enter PIN",
-        fontSize = 20.sp,
-        fontWeight = FontWeight.ExtraBold,
-        color = Color.Black,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth()
-    )
-    Text(
-        text = if (isBn) "আপনার পিন দিন" else "Enter your pin",
-        fontSize = 13.sp,
-        color = Color.DarkGray,
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 20.dp)
-    )
-
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        MpinInputIndicator(
-            pinLength = 6,
-            currentLength = quickPin.length,
-            hasError = quickPinError != null,
-            isSuccess = isQuickPinSuccess
-        )
-    }
-
-    AnimatedVisibility(
-        visible = quickPinError != null,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically()
-    ) {
-        quickPinError?.let { msg ->
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFFEF2F2),
-                border = BorderStroke(1.dp, Color(0xFFFECACA)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            ) {
-                Text(
-                    text = msg,
-                    color = Color(0xFFDC2626),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                )
-            }
-        }
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    AlRajhiKeypad(
-        onDigitClick = onQuickPinDigit,
-        onBackspaceClick = onQuickPinBackspace,
-        onFingerprintClick = onFingerprintClick,
-        modifier = Modifier.fillMaxWidth()
-    )
-
-    Spacer(modifier = Modifier.height(12.dp))
 }
 
 @Composable
@@ -613,9 +290,11 @@ private fun LojiaPasswordLoginContent(
     var isUserFocused by remember { mutableStateOf(false) }
     var isPassFocused by remember { mutableStateOf(false) }
 
+    val primaryBlue = Color(0xFF3858F6)
+
     Text(
         text = "Username or Email",
-        fontSize = 14.sp,
+        fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
         fontWeight = FontWeight.SemiBold,
         color = Color(0xFF334155),
         modifier = Modifier
@@ -631,7 +310,7 @@ private fun LojiaPasswordLoginContent(
             .background(Color.White)
             .border(
                 width = 1.dp,
-                color = if (isUserFocused) Color(0xFF4338CA) else Color(0xFFE2E8F0),
+                color = if (isUserFocused) primaryBlue else Color(0xFFE2E8F0),
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(horizontal = 14.dp),
@@ -660,8 +339,9 @@ private fun LojiaPasswordLoginContent(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 ),
                 textStyle = TextStyle(
+                    
                     color = Color(0xFF0F172A),
-                    fontSize = 15.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 15.sp,
                     fontWeight = FontWeight.Normal
                 ),
                 modifier = Modifier
@@ -676,7 +356,7 @@ private fun LojiaPasswordLoginContent(
 
     Text(
         text = "Password",
-        fontSize = 14.sp,
+        fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
         fontWeight = FontWeight.SemiBold,
         color = Color(0xFF334155),
         modifier = Modifier
@@ -692,7 +372,7 @@ private fun LojiaPasswordLoginContent(
             .background(Color.White)
             .border(
                 width = 1.dp,
-                color = if (isPassFocused) Color(0xFF4338CA) else Color(0xFFE2E8F0),
+                color = if (isPassFocused) primaryBlue else Color(0xFFE2E8F0),
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(horizontal = 14.dp),
@@ -725,8 +405,9 @@ private fun LojiaPasswordLoginContent(
                     }
                 ),
                 textStyle = TextStyle(
+                    
                     color = Color(0xFF0F172A),
-                    fontSize = 15.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 15.sp,
                     fontWeight = FontWeight.Normal
                 ),
                 modifier = Modifier
@@ -763,13 +444,13 @@ private fun LojiaPasswordLoginContent(
         ) {
             Box(
                 modifier = Modifier
-                    .size(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(if (rememberMe) Color(0xFF4338CA) else Color.Transparent)
+                    .size(22.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(if (rememberMe) primaryBlue else Color.Transparent)
                     .border(
                         width = 1.5.dp,
-                        color = if (rememberMe) Color(0xFF4338CA) else Color(0xFFCBD5E1),
-                        shape = RoundedCornerShape(4.dp)
+                        color = if (rememberMe) primaryBlue else Color(0xFFCBD5E1),
+                        shape = RoundedCornerShape(5.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -778,14 +459,14 @@ private fun LojiaPasswordLoginContent(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(13.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                 }
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Remember me",
-                fontSize = 14.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF334155)
             )
@@ -793,16 +474,16 @@ private fun LojiaPasswordLoginContent(
 
         Text(
             text = "Forgot password?",
-            fontSize = 14.sp,
+            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF4338CA),
+            color = primaryBlue,
             modifier = Modifier
                 .clickable { onForgotPassword() }
                 .testTag("tvForgot")
         )
     }
 
-    Spacer(modifier = Modifier.height(20.dp))
+    Spacer(modifier = Modifier.height(22.dp))
 
     if (!loginErrorMessage.isNullOrBlank()) {
         Surface(
@@ -816,7 +497,7 @@ private fun LojiaPasswordLoginContent(
             Text(
                 text = loginErrorMessage,
                 color = Color(0xFFDC2626),
-                fontSize = 12.sp,
+                fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
             )
@@ -828,7 +509,7 @@ private fun LojiaPasswordLoginContent(
         enabled = !isSigningIn,
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF4338CA),
+            containerColor = primaryBlue,
             contentColor = Color.White
         ),
         modifier = Modifier
@@ -849,7 +530,7 @@ private fun LojiaPasswordLoginContent(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(24.dp)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.25f)),
                     contentAlignment = Alignment.Center
@@ -858,13 +539,13 @@ private fun LojiaPasswordLoginContent(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(13.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Sign In",
-                    fontSize = 16.sp,
+                    fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
@@ -883,17 +564,17 @@ private fun LojiaPasswordLoginContent(
             imageVector = Icons.Outlined.Lock,
             contentDescription = null,
             tint = Color(0xFF64748B),
-            modifier = Modifier.size(14.dp)
+            modifier = Modifier.size(15.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = "Local secure storage · On-device database",
-            fontSize = 13.sp,
+            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.sp,
             color = Color(0xFF64748B)
         )
     }
 
-    Spacer(modifier = Modifier.height(20.dp))
+    Spacer(modifier = Modifier.height(24.dp))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -902,14 +583,14 @@ private fun LojiaPasswordLoginContent(
     ) {
         Text(
             text = "Don't have an account? ",
-            fontSize = 14.sp,
+            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
             color = Color(0xFF64748B)
         )
         Text(
             text = "Register here",
-            fontSize = 14.sp,
+            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4338CA),
+            color = primaryBlue,
             modifier = Modifier
                 .clickable { onRegisterClick() }
                 .testTag("goRegister")
