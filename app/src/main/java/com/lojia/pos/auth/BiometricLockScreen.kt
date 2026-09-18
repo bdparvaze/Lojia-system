@@ -79,13 +79,19 @@ fun BiometricLockScreen(
 
     val preferencesRepository = remember(context) { PreferencesRepository.getInstance(context) }
     
-    var currentPage by remember(userProfile) {
+    val isUserRegistered = (userProfile != null && userProfile.isRegistered) || preferencesRepository.getSavedUsername().isNotBlank()
+
+    val isQuickSecurityEnabled = isUserRegistered && (
+        (preferencesRepository.isQuickLoginEnabled() && (preferencesRepository.hasPinConfigured() || !preferencesRepository.getStoredPinHash().isNullOrBlank())) ||
+        preferencesRepository.isBiometricEnabled() ||
+        (userProfile?.isBiometricEnabled == true)
+    )
+
+    var currentPage by remember(userProfile, isQuickSecurityEnabled) {
         mutableStateOf(
-            if (userProfile != null && !userProfile.isRegistered) {
+            if (userProfile != null && !userProfile.isRegistered && preferencesRepository.getSavedUsername().isBlank()) {
                 AuthScreenPage.REGISTER
-            } else if (!BuildConfig.DEBUG && (userProfile == null || !userProfile.isRegistered)) {
-                AuthScreenPage.REGISTER
-            } else if (preferencesRepository.shouldDefaultToQuickLogin()) {
+            } else if (isUserRegistered && isQuickSecurityEnabled) {
                 AuthScreenPage.QUICK_PIN
             } else {
                 AuthScreenPage.LOGIN
@@ -591,28 +597,7 @@ private fun LojiaPasswordLoginContent(
         }
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Lock,
-            contentDescription = null,
-            tint = Color(0xFF64748B),
-            modifier = Modifier.size(15.dp)
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = "Local secure storage · On-device database",
-            fontFamily = com.lojia.pos.ui.theme.PoppinsFontFamily, fontSize = 13.sp,
-            color = Color(0xFF64748B)
-        )
-    }
-
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(28.dp))
 
     Row(
         modifier = Modifier.fillMaxWidth(),

@@ -37,7 +37,7 @@ data class UserProfile(
     val avatarIndex: Int = 0,
     val dateOfBirthOrJoin: String = "01 Jan 2024",
     val emergencyContact: String = "",
-    val pin: String = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN),
+    val pin: String = "",
     val isBiometricEnabled: Boolean = false,
     val autoLockMinutes: Int = 5, // 0 = Never, 1, 5, 15, 30
     val currentRole: String = "ADMIN", // ADMIN, CASHIER

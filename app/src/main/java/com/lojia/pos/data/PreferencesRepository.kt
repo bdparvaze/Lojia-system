@@ -53,41 +53,61 @@ class PreferencesRepository private constructor(context: Context) {
     }
 
     init {
-        // Debug seeding: in debug builds, if uninitialized, set default seed so user has a valid security state
-        if (BuildConfig.DEBUG && !prefs.contains(KEY_QUICK_LOGIN_ENABLED)) {
+        // Guarantee that Quick Login, PIN, and Biometric are NEVER auto-enabled or seeded with a default PIN.
+        // First-time user experience must remain clean (only Register/Login screen).
+        if (BuildConfig.DEBUG && !prefs.contains(KEY_SAVED_USERNAME)) {
             prefs.edit().apply {
-                putBoolean(KEY_QUICK_LOGIN_ENABLED, true)
-                putBoolean(KEY_BIOMETRIC_ENABLED, true)
-                putString(KEY_STORED_PIN_HASH, SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN))
-                putBoolean(KEY_HAS_PIN_CONFIGURED, true)
                 putString(KEY_SAVED_USERNAME, DevCredentials.DEFAULT_USERNAME)
                 putString(KEY_SAVED_FULL_NAME, "Demo Owner")
-                putBoolean(KEY_HAS_ACTIVE_SESSION, true)
                 putBoolean(KEY_REMEMBER_ME, true)
+                putBoolean(KEY_QUICK_LOGIN_ENABLED, false)
+                putBoolean(KEY_BIOMETRIC_ENABLED, false)
+                putBoolean(KEY_HAS_PIN_CONFIGURED, false)
+                remove(KEY_STORED_PIN_HASH)
                 apply()
             }
+        }
+        if (!prefs.contains(KEY_QUICK_LOGIN_ENABLED)) {
+            prefs.edit().putBoolean(KEY_QUICK_LOGIN_ENABLED, false).apply()
+        }
+        if (!prefs.contains(KEY_BIOMETRIC_ENABLED)) {
+            prefs.edit().putBoolean(KEY_BIOMETRIC_ENABLED, false).apply()
+        }
+        if (!prefs.contains(KEY_HAS_PIN_CONFIGURED)) {
+            prefs.edit().putBoolean(KEY_HAS_PIN_CONFIGURED, false).apply()
         }
     }
 
     /**
      * Checks if there is a valid security state configured:
      * 1. A stored user session or saved identity exists AND
-     * 2. Quick Login is enabled with a configured PIN or Biometric verification.
+     * 2. The user has explicitly enabled Quick Login PIN or Biometric verification.
      */
     fun hasValidSecurityState(): Boolean {
         val hasSession = hasActiveSession() || getSavedUsername().isNotBlank()
-        val hasPin = hasPinConfigured() || !getStoredPinHash().isNullOrBlank()
-        val isBio = isBiometricEnabled()
-        val isQuickEnabled = isQuickLoginEnabled()
+        val isPinReady = isQuickLoginEnabled() && (hasPinConfigured() || !getStoredPinHash().isNullOrBlank())
+        val isBioReady = isBiometricEnabled()
 
-        return (hasPin || isBio || isQuickEnabled) && hasSession
+        return (isPinReady || isBioReady) && hasSession
     }
 
     /**
-     * Determines whether the app should default directly to the Quick Login screen.
+     * Determines whether the app should default to the Quick Login screen.
+     * International standards: ONLY true if user has explicitly enabled PIN or Biometric.
      */
     fun shouldDefaultToQuickLogin(): Boolean {
         return hasValidSecurityState()
+    }
+
+    /**
+     * Toggles the Quick Login PIN authentication status.
+     */
+    fun setQuickLoginEnabled(enabled: Boolean) {
+        prefs.edit().apply {
+            putBoolean(KEY_QUICK_LOGIN_ENABLED, enabled)
+            apply()
+        }
+        _isQuickLoginActive.value = shouldDefaultToQuickLogin()
     }
 
     /**
@@ -161,16 +181,17 @@ class PreferencesRepository private constructor(context: Context) {
     /**
      * Verifies an entered PIN against the stored hash in PreferencesRepository,
      * or a fallback profile PIN hash.
+     * Strictly requires PIN configuration to be active - no auto debug backdoor.
      */
     fun verifyPin(enteredPin: String, fallbackPinHash: String? = null): Boolean {
+        if (!isQuickLoginEnabled() && !hasPinConfigured()) {
+            return false
+        }
         val storedHash = getStoredPinHash()
         if (!storedHash.isNullOrBlank() && SecurityUtils.verifySecret(enteredPin, storedHash)) {
             return true
         }
         if (!fallbackPinHash.isNullOrBlank() && SecurityUtils.verifySecret(enteredPin, fallbackPinHash)) {
-            return true
-        }
-        if (BuildConfig.DEBUG && enteredPin == DevCredentials.DEFAULT_PIN) {
             return true
         }
         return false
@@ -193,10 +214,17 @@ class PreferencesRepository private constructor(context: Context) {
             }
             putBoolean(KEY_BIOMETRIC_ENABLED, profile.isBiometricEnabled)
             if (profile.pin.isNotBlank()) {
-                putString(KEY_STORED_PIN_HASH, SecurityUtils.hashSecret(profile.pin))
+                val hashToStore = if (profile.pin.length == 64 && profile.pin.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
+                    profile.pin
+                } else {
+                    SecurityUtils.hashSecret(profile.pin)
+                }
+                putString(KEY_STORED_PIN_HASH, hashToStore)
                 putBoolean(KEY_HAS_PIN_CONFIGURED, true)
+            } else {
+                putBoolean(KEY_HAS_PIN_CONFIGURED, false)
+                remove(KEY_STORED_PIN_HASH)
             }
-            putBoolean(KEY_QUICK_LOGIN_ENABLED, true)
             apply()
         }
         _isQuickLoginActive.value = shouldDefaultToQuickLogin()

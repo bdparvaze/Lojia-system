@@ -127,7 +127,7 @@ abstract class AppDatabase : RoomDatabase() {
                         avatarIndex = 0,
                         dateOfBirthOrJoin = "01 Jan 2024",
                         emergencyContact = "",
-                        pin = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN),
+                        pin = "",
                         isBiometricEnabled = false,
                         autoLockMinutes = 5,
                         currentRole = "ADMIN",
@@ -172,7 +172,7 @@ abstract class AppDatabase : RoomDatabase() {
                         username = DevCredentials.DEFAULT_USERNAME,
                         passwordHash = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PASSWORD),
                         role = "ADMIN",
-                        pin = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN)
+                        pin = ""
                     )
                 )
 

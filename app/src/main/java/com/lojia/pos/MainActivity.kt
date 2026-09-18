@@ -204,6 +204,21 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             var isAuthenticated by remember { mutableStateOf(false) }
             var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
+            LaunchedEffect(isAuthenticated, lastInteractionTime, userProfile?.autoLockMinutes) {
+                val lockMinutes = userProfile?.autoLockMinutes ?: 5
+                if (isAuthenticated && lockMinutes > 0) {
+                    while (true) {
+                        kotlinx.coroutines.delay(10_000)
+                        val elapsed = System.currentTimeMillis() - lastInteractionTime
+                        if (elapsed >= lockMinutes * 60 * 1000L) {
+                            reportViewModel.preferencesRepository.recordLogout(keepQuickLoginState = true)
+                            isAuthenticated = false
+                            break
+                        }
+                    }
+                }
+            }
+
             val performSecureModuleSwitch: (AppModule) -> Unit = { targetModule ->
                 if (targetModule != activeModule) {
                     reportViewModel.switchModule(targetModule)

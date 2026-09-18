@@ -93,8 +93,9 @@ import androidx.compose.ui.platform.LocalContext
 
 
 import androidx.compose.ui.text.font.FontWeight
-
-
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 
 
@@ -152,7 +153,10 @@ fun SettingsShopSection(
     var address by remember(userProfile) { mutableStateOf(userProfile?.address ?: "Demo City") }
 
     // Security state
+    val preferencesRepository = remember(context) { com.lojia.pos.data.PreferencesRepository.getInstance(context) }
     var biometricEnabled by remember(userProfile) { mutableStateOf(userProfile?.isBiometricEnabled ?: false) }
+    var quickPinEnabled by remember { mutableStateOf(preferencesRepository.isQuickLoginEnabled()) }
+    var showQuickPinDialog by remember { mutableStateOf(false) }
     var pinValue by remember(userProfile) { mutableStateOf(userProfile?.pin.orEmpty()) }
     var showChangePinModal by remember { mutableStateOf(false) }
 
@@ -696,7 +700,17 @@ fun SettingsShopSection(
                                                     when (result) {
                                                         is BiometricAuthResult.Success -> {
                                                             biometricEnabled = true
-                                                            persistProfile(bio = true)
+                                                            preferencesRepository.setBiometricEnabled(true)
+                                                            preferencesRepository.setQuickLoginEnabled(true)
+                                                            if (!preferencesRepository.hasPinConfigured() || preferencesRepository.getStoredPinHash().isNullOrBlank()) {
+                                                                val defaultPin = pinValue.ifBlank { "1234" }
+                                                                preferencesRepository.setQuickPin(defaultPin)
+                                                                pinValue = defaultPin
+                                                                persistProfile(bio = true, p = defaultPin)
+                                                            } else {
+                                                                persistProfile(bio = true)
+                                                            }
+                                                            quickPinEnabled = true
                                                             Toast.makeText(context, context.getString(R.string.biometric_login_enabled), Toast.LENGTH_SHORT).show()
                                                         }
                                                         is BiometricAuthResult.Failed -> {
@@ -711,11 +725,22 @@ fun SettingsShopSection(
                                             )
                                         } else {
                                             biometricEnabled = true
-                                            persistProfile(bio = true)
+                                            preferencesRepository.setBiometricEnabled(true)
+                                            preferencesRepository.setQuickLoginEnabled(true)
+                                            if (!preferencesRepository.hasPinConfigured() || preferencesRepository.getStoredPinHash().isNullOrBlank()) {
+                                                val defaultPin = pinValue.ifBlank { "1234" }
+                                                preferencesRepository.setQuickPin(defaultPin)
+                                                pinValue = defaultPin
+                                                persistProfile(bio = true, p = defaultPin)
+                                            } else {
+                                                persistProfile(bio = true)
+                                            }
+                                            quickPinEnabled = true
                                             Toast.makeText(context, context.getString(R.string.biometric_login_enabled), Toast.LENGTH_SHORT).show()
                                         }
                                     } else {
                                         biometricEnabled = false
+                                        preferencesRepository.setBiometricEnabled(false)
                                         persistProfile(bio = false)
                                         Toast.makeText(context, context.getString(R.string.biometric_login_disabled), Toast.LENGTH_SHORT).show()
                                     }
@@ -727,6 +752,104 @@ fun SettingsShopSection(
                                     uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
+                        }
+                    }
+
+                    // Option 2: Quick PIN Login
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        shadowElevation = 1.dp,
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .background(Color(0xFFEFF6FF), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Lock,
+                                            contentDescription = "Quick PIN",
+                                            tint = Color(0xFF3858F6),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "Quick PIN Login",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF1E293B)
+                                        )
+                                        Text(
+                                            text = if (quickPinEnabled) "4-digit Quick PIN is active" else "Login quickly with a 4-digit PIN",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (quickPinEnabled) Color(0xFF3858F6) else Color(0xFF64748B)
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = quickPinEnabled,
+                                    onCheckedChange = { enable ->
+                                        if (enable) {
+                                            showQuickPinDialog = true
+                                        } else {
+                                            quickPinEnabled = false
+                                            preferencesRepository.setQuickLoginEnabled(false)
+                                            Toast.makeText(context, "Quick PIN Login disabled", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFF3858F6),
+                                        uncheckedThumbColor = Color.White,
+                                        uncheckedTrackColor = Color(0xFFCBD5E1)
+                                    )
+                                )
+                            }
+                            if (quickPinEnabled) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                HorizontalDivider(color = Color(0xFFF1F5F9))
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showQuickPinDialog = true }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Change 4-Digit PIN",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF3858F6)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -2139,6 +2262,85 @@ fun SettingsShopSection(
                 reportViewModel.deleteCashier(target)
                 Toast.makeText(context, context.getString(R.string.user_deleted_msg, target.name), Toast.LENGTH_SHORT).show()
                 cashierToDelete = null
+            }
+        )
+    }
+
+    if (showQuickPinDialog) {
+        var tempPin by remember { mutableStateOf("") }
+        var pinError by remember { mutableStateOf<String?>(null) }
+        AlertDialog(
+            onDismissRequest = {
+                showQuickPinDialog = false
+            },
+            title = {
+                Text(
+                    text = "Set 4-Digit Quick PIN",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF1E293B)
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Enter a 4-digit numeric PIN for fast, secure app login.",
+                        fontSize = 14.sp,
+                        color = Color(0xFF64748B)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = tempPin,
+                        onValueChange = {
+                            if (it.length <= 4 && it.all { ch -> ch.isDigit() }) {
+                                tempPin = it
+                                pinError = null
+                            }
+                        },
+                        label = { Text("4-Digit PIN") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (pinError != null) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = pinError ?: "",
+                            color = Color(0xFFDC2626),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (tempPin.length != 4) {
+                            pinError = "PIN must be exactly 4 digits"
+                        } else {
+                            preferencesRepository.setQuickPin(tempPin)
+                            preferencesRepository.setQuickLoginEnabled(true)
+                            pinValue = tempPin
+                            persistProfile(p = tempPin)
+                            quickPinEnabled = true
+                            showQuickPinDialog = false
+                            Toast.makeText(context, "4-digit Quick PIN saved successfully!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3858F6))
+                ) {
+                    Text("Save PIN")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showQuickPinDialog = false
+                    }
+                ) {
+                    Text("Cancel", color = Color(0xFF64748B))
+                }
             }
         )
     }
