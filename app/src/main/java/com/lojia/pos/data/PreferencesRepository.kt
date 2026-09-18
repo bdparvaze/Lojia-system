@@ -84,8 +84,9 @@ class PreferencesRepository private constructor(context: Context) {
      * 2. The user has explicitly enabled Quick Login PIN or Biometric verification.
      */
     fun hasValidSecurityState(): Boolean {
+        if (!isQuickLoginEnabled()) return false
         val hasSession = hasActiveSession() || getSavedUsername().isNotBlank()
-        val isPinReady = isQuickLoginEnabled() && (hasPinConfigured() || !getStoredPinHash().isNullOrBlank())
+        val isPinReady = hasPinConfigured() || !getStoredPinHash().isNullOrBlank()
         val isBioReady = isBiometricEnabled()
 
         return (isPinReady || isBioReady) && hasSession
@@ -212,7 +213,11 @@ class PreferencesRepository private constructor(context: Context) {
             if (profile.email.isNotBlank()) {
                 putString(KEY_SAVED_EMAIL, profile.email)
             }
-            putBoolean(KEY_BIOMETRIC_ENABLED, profile.isBiometricEnabled)
+            if (isQuickLoginEnabled()) {
+                putBoolean(KEY_BIOMETRIC_ENABLED, profile.isBiometricEnabled)
+            } else {
+                putBoolean(KEY_BIOMETRIC_ENABLED, false)
+            }
             if (profile.pin.isNotBlank()) {
                 val hashToStore = if (profile.pin.length == 64 && profile.pin.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
                     profile.pin

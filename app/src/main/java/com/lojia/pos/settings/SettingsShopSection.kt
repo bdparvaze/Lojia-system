@@ -741,6 +741,9 @@ fun SettingsShopSection(
                                     } else {
                                         biometricEnabled = false
                                         preferencesRepository.setBiometricEnabled(false)
+                                        if (!quickPinEnabled) {
+                                            preferencesRepository.setQuickLoginEnabled(false)
+                                        }
                                         persistProfile(bio = false)
                                         Toast.makeText(context, context.getString(R.string.biometric_login_disabled), Toast.LENGTH_SHORT).show()
                                     }
@@ -812,7 +815,10 @@ fun SettingsShopSection(
                                             showQuickPinDialog = true
                                         } else {
                                             quickPinEnabled = false
-                                            preferencesRepository.setQuickLoginEnabled(false)
+                                            if (!biometricEnabled) {
+                                                preferencesRepository.setQuickLoginEnabled(false)
+                                            }
+                                            persistProfile(p = "")
                                             Toast.makeText(context, "Quick PIN Login disabled", Toast.LENGTH_SHORT).show()
                                         }
                                     },

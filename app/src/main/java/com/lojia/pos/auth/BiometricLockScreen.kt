@@ -81,10 +81,10 @@ fun BiometricLockScreen(
     
     val isUserRegistered = (userProfile != null && userProfile.isRegistered) || preferencesRepository.getSavedUsername().isNotBlank()
 
-    val isQuickSecurityEnabled = isUserRegistered && (
-        (preferencesRepository.isQuickLoginEnabled() && (preferencesRepository.hasPinConfigured() || !preferencesRepository.getStoredPinHash().isNullOrBlank())) ||
-        preferencesRepository.isBiometricEnabled() ||
-        (userProfile?.isBiometricEnabled == true)
+    val isQuickSecurityEnabled = isUserRegistered && preferencesRepository.isQuickLoginEnabled() && (
+        preferencesRepository.hasPinConfigured() ||
+        !preferencesRepository.getStoredPinHash().isNullOrBlank() ||
+        preferencesRepository.isBiometricEnabled()
     )
 
     var currentPage by remember(userProfile, isQuickSecurityEnabled) {
