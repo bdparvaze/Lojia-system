@@ -64,6 +64,8 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 
 
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.platform.testTag
 
 
 import androidx.compose.material3.*
@@ -157,11 +159,12 @@ fun SettingsReportSection(
     // 3. Backup State
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault())
     val lastBackupFormatted = remember(lastBackupTime) {
-        if (lastBackupTime > 0L) dateFormatter.format(Date(lastBackupTime)) else "Today at 02:45 PM"
+        if (lastBackupTime > 0L) dateFormatter.format(Date(lastBackupTime)) else "Never"
     }
 
     var showRestoreConfirmDialog by remember { mutableStateOf(false) }
     var showClearAllDataConfirmDialog by remember { mutableStateOf(false) }
+    var showAutoBackupDialog by remember { mutableStateOf(false) }
     var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
     var pendingBackupSummary by remember { mutableStateOf<BackupSummary?>(null) }
     var lastCreatedBackupInfo by remember { mutableStateOf<BackupInfo?>(null) }
@@ -722,536 +725,534 @@ fun SettingsReportSection(
             }
 
             // =================================================================
-            // 3. BACKUP
+            // 3. BACKUP & RESTORE
             // =================================================================
             "backup" -> {
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.Settings,
-                    title = stringResource(R.string.backup_settings),
-                    subtitle = stringResource(R.string.backup_settings_desc),
-                    onClick = {}
-                )
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.AccessTime,
-                    title = stringResource(R.string.last_backup),
-                    subtitle = lastBackupFormatted,
-                    onClick = {}
-                )
-
-                // =============================================================
-                // FIREBASE CLOUD SYNC CARD (OFFLINE-FIRST ARCHITECTURE)
-                // =============================================================
-                Card(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                    border = BorderStroke(1.dp, if (firebaseSyncState.isEnabled) Color(0xFF38BDF8) else Color(0xFFE2E8F0)),
-                    shape = RoundedCornerShape(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // Title & Switch Row
+                    // 1. Header
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = stringResource(R.string.backup_and_storage),
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            color = Color(0xFF0F172A)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Keep your business data safe on this device",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
+                    // 2. Status Card (Simple, clean, calm)
+                    Surface(
+                        color = Color(0xFFF8FAFC),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(42.dp)
+                                        .size(40.dp)
                                         .background(
-                                            if (firebaseSyncState.isEnabled) Color(0xFF0284C7) else Color(0xFF94A3B8),
-                                            RoundedCornerShape(10.dp)
+                                            if (lastBackupTime > 0L) Color(0xFFDCFCE7) else Color(0xFFFEF3C7),
+                                            CircleShape
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Outlined.CloudSync,
+                                        imageVector = if (lastBackupTime > 0L) Icons.Outlined.CheckCircle else Icons.Outlined.Schedule,
                                         contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(24.dp)
+                                        tint = if (lastBackupTime > 0L) Color(0xFF16A34A) else Color(0xFFD97706),
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = stringResource(R.string.firebase_sync_title),
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
+                                        text = stringResource(R.string.last_backup),
+                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                        color = Color(0xFF64748B)
+                                    )
+                                    Text(
+                                        text = if (lastBackupTime > 0L) lastBackupFormatted else "Never",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = Color(0xFF0F172A)
+                                    )
+                                }
+                            }
+
+                            // Indicator Badge
+                            Surface(
+                                color = if (lastBackupTime > 0L) Color(0xFFDCFCE7) else Color(0xFFFEF3C7),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = if (lastBackupTime > 0L) "Protected" else "Action Needed",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = if (lastBackupTime > 0L) Color(0xFF15803D) else Color(0xFFB45309)
+                                )
+                            }
+                        }
+                    }
+
+                    // 3. Primary Actions (Clean, no duplicate buttons)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                if (!isBackingUp) {
+                                    reportViewModel.createOfflineBackup(
+                                        onSuccess = { info -> lastCreatedBackupInfo = info }
+                                    )
+                                }
+                            },
+                            enabled = !isBackingUp,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("create_backup_btn")
+                        ) {
+                            if (isBackingUp) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.5.dp,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.backup_in_progress),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            } else {
+                                Icon(Icons.Outlined.Download, contentDescription = null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.backup_data_title),
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                restoreFileLauncher.launch("*/*")
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("restore_from_file_btn")
+                        ) {
+                            Icon(Icons.Outlined.Restore, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.restore_backup_title),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
+
+                    // Recently Created Backup Banner Card (if active)
+                    if (lastCreatedBackupInfo != null) {
+                        val info = lastCreatedBackupInfo!!
+                        Surface(
+                            color = Color(0xFFF0FDF4),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFF86EFAC)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(22.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.backup_created_success, info.fileName),
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = Color(0xFF15803D)
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "${info.savedPath} • ${info.totalRecords} records",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF166534)
+                                    )
+                                }
+                                IconButton(onClick = { lastCreatedBackupInfo = null }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Color(0xFF166534), modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
+
+                    // 4. Auto Backup (Single Row)
+                    Surface(
+                        onClick = { showAutoBackupDialog = true },
+                        color = Color.White,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(Color(0xFFF1F5F9), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Outlined.Autorenew, contentDescription = null, tint = Color(0xFF475569), modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.auto_backups),
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = Color(0xFF0F172A)
                                     )
                                     Text(
-                                        text = stringResource(R.string.firebase_sync_enable_desc),
-                                        fontSize = 12.sp,
+                                        text = when (autoBackupFreq) {
+                                            "Daily" -> stringResource(R.string.daily)
+                                            "Weekly" -> stringResource(R.string.weekly)
+                                            "Monthly" -> stringResource(R.string.monthly)
+                                            else -> autoBackupFreq ?: stringResource(R.string.daily)
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = Color(0xFF64748B)
                                     )
                                 }
                             }
-                            Switch(
-                                checked = firebaseSyncState.isEnabled,
-                                onCheckedChange = { isChecked ->
-                                    reportViewModel.toggleFirebaseCloudSync(isChecked)
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = Color(0xFF0284C7)
-                                )
-                            )
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF94A3B8))
                         }
+                    }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
 
-                        // Status Badge & State
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    if (!firebaseSyncState.isEnabled) Color(0xFFF1F5F9)
-                                    else if (firebaseSyncState.isSyncing) Color(0xFFEFF6FF)
-                                    else if (firebaseSyncState.isCloudReachable) Color(0xFFF0FDF4)
-                                    else Color(0xFFFEF3C7),
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (firebaseSyncState.isSyncing) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(14.dp),
-                                        strokeWidth = 2.dp,
-                                        color = Color(0xFF0284C7)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = if (!firebaseSyncState.isEnabled) Icons.Outlined.CloudOff
-                                        else if (firebaseSyncState.isCloudReachable) Icons.Outlined.CheckCircle
-                                        else Icons.Outlined.CloudQueue,
-                                        contentDescription = null,
-                                        tint = if (!firebaseSyncState.isEnabled) Color(0xFF64748B)
-                                        else if (firebaseSyncState.isCloudReachable) Color(0xFF16A34A)
-                                        else Color(0xFFD97706),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (!firebaseSyncState.isEnabled) {
-                                        stringResource(R.string.firebase_sync_disabled)
-                                    } else if (firebaseSyncState.isSyncing) {
-                                        stringResource(R.string.firebase_sync_in_progress)
-                                    } else if (firebaseSyncState.isCloudReachable) {
-                                        firebaseSyncState.statusMessage
-                                    } else {
-                                        stringResource(R.string.firebase_sync_cloud_down)
-                                    },
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (!firebaseSyncState.isEnabled) Color(0xFF475569)
-                                    else if (firebaseSyncState.isSyncing) Color(0xFF0284C7)
-                                    else if (firebaseSyncState.isCloudReachable) Color(0xFF15803D)
-                                    else Color(0xFF92400E)
-                                )
-                            }
-                        }
-
-                        if (firebaseSyncState.isEnabled) {
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // Last Sync Time Info Row & Sync Now Button
+                    // 5. Google Drive (Separate Compact Section)
+                    Surface(
+                        color = Color(0xFFF8FAFC),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Outlined.AccessTime, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (firebaseSyncState.lastSyncTimestamp > 0L) {
-                                            stringResource(R.string.firebase_sync_last_time, FirebaseCloudSyncManager.formatSyncTime(firebaseSyncState.lastSyncTimestamp))
-                                        } else {
-                                            stringResource(R.string.firebase_sync_never)
-                                        },
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF475569)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(Color(0xFFEFF6FF), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Outlined.CloudQueue, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = "Google Drive",
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color(0xFF0F172A)
+                                        )
+                                        Text(
+                                            text = if (driveAccount.isConnected) {
+                                                driveAccount.email ?: stringResource(R.string.drive_connected_as, "")
+                                            } else {
+                                                stringResource(R.string.drive_not_connected)
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (driveAccount.isConnected) Color(0xFF16A34A) else Color(0xFF64748B)
+                                        )
+                                    }
                                 }
 
-                                Button(
-                                    onClick = { reportViewModel.syncFirebaseNow() },
-                                    enabled = !firebaseSyncState.isSyncing,
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    if (firebaseSyncState.isSyncing) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(14.dp),
-                                            strokeWidth = 2.dp,
-                                            color = Color.White
-                                        )
-                                    } else {
-                                        Icon(Icons.Outlined.Sync, contentDescription = null, modifier = Modifier.size(14.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(stringResource(R.string.firebase_sync_now), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                if (driveAccount.isConnected) {
+                                    TextButton(
+                                        onClick = { reportViewModel.disconnectGoogleDrive() },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(stringResource(R.string.btn_disconnect_drive), color = Color(0xFFDC2626), fontSize = 12.sp)
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = { reportViewModel.connectGoogleDrive(context) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(stringResource(R.string.btn_connect_drive), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
 
-                            // Synced summary if present
-                            if (firebaseSyncState.lastSyncSummary.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = firebaseSyncState.lastSyncSummary,
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF059669),
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                            if (driveAccount.isConnected) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    // Backup to Drive
+                                    Button(
+                                        onClick = { reportViewModel.backupToGoogleDrive() },
+                                        enabled = !isDriveUploading,
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        if (isDriveUploading) {
+                                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                                        } else {
+                                            Icon(Icons.Outlined.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(stringResource(R.string.backup_to_drive_title), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
 
-                            Spacer(modifier = Modifier.height(10.dp))
-                            HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 0.8.dp)
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Sync Details: Products, Categories, Shift Reports, Sales, Business Profile
-                            Text(
-                                text = "Synced Entities: Products • Categories • Shift Reports • Sales • Business Profile",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF334155)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.firebase_sync_conflict_note),
-                                fontSize = 10.sp,
-                                color = Color(0xFF64748B)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.firebase_sync_security_note),
-                                fontSize = 10.sp,
-                                color = Color(0xFF10B981),
-                                fontWeight = FontWeight.Medium
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.firebase_sync_project_id, FirebaseCloudSyncManager.DEFAULT_PROJECT_ID),
-                                fontSize = 10.sp,
-                                color = Color(0xFF94A3B8)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // 1. OFFLINE BACKUP DATA BUTTON
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.Download,
-                    title = stringResource(R.string.backup_data_title),
-                    subtitle = stringResource(R.string.backup_data_desc),
-                    trailing = {
-                        if (isBackingUp) {
-                            CircularProgressIndicator(
-                                progress = { backupProgress },
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.5.dp,
-                                color = Color(0xFF10B981)
-                            )
-                        } else {
-                            Button(
-                                onClick = {
-                                    reportViewModel.createOfflineBackup(
-                                        onSuccess = { info -> lastCreatedBackupInfo = info }
-                                    )
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Outlined.Download, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.backup_data_title), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    // Restore from Drive
+                                    OutlinedButton(
+                                        onClick = {
+                                            reportViewModel.fetchGoogleDriveBackups()
+                                            showDriveBackupsPicker = true
+                                        },
+                                        enabled = !isDriveDownloading && !isDriveLoadingList,
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        if (isDriveDownloading || isDriveLoadingList) {
+                                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color(0xFF2563EB), strokeWidth = 2.dp)
+                                        } else {
+                                            Icon(Icons.Outlined.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(stringResource(R.string.restore_from_drive_title), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
                         }
-                    },
-                    onClick = {
-                        if (!isBackingUp) {
-                            reportViewModel.createOfflineBackup(
-                                onSuccess = { info -> lastCreatedBackupInfo = info }
-                            )
-                        }
                     }
-                )
 
-                // 2. OFFLINE RESTORE BACKUP BUTTON
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.Restore,
-                    title = stringResource(R.string.restore_backup_title),
-                    subtitle = stringResource(R.string.restore_backup_desc),
-                    trailing = {
-                        OutlinedButton(
-                            onClick = {
-                                restoreFileLauncher.launch("*/*")
-                            },
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Icon(Icons.Outlined.Restore, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.restore_backup_title), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    onClick = {
-                        restoreFileLauncher.launch("*/*")
-                    }
-                )
+                    HorizontalDivider(color = Color(0xFFF1F5F9))
 
-                // Recently Created Backup Banner Card
-                if (lastCreatedBackupInfo != null) {
-                    val info = lastCreatedBackupInfo!!
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FDF4)),
-                        border = BorderStroke(1.dp, Color(0xFF86EFAC)),
-                        shape = RoundedCornerShape(12.dp)
+                    // 6. Cloud Sync / Firebase (Clean Submenu)
+                    Surface(
+                        color = Color(0xFFF8FAFC),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, if (firebaseSyncState.isEnabled) Color(0xFF38BDF8) else Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = stringResource(R.string.backup_created_success, info.fileName),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF15803D)
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(if (firebaseSyncState.isEnabled) Color(0xFF0284C7) else Color(0xFF94A3B8), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Outlined.CloudSync, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = stringResource(R.string.firebase_sync_title),
+                                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = Color(0xFF0F172A)
+                                        )
+                                        Text(
+                                            text = if (firebaseSyncState.lastSyncTimestamp > 0L) {
+                                                stringResource(R.string.firebase_sync_last_time, FirebaseCloudSyncManager.formatSyncTime(firebaseSyncState.lastSyncTimestamp))
+                                            } else {
+                                                stringResource(R.string.firebase_sync_never)
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFF64748B)
+                                        )
+                                    }
+                                }
+
+                                Switch(
+                                    checked = firebaseSyncState.isEnabled,
+                                    onCheckedChange = { isChecked ->
+                                        reportViewModel.toggleFirebaseCloudSync(isChecked)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFF0284C7)
+                                    )
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Path: ${info.savedPath} • ${info.totalRecords} records included",
-                                fontSize = 11.sp,
-                                color = Color(0xFF166534)
-                            )
+
+                            if (firebaseSyncState.isEnabled) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = if (firebaseSyncState.isSyncing) "Syncing in background..." else firebaseSyncState.statusMessage,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (firebaseSyncState.isSyncing) Color(0xFF0284C7) else Color(0xFF15803D)
+                                    )
+
+                                    Button(
+                                        onClick = { reportViewModel.syncFirebaseNow() },
+                                        enabled = !firebaseSyncState.isSyncing,
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        if (firebaseSyncState.isSyncing) {
+                                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = Color.White)
+                                        } else {
+                                            Icon(Icons.Outlined.Sync, contentDescription = null, modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(stringResource(R.string.firebase_sync_now), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFFF1F5F9))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                // Section Header for Google Drive Cloud Backup
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Outlined.CloudQueue,
-                        contentDescription = null,
-                        tint = Color(0xFF2563EB),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Google Drive (Cloud Backup)",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
-                    )
-                }
-
-                // 1. Google Drive Account Status Row
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.AccountCircle,
-                    title = if (driveAccount.isConnected) {
-                        stringResource(R.string.drive_connected_as, driveAccount.email ?: "Google Account")
-                    } else {
-                        stringResource(R.string.drive_not_connected)
-                    },
-                    subtitle = if (driveAccount.isConnected) {
-                        "Cloud backups are securely stored in your Google Drive App Folder"
-                    } else {
-                        "Connect your Google Drive account for optional cloud backups"
-                    },
-                    trailing = {
-                        if (driveAccount.isConnected) {
+                    // 7. Danger Zone: Clear Data
+                    Surface(
+                        color = Color(0xFFFEF2F2),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.clear_all_data_title),
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = Color(0xFF991B1B)
+                                )
+                                Text(
+                                    text = stringResource(R.string.clear_all_data_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFB91C1C)
+                                )
+                            }
                             OutlinedButton(
-                                onClick = { reportViewModel.disconnectGoogleDrive() },
+                                onClick = {
+                                    onRestrictedClick {
+                                        showClearAllDataConfirmDialog = true
+                                    }
+                                },
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626)),
                                 border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(8.dp)
                             ) {
-                                Text(stringResource(R.string.btn_disconnect_drive), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.clear_all_data_title), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
-                        } else {
-                            Button(
-                                onClick = { reportViewModel.connectGoogleDrive(context) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.btn_connect_drive), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    },
-                    onClick = {
-                        if (!driveAccount.isConnected) {
-                            reportViewModel.connectGoogleDrive(context)
                         }
                     }
-                )
+                }
 
-                // 2. Backup to Google Drive
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.CloudUpload,
-                    title = stringResource(R.string.backup_to_drive_title),
-                    subtitle = if (isDriveUploading) stringResource(R.string.drive_backup_in_progress) else stringResource(R.string.backup_to_drive_desc),
-                    trailing = {
-                        if (isDriveUploading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.5.dp,
-                                color = Color(0xFF2563EB)
+                // Auto Backup frequency picker dialog
+                if (showAutoBackupDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showAutoBackupDialog = false },
+                        title = {
+                            Text(
+                                text = stringResource(R.string.auto_backups),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                             )
-                        } else {
-                            Button(
-                                onClick = {
-                                    if (!driveAccount.isConnected) {
-                                        reportViewModel.connectGoogleDrive(context)
-                                    } else {
-                                        reportViewModel.backupToGoogleDrive()
+                        },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("Daily", "Weekly", "Monthly").forEach { freq ->
+                                    val isSelected = autoBackupFreq == freq
+                                    Surface(
+                                        onClick = {
+                                            reportViewModel.autoBackupFrequency.value = freq
+                                            showAutoBackupDialog = false
+                                            Toast.makeText(context, context.getString(R.string.auto_backup_set_to, freq), Toast.LENGTH_SHORT).show()
+                                        },
+                                        color = if (isSelected) Color(0xFFEFF6FF) else Color.Transparent,
+                                        shape = RoundedCornerShape(10.dp),
+                                        border = if (isSelected) BorderStroke(1.dp, Color(0xFF3B82F6)) else null,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = when (freq) {
+                                                    "Daily" -> stringResource(R.string.daily)
+                                                    "Weekly" -> stringResource(R.string.weekly)
+                                                    "Monthly" -> stringResource(R.string.monthly)
+                                                    else -> freq
+                                                },
+                                                style = MaterialTheme.typography.bodyLarge.copy(
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                ),
+                                                color = if (isSelected) Color(0xFF1D4ED8) else Color(0xFF0F172A)
+                                            )
+                                            if (isSelected) {
+                                                Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF1D4ED8), modifier = Modifier.size(20.dp))
+                                            }
+                                        }
                                     }
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Outlined.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.btn_upload_to_drive), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    },
-                    onClick = {
-                        if (!isDriveUploading) {
-                            if (!driveAccount.isConnected) {
-                                reportViewModel.connectGoogleDrive(context)
-                            } else {
-                                reportViewModel.backupToGoogleDrive()
-                            }
-                        }
-                    }
-                )
-
-                // 3. Restore from Google Drive
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.CloudDownload,
-                    title = stringResource(R.string.restore_from_drive_title),
-                    subtitle = if (isDriveDownloading) stringResource(R.string.drive_restore_in_progress) else stringResource(R.string.restore_from_drive_desc),
-                    trailing = {
-                        if (isDriveDownloading || isDriveLoadingList) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.5.dp,
-                                color = Color(0xFFD97706)
-                            )
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    if (!driveAccount.isConnected) {
-                                        reportViewModel.connectGoogleDrive(context)
-                                    } else {
-                                        reportViewModel.fetchGoogleDriveBackups()
-                                        showDriveBackupsPicker = true
-                                    }
-                                },
-                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                            ) {
-                                Icon(Icons.Outlined.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.restore_from_drive_title), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    },
-                    onClick = {
-                        if (!isDriveDownloading && !isDriveLoadingList) {
-                            if (!driveAccount.isConnected) {
-                                reportViewModel.connectGoogleDrive(context)
-                            } else {
-                                reportViewModel.fetchGoogleDriveBackups()
-                                showDriveBackupsPicker = true
-                            }
-                        }
-                    }
-                )
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.Autorenew,
-                    title = stringResource(R.string.auto_backups),
-                    subtitle = when (autoBackupFreq) {
-                        "Daily" -> stringResource(R.string.daily)
-                        "Weekly" -> stringResource(R.string.weekly)
-                        "Monthly" -> stringResource(R.string.monthly)
-                        else -> autoBackupFreq ?: stringResource(R.string.daily)
-                    },
-                    onClick = {
-                        val nextFreq = when (autoBackupFreq) {
-                            "Daily" -> "Weekly"
-                            "Weekly" -> "Monthly"
-                            else -> "Daily"
-                        }
-                        reportViewModel.autoBackupFrequency.value = nextFreq
-                        Toast.makeText(context, context.getString(R.string.auto_backup_set_to, nextFreq), Toast.LENGTH_SHORT).show()
-                    }
-                )
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.SignalCellularAlt,
-                    title = stringResource(R.string.backup_cellular),
-                    subtitle = if (backupCellular) stringResource(R.string.allowed_cellular) else stringResource(R.string.wifi_only),
-                    trailing = {
-                        Switch(
-                            checked = backupCellular,
-                            onCheckedChange = { enabled ->
-                                reportViewModel.backupUsingCellular.value = enabled
-                                Toast.makeText(context, context.getString(if (enabled) R.string.cellular_backup_enabled else R.string.wifi_only_backup), Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    },
-                    onClick = {
-                        reportViewModel.backupUsingCellular.value = !backupCellular
-                    }
-                )
-
-                Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFFEE2E2))
-
-                // DANGER ZONE: CLEAR ALL BUSINESS DATA
-                LoyverseMenuItemRow(
-                    icon = Icons.Outlined.DeleteForever,
-                    title = stringResource(R.string.clear_all_data_title),
-                    subtitle = stringResource(R.string.clear_all_data_desc),
-                    trailing = {
-                        Button(
-                            onClick = {
-                                onRestrictedClick {
-                                    showClearAllDataConfirmDialog = true
                                 }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(stringResource(R.string.clear_all_data_title), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showAutoBackupDialog = false }) {
+                                Text(stringResource(R.string.cancel_18))
+                            }
                         }
-                    },
-                    onClick = {
-                        onRestrictedClick {
-                            showClearAllDataConfirmDialog = true
-                        }
-                    }
-                )
+                    )
+                }
             }
 
             // =================================================================
