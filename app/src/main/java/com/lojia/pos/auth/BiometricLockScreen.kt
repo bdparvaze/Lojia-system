@@ -57,7 +57,8 @@ import kotlinx.coroutines.launch
 enum class AuthScreenPage {
     LOGIN,
     REGISTER,
-    SUCCESS
+    SUCCESS,
+    QUICK_PIN
 }
 
 @Composable
@@ -76,19 +77,21 @@ fun BiometricLockScreen(
 
     var isBn by remember { mutableStateOf(language.code == "bn") }
 
+    val preferencesRepository = remember(context) { PreferencesRepository.getInstance(context) }
+    
     var currentPage by remember(userProfile) {
         mutableStateOf(
             if (userProfile != null && !userProfile.isRegistered) {
                 AuthScreenPage.REGISTER
             } else if (!BuildConfig.DEBUG && (userProfile == null || !userProfile.isRegistered)) {
                 AuthScreenPage.REGISTER
+            } else if (preferencesRepository.shouldDefaultToQuickLogin()) {
+                AuthScreenPage.QUICK_PIN
             } else {
                 AuthScreenPage.LOGIN
             }
         )
     }
-
-    val preferencesRepository = remember(context) { PreferencesRepository.getInstance(context) }
 
     LaunchedEffect(userProfile) {
         userProfile?.let { preferencesRepository.syncWithUserProfile(it) }
@@ -183,6 +186,41 @@ fun BiometricLockScreen(
             .testTag("lojiaAuthRoot")
     ) {
         when (currentPage) {
+            AuthScreenPage.QUICK_PIN -> {
+                LaunchedEffect(Unit) {
+                    if (preferencesRepository.isBiometricEnabled()) {
+                        BiometricAuthManager.showBiometricPrompt(
+                            activity = activity,
+                            onResult = { result ->
+                                if (result is BiometricAuthResult.Success) {
+                                    onAuthenticated()
+                                }
+                            }
+                        )
+                    }
+                }
+                QuickPinScreen(
+                    isBn = isBn,
+                    preferencesRepository = preferencesRepository,
+                    onAuthenticated = {
+                        Toast.makeText(context, if (isBn) "লগইন সফল হয়েছে!" else "Sign In successful!", Toast.LENGTH_SHORT).show()
+                        onAuthenticated()
+                    },
+                    onFallbackToLogin = {
+                        currentPage = AuthScreenPage.LOGIN
+                    },
+                    onTriggerBiometric = {
+                        BiometricAuthManager.showBiometricPrompt(
+                            activity = activity,
+                            onResult = { result ->
+                                if (result is BiometricAuthResult.Success) {
+                                    onAuthenticated()
+                                }
+                            }
+                        )
+                    }
+                )
+            }
             AuthScreenPage.LOGIN -> {
                 Column(
                     modifier = Modifier

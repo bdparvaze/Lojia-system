@@ -50,6 +50,7 @@ ksp {
 }
 
 dependencies {
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
