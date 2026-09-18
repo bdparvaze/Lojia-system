@@ -51,8 +51,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Screen state matching Lojia System:
- * LOGIN, REGISTER, SUCCESS
+ * Authentication Screen Pages:
+ * LOGIN, REGISTER, SUCCESS, QUICK_PIN
+ *
+ * International Standard Auth Flow:
+ * 1. First launch / no security configured → Direct to standard Login (or Register for new accounts).
+ *    No default Quick PIN or Biometric is forced on the user.
+ * 2. Successful Registration / First Login → Directly navigates into the main app without forcing PIN setup.
+ * 3. User enables Quick Login + PIN/Biometric in Settings → Next time (or post-logout), shows Quick PIN / Biometric lock screen.
+ * 4. User can always fall back to standard password login using the "Use Password" action.
  */
 enum class AuthScreenPage {
     LOGIN,
@@ -81,19 +88,21 @@ fun BiometricLockScreen(
     
     val isUserRegistered = (userProfile != null && userProfile.isRegistered) || preferencesRepository.getSavedUsername().isNotBlank()
 
+    // Quick PIN/Biometric screen is ONLY shown if user has registered AND explicitly enabled Quick Login in Settings
     val isQuickSecurityEnabled = isUserRegistered && preferencesRepository.isQuickLoginEnabled() && (
-        preferencesRepository.hasPinConfigured() ||
-        !preferencesRepository.getStoredPinHash().isNullOrBlank() ||
-        preferencesRepository.isBiometricEnabled()
+        preferencesRepository.hasPinConfigured() || preferencesRepository.isBiometricEnabled()
     )
 
     var currentPage by remember(userProfile, isQuickSecurityEnabled) {
         mutableStateOf(
             if (userProfile != null && !userProfile.isRegistered && preferencesRepository.getSavedUsername().isBlank()) {
+                // New user / unregistered -> Registration flow
                 AuthScreenPage.REGISTER
             } else if (isUserRegistered && isQuickSecurityEnabled) {
+                // Returning user with Quick Login explicitly configured in Settings -> Quick PIN screen
                 AuthScreenPage.QUICK_PIN
             } else {
+                // First launch / no security enabled / standard credentials -> Clean Username + Password Login
                 AuthScreenPage.LOGIN
             }
         )
@@ -113,8 +122,8 @@ fun BiometricLockScreen(
         role.contains("cashier") || role.contains("staff") || desig.contains("cashier") || desig.contains("staff")
     }
 
-    var loginUser by remember { mutableStateOf(sessionUser.ifEmpty { savedUser }.ifEmpty { DevCredentials.DEFAULT_USERNAME }) }
-    var loginPass by remember { mutableStateOf(if (sessionUser.ifEmpty { savedUser }.isEmpty()) DevCredentials.DEFAULT_PASSWORD else "") }
+    var loginUser by remember { mutableStateOf(sessionUser.ifEmpty { savedUser }) }
+    var loginPass by remember { mutableStateOf("") }
     var loginPassVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(if (isCashierRole) false else preferencesRepository.isRememberMe()) }
     var isSigningIn by remember { mutableStateOf(false) }
@@ -144,31 +153,15 @@ fun BiometricLockScreen(
                 prefs.edit().remove("lojiaUser").apply()
             }
 
-            val isDevAdmin = (
-                u.equals(DevCredentials.DEFAULT_USERNAME, ignoreCase = true) ||
-                u.equals("admin", ignoreCase = true) ||
-                u.equals("demo", ignoreCase = true) ||
-                u.equals("user", ignoreCase = true)
-            ) && (
-                p == DevCredentials.DEFAULT_PASSWORD ||
-                p == DevCredentials.DEFAULT_PIN ||
-                p == "123456" ||
-                p == "admin" ||
-                p == "admin123" ||
-                p == "password"
-            )
-
             val profile = userProfile
             val isProfileValid = if (profile != null && profile.username.isNotBlank()) {
                 (u.equals(profile.username, ignoreCase = true) || u.equals(profile.email, ignoreCase = true)) &&
-                        (SecurityUtils.verifySecret(p, profile.passwordHash) || (BuildConfig.DEBUG && p == DevCredentials.DEFAULT_PASSWORD))
+                        SecurityUtils.verifySecret(p, profile.passwordHash)
             } else {
                 false
             }
 
-            val isValidUser = isDevAdmin || isProfileValid
-
-            if (isValidUser) {
+            if (isProfileValid) {
                 preferencesRepository.saveUserSession(
                     username = u,
                     fullName = userProfile?.fullName,
@@ -285,7 +278,12 @@ fun BiometricLockScreen(
                     isBn = isBn,
                     onRegisterSuccess = { updatedProfile ->
                         onSaveUserProfile?.invoke(updatedProfile)
-                        currentPage = AuthScreenPage.SUCCESS
+                        Toast.makeText(
+                            context,
+                            if (isBn) "রেজিস্ট্রেশন সফল হয়েছে! Lojia POS-এ স্বাগতম" else "Registration successful! Welcome to Lojia POS",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onAuthenticated()
                     },
                     onGoToLogin = {
                         currentPage = AuthScreenPage.LOGIN
@@ -297,7 +295,7 @@ fun BiometricLockScreen(
                 LojiaRegisterSuccessScreen(
                     isBn = isBn,
                     onGoToLogin = {
-                        currentPage = AuthScreenPage.LOGIN
+                        onAuthenticated()
                     }
                 )
             }

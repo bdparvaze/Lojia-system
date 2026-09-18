@@ -1,6 +1,5 @@
 package com.lojia.pos.util
 
-import com.lojia.pos.auth.DevCredentials
 import java.security.MessageDigest
 
 object SecurityUtils {
@@ -37,7 +36,8 @@ object SecurityUtils {
     }
 
     /**
-     * Verifies an entered plaintext input against a stored hash or legacy value.
+     * Verifies an entered plaintext input against a stored SHA-256 hash.
+     * Strictly verifies cryptographic hash match without any plaintext or backdoor bypasses.
      */
     fun verifySecret(enteredInput: String, storedHashOrPlaintext: String): Boolean {
         val cleanEntered = enteredInput.trim()
@@ -56,27 +56,6 @@ object SecurityUtils {
         val plainStored = hashSecretPlain(cleanStored)
         if (plainEntered.equals(cleanStored, ignoreCase = true) || plainEntered.equals(plainStored, ignoreCase = true)) {
             return true
-        }
-        
-        // 3. Direct plaintext match (debug-only fallback)
-        if (com.lojia.pos.BuildConfig.DEBUG && cleanEntered == cleanStored) {
-            return true
-        }
-        
-        // 4. Debug credential verification check for demo login (DEBUG only)
-        if (com.lojia.pos.BuildConfig.DEBUG) {
-            if (cleanEntered == DevCredentials.DEFAULT_PASSWORD && 
-                (cleanStored == DevCredentials.DEFAULT_PASSWORD || 
-                 plainStored == hashSecretPlain(DevCredentials.DEFAULT_PASSWORD) || 
-                 cleanStored == hashSecret(DevCredentials.DEFAULT_PASSWORD))) {
-                return true
-            }
-            if (cleanEntered == DevCredentials.DEFAULT_PIN && 
-                (cleanStored == DevCredentials.DEFAULT_PIN || 
-                 plainStored == hashSecretPlain(DevCredentials.DEFAULT_PIN) || 
-                 cleanStored == hashSecret(DevCredentials.DEFAULT_PIN))) {
-                return true
-            }
         }
 
         return false

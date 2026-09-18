@@ -158,6 +158,10 @@ data class ShiftReportData(
     val date: String,
     val cashReceipts: Double,
     val madaPayments: Double,
+    val digitalWallet: Double = 0.0,
+    val startingCash: Double = 0.0,
+    val actualCash: Double? = null,
+    val notes: String = "",
     val staffCount: Int,
     val totalExpenses: Double,
     val muassel: Int,
@@ -255,12 +259,25 @@ fun ShiftReportScreen(
                 }
             }.toString()
 
+            val noteParts = mutableListOf<String>()
+            if (data.startingCash > 0) {
+                noteParts.add("Starting Float: %.2f".format(Locale.US, data.startingCash))
+            }
+            if (data.actualCash != null) {
+                noteParts.add("Actual Cash Count: %.2f".format(Locale.US, data.actualCash))
+            }
+            if (data.notes.isNotBlank() && data.notes != "Saved from Shift Closing Ledger") {
+                noteParts.add(data.notes)
+            }
+            val formattedNotes = if (noteParts.isNotEmpty()) noteParts.joinToString(" | ") else "Saved from Shift Closing Ledger"
+
             val report = ShiftReport(
                 cashierName = data.cashier.ifBlank { "Standard Cashier" },
                 shift = data.shift,
                 dateInMillis = data.dateMillis,
                 grossCash = data.cashReceipts,
                 madaPayments = data.madaPayments,
+                digitalWallet = data.digitalWallet,
                 staffMealsCount = data.staffCount,
                 totalExpenses = data.totalExpenses,
                 muasselQty = data.muassel.toDouble(),
@@ -270,7 +287,7 @@ fun ShiftReportScreen(
                 staffAdvancesJson = staffAdvJson,
                 unpaidBillsJson = walkoutJson,
                 purchasedItemsJson = itemsJson,
-                notes = "Saved from Shift Closing Ledger"
+                notes = formattedNotes
             )
 
             viewModel.saveShiftReportDirect(report) { savedReport ->
@@ -282,7 +299,9 @@ fun ShiftReportScreen(
             viewModel.openShift(cashier, shiftName, startingCash)
         },
         onCloseShift = { session, actualCash, notes ->
-            viewModel.closeShift(session, actualCash, notes)
+            viewModel.closeShiftWithZReport(session, actualCash, notes) { savedReport ->
+                onPreviewPdf(savedReport)
+            }
         },
         onDeleteReport = { report ->
             viewModel.deleteReport(report)
@@ -443,8 +462,12 @@ private fun ReportEntryTab(
     var shift by rememberSaveable { mutableStateOf("Day") }
     var dateMillis by rememberSaveable { mutableStateOf(System.currentTimeMillis()) }
 
+    var startingCashInput by rememberSaveable { mutableStateOf("") }
     var cashReceipts by rememberSaveable { mutableStateOf("") }
     var madaPayments by rememberSaveable { mutableStateOf("") }
+    var digitalWalletInput by rememberSaveable { mutableStateOf("") }
+    var actualCashCountInput by rememberSaveable { mutableStateOf("") }
+    var notesInput by rememberSaveable { mutableStateOf("") }
 
     var staffCount by rememberSaveable { mutableStateOf(0) }
     var totalExpenses by rememberSaveable { mutableStateOf("") }
@@ -464,9 +487,13 @@ private fun ReportEntryTab(
 
     fun d(s: String) = s.toDoubleOrNull() ?: 0.0
 
+    val startingCash = d(startingCashInput)
     val cash = d(cashReceipts)
     val mada = d(madaPayments)
+    val digitalWallet = d(digitalWalletInput)
+    val actualCashVal = actualCashCountInput.toDoubleOrNull()
     val expenses = d(totalExpenses)
+
     val totalCredit = creditEntries.sumOf { it.amount }
     val totalOldDueCash = oldDueEntries.filter { it.type == PayType.CASH }.sumOf { it.amount }
     val totalOldDueBank = oldDueEntries.filter { it.type == PayType.BANK }.sumOf { it.amount }
@@ -475,11 +502,17 @@ private fun ReportEntryTab(
     val totalWalkout = walkoutEntries.sumOf { it.amount }
     val totalItems = itemEntries.sumOf { it.total }
 
-    val gross = cash + mada
-    val netCash = cash - expenses - totalCredit + totalOldDueCash - totalStaffCash - totalWalkout - totalItems
-    val netMada = mada + totalOldDueBank - totalStaffBank
+    // International Standard Formulas
+    val totalSales = cash + mada + digitalWallet
+    val totalCashIn = cash + totalOldDueCash
+    val totalCashOut = expenses + totalStaffCash + totalItems
+    val expectedCash = startingCash + totalCashIn - totalCashOut
+    val variance = actualCashVal?.let { it - expectedCash }
+    val netMada = mada + digitalWallet + totalOldDueBank - totalStaffBank
 
-    val hasEnteredData = cashier.isNotBlank() || cashReceipts.isNotBlank() || madaPayments.isNotBlank() ||
+    val hasEnteredData = cashier.isNotBlank() || startingCashInput.isNotBlank() ||
+            cashReceipts.isNotBlank() || madaPayments.isNotBlank() || digitalWalletInput.isNotBlank() ||
+            actualCashCountInput.isNotBlank() || notesInput.isNotBlank() ||
             totalExpenses.isNotBlank() || staffCount > 0 ||
             muassel.isNotBlank() || outdoorMuassel.isNotBlank() ||
             creditEntries.isNotEmpty() || oldDueEntries.isNotEmpty() ||
@@ -487,7 +520,7 @@ private fun ReportEntryTab(
             itemEntries.isNotEmpty()
 
     val canSave = cashier.isNotBlank() && (
-            cash > 0.0 || mada > 0.0 || expenses > 0.0 ||
+            cash > 0.0 || mada > 0.0 || digitalWallet > 0.0 || expenses > 0.0 || startingCash > 0.0 ||
             (muassel.toIntOrNull() ?: 0) > 0 || (outdoorMuassel.toIntOrNull() ?: 0) > 0 ||
             creditEntries.isNotEmpty() || oldDueEntries.isNotEmpty() ||
             staffEntries.isNotEmpty() || walkoutEntries.isNotEmpty() ||
@@ -496,7 +529,8 @@ private fun ReportEntryTab(
 
     fun resetAll() {
         cashier = ""; shift = "Day"; dateMillis = System.currentTimeMillis()
-        cashReceipts = ""; madaPayments = ""
+        startingCashInput = ""; cashReceipts = ""; madaPayments = ""; digitalWalletInput = ""
+        actualCashCountInput = ""; notesInput = ""
         staffCount = 0; totalExpenses = ""
         muassel = ""; outdoorMuassel = ""
         creditEntries.clear(); oldDueEntries.clear(); staffEntries.clear()
@@ -510,7 +544,7 @@ private fun ReportEntryTab(
     Scaffold(
         containerColor = ShiftColors.Bg,
         bottomBar = {
-            StickySummaryBar(netCash)
+            StickySummaryBar(expectedCash = expectedCash, variance = variance)
         }
     ) { padding ->
         Column(
@@ -584,11 +618,16 @@ private fun ReportEntryTab(
                             }
                         }
 
-                        // ---- Sales Summary ----
+                        // ---- Starting Cash & Payment Methods ----
                         SectionHeader("💰", stringResource(R.string.sales_summary), ShiftColors.BrassLight, ShiftColors.Brass, ShiftColors.Brass)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            NumberField(stringResource(R.string.starting_cash), startingCashInput, { startingCashInput = it }, Modifier.weight(1f))
                             NumberField(stringResource(R.string.cash), cashReceipts, { cashReceipts = it }, Modifier.weight(1f))
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             NumberField(stringResource(R.string.mada_bank), madaPayments, { madaPayments = it }, Modifier.weight(1f))
+                            NumberField(stringResource(R.string.digital_wallet), digitalWalletInput, { digitalWalletInput = it }, Modifier.weight(1f))
                         }
 
                         // ---- Operational Expenses ----
@@ -684,13 +723,27 @@ private fun ReportEntryTab(
 
                         Spacer(Modifier.height(24.dp))
 
-                        // ---- Receipt-style live summary ----
-                        ReceiptSummary(
-                            cash = cash, mada = mada, gross = gross, expenses = expenses,
-                            totalCredit = totalCredit, totalOldDueCash = totalOldDueCash,
-                            totalOldDueBank = totalOldDueBank, totalStaffCash = totalStaffCash,
-                            totalStaffBank = totalStaffBank, totalWalkout = totalWalkout,
-                            totalItems = totalItems, netCash = netCash, netMada = netMada
+                        // ---- Standard 4-Card International POS Reconciliation Summary ----
+                        PosReconciliationSummary(
+                            startingCash = startingCash,
+                            cashSales = cash,
+                            madaSales = mada,
+                            digitalWalletSales = digitalWallet,
+                            totalExpenses = expenses,
+                            totalDueCredit = totalCredit,
+                            totalDueCollectedCash = totalOldDueCash,
+                            totalDueCollectedBank = totalOldDueBank,
+                            totalStaffAdvanceCash = totalStaffCash,
+                            totalStaffAdvanceBank = totalStaffBank,
+                            totalWalkout = totalWalkout,
+                            totalPurchasesCash = totalItems,
+                            staffMealsCount = staffCount,
+                            muasselCount = muassel.toIntOrNull() ?: 0,
+                            outdoorMuasselCount = outdoorMuassel.toIntOrNull() ?: 0,
+                            actualCashCount = actualCashCountInput,
+                            onActualCashCountChange = { actualCashCountInput = it },
+                            notes = notesInput,
+                            onNotesChange = { notesInput = it }
                         )
 
                         Spacer(Modifier.height(24.dp))
@@ -738,11 +791,27 @@ private fun ReportEntryTab(
                                 onClick = {
                                     onSave(
                                         ShiftReportData(
-                                            cashier, shift, dateLabel, cash, mada, staffCount, expenses,
-                                            muassel.toIntOrNull() ?: 0, outdoorMuassel.toIntOrNull() ?: 0,
-                                            creditEntries.toList(), oldDueEntries.toList(), staffEntries.toList(),
-                                            walkoutEntries.toList(), itemEntries.toList(), netCash, netMada,
-                                            dateMillis
+                                            cashier = cashier,
+                                            shift = shift,
+                                            date = dateLabel,
+                                            cashReceipts = cash,
+                                            madaPayments = mada,
+                                            digitalWallet = digitalWallet,
+                                            startingCash = startingCash,
+                                            actualCash = actualCashVal,
+                                            notes = notesInput,
+                                            staffCount = staffCount,
+                                            totalExpenses = expenses,
+                                            muassel = muassel.toIntOrNull() ?: 0,
+                                            outdoorMuassel = outdoorMuassel.toIntOrNull() ?: 0,
+                                            creditEntries = creditEntries.toList(),
+                                            oldDueEntries = oldDueEntries.toList(),
+                                            staffEntries = staffEntries.toList(),
+                                            walkoutEntries = walkoutEntries.toList(),
+                                            itemEntries = itemEntries.toList(),
+                                            netCash = expectedCash,
+                                            netMada = netMada,
+                                            dateMillis = dateMillis
                                         )
                                     )
                                     resetAll()
@@ -767,7 +836,7 @@ private fun ReportEntryTab(
                                     Text("💾", fontSize = 13.sp)
                                     Spacer(Modifier.width(4.dp))
                                     Text(
-                                        text = stringResource(R.string.save),
+                                        text = stringResource(R.string.save_report),
                                         color = if (canSave) Color.White else Color.White.copy(alpha = 0.6f),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
@@ -1293,10 +1362,13 @@ private fun LiveCashflowTab(
         )
     }
 
-    // Modal: Close Shift
+    // Modal: Close Shift & Generate Z-Report
     if (showCloseShiftModal && activeSession != null) {
         var actualCountText by remember { mutableStateOf("") }
         var notesText by remember { mutableStateOf("") }
+        val currency = stringResource(R.string.currency_unit)
+        val actualCount = actualCountText.toDoubleOrNull()
+        val variance = if (actualCount != null) actualCount - activeSession.expectedCash else null
 
         AlertDialog(
             onDismissRequest = { showCloseShiftModal = false },
@@ -1313,41 +1385,148 @@ private fun LiveCashflowTab(
             },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()
                 ) {
+                    // 1. Sales Summary Card
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFF8FAFC),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = stringResource(R.string.sales_summary),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ShiftColors.Primary
+                            )
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(R.string.cash_sales), fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                Text("%.2f %s".format(activeSession.cashSales, currency), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(R.string.mada_bank), fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                Text("%.2f %s".format(activeSession.cardSales, currency), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                            if (activeSession.digitalSales > 0) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(stringResource(R.string.digital_wallet), fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                    Text("%.2f %s".format(activeSession.digitalSales, currency), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                            HorizontalDivider(color = Color(0xFFE2E8F0), modifier = Modifier.padding(vertical = 2.dp))
+                            val totalSales = activeSession.cashSales + activeSession.cardSales + activeSession.digitalSales
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(R.string.total_sales), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("%.2f %s".format(totalSales, currency), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.Primary)
+                            }
+                        }
+                    }
+
+                    // 2. Expected Cash Drawer Movement
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = ShiftColors.BrassLight,
                         border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Brass.copy(alpha = 0.3f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(Icons.Default.Info, contentDescription = null, tint = ShiftColors.Brass, modifier = Modifier.size(18.dp))
+                        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = stringResource(R.string.expected_cash_drawer, "%.2f ${stringResource(R.string.currency_unit)}".format(activeSession.expectedCash)),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ShiftColors.Charcoal
+                                text = stringResource(R.string.cash_in_drawer),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ShiftColors.Brass
                             )
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(R.string.starting_cash), fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                Text("%.2f %s".format(activeSession.startingCash, currency), fontSize = 12.sp)
+                            }
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("(+) ${stringResource(R.string.cash_sales)}", fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                Text("+%.2f %s".format(activeSession.cashSales, currency), fontSize = 12.sp)
+                            }
+                            if (activeSession.totalPayIn > 0) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("(+) ${stringResource(R.string.pay_in)}", fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                    Text("+%.2f %s".format(activeSession.totalPayIn, currency), fontSize = 12.sp)
+                                }
+                            }
+                            if (activeSession.totalPayOut > 0) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("(-) ${stringResource(R.string.pay_out)}", fontSize = 12.sp, color = ShiftColors.TextMuted)
+                                    Text("-%.2f %s".format(activeSession.totalPayOut, currency), fontSize = 12.sp)
+                                }
+                            }
+                            HorizontalDivider(color = ShiftColors.Brass.copy(alpha = 0.2f), modifier = Modifier.padding(vertical = 2.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(R.string.expected_cash_drawer, ""), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("%.2f %s".format(activeSession.expectedCash, currency), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
+                            }
                         }
                     }
 
+                    // 3. Actual Count Input
                     NumberField(
                         label = stringResource(R.string.actual_cash_counted),
                         value = actualCountText,
                         onChange = { actualCountText = it }
                     )
+
+                    // 4. Live Variance Card
+                    if (variance != null) {
+                        val isBalanced = Math.abs(variance) < 0.001
+                        val isOver = variance > 0
+                        val varColor = when {
+                            isBalanced -> Color(0xFF15803D)
+                            isOver -> Color(0xFF047857)
+                            else -> Color(0xFFDC2626)
+                        }
+                        val varBg = when {
+                            isBalanced -> Color(0xFFF0FDF4)
+                            isOver -> Color(0xFFECFDF5)
+                            else -> Color(0xFFFEF2F2)
+                        }
+                        val statusLabel = when {
+                            isBalanced -> stringResource(R.string.balanced)
+                            isOver -> "OVER (+%.2f %s)".format(variance, currency)
+                            else -> "SHORT (-%.2f %s)".format(Math.abs(variance), currency)
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = varBg,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, varColor.copy(alpha = 0.4f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.cash_variance),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = varColor
+                                )
+                                Text(
+                                    text = statusLabel,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = varColor
+                                )
+                            }
+                        }
+                    }
+
+                    // 5. Notes
                     LojiaMultilineTextField(
                         value = notesText,
                         onValueChange = { notesText = it },
                         label = { Text(stringResource(R.string.shift_notes_variance)) },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp)
                     )
                 }
             },
@@ -1362,6 +1541,8 @@ private fun LiveCashflowTab(
                         showCloseShiftModal = false
                     }
                 ) {
+                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         text = stringResource(R.string.close_shift_session),
                         fontWeight = FontWeight.Bold,
@@ -1647,19 +1828,49 @@ private fun ShiftReportArchivesTab(
                                     }
                                 }
 
-                                // Report ID capsule
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = ShiftColors.Bg,
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border)
+                                // Report ID & Locked status
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Text(
-                                        text = "#${report.id}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = ShiftColors.TextMuted,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = Color(0xFFF1F5F9),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Lock,
+                                                contentDescription = null,
+                                                tint = ShiftColors.TextMuted,
+                                                modifier = Modifier.size(11.dp)
+                                            )
+                                            Spacer(Modifier.width(3.dp))
+                                            Text(
+                                                text = "Z-REPORT",
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = ShiftColors.TextMuted
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = ShiftColors.Bg,
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border)
+                                    ) {
+                                        Text(
+                                            text = "#${report.id}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = ShiftColors.TextMuted,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
                                 }
                             }
 
@@ -1897,7 +2108,477 @@ private fun EntryRow(left: String, right: String, onRemove: () -> Unit) {
 }
 
 /* ----------------------------------------------------------------------
- * RECEIPT-STYLE LIVE SUMMARY
+ * 4-CARD INTERNATIONAL POS RECONCILIATION SUMMARY (SQUARE/LOYVERSE STYLE)
+ * ---------------------------------------------------------------------- */
+@Composable
+fun PosReconciliationSummary(
+    startingCash: Double,
+    cashSales: Double,
+    madaSales: Double,
+    digitalWalletSales: Double,
+    totalExpenses: Double,
+    totalDueCredit: Double,
+    totalDueCollectedCash: Double,
+    totalDueCollectedBank: Double,
+    totalStaffAdvanceCash: Double,
+    totalStaffAdvanceBank: Double,
+    totalWalkout: Double,
+    totalPurchasesCash: Double,
+    staffMealsCount: Int,
+    muasselCount: Int,
+    outdoorMuasselCount: Int,
+    actualCashCount: String,
+    onActualCashCountChange: (String) -> Unit,
+    notes: String,
+    onNotesChange: (String) -> Unit
+) {
+    val currency = stringResource(R.string.currency_unit)
+    val totalSales = cashSales + madaSales + digitalWalletSales
+    val totalCashIn = cashSales + totalDueCollectedCash
+    val totalCashOut = totalExpenses + totalStaffAdvanceCash + totalPurchasesCash
+    val expectedCash = startingCash + totalCashIn - totalCashOut
+    val actualCountVal = actualCashCount.toDoubleOrNull()
+    val variance = actualCountVal?.let { it - expectedCash }
+    val netMada = madaSales + digitalWalletSales + totalDueCollectedBank - totalStaffAdvanceBank
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // ==========================================
+        // CARD 1: SALES SUMMARY (Payment Methods Only)
+        // ==========================================
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(Modifier.fillMaxWidth().height(4.dp).background(ShiftColors.Brass))
+            Column(Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🏷️", fontSize = 16.sp)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.sales_summary),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = ShiftColors.Charcoal
+                        )
+                    }
+                    Surface(
+                        color = ShiftColors.BrassLight,
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = "Payment Methods Only",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = ShiftColors.Brass,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+
+                DashedDivider(Modifier.padding(vertical = 10.dp))
+
+                ReconciliationRow(stringResource(R.string.cash_sales), cashSales, currency)
+                ReconciliationRow(stringResource(R.string.mada_bank), madaSales, currency)
+                if (digitalWalletSales > 0) {
+                    ReconciliationRow(stringResource(R.string.digital_wallet), digitalWalletSales, currency)
+                }
+
+                DashedDivider(Modifier.padding(vertical = 8.dp), color = ShiftColors.Border)
+
+                // TOTAL SALES (Prominent)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFFFFBEB))
+                        .border(1.dp, Color(0xFFFDE68A), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 10.dp, vertical = 9.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.total_sales),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.5.sp,
+                        color = Color(0xFF92400E)
+                    )
+                    Text(
+                        "%.2f %s".format(totalSales, currency),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp,
+                        color = Color(0xFF92400E)
+                    )
+                }
+            }
+        }
+
+        // ==========================================
+        // CARD 2: CASH DRAWER RECONCILIATION
+        // ==========================================
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(Modifier.fillMaxWidth().height(4.dp).background(ShiftColors.NetCashGreen))
+            Column(Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("💵", fontSize = 16.sp)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Cash Drawer Reconciliation",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = ShiftColors.Charcoal
+                        )
+                    }
+                }
+
+                DashedDivider(Modifier.padding(vertical = 10.dp))
+
+                // Float / Inflow
+                if (startingCash > 0) {
+                    ReconciliationRow(stringResource(R.string.starting_cash), startingCash, currency)
+                }
+                ReconciliationRow("+ ${stringResource(R.string.cash_sales)}", cashSales, currency, valueColor = Color(0xFF047857))
+                if (totalDueCollectedCash > 0) {
+                    ReconciliationRow("+ ${stringResource(R.string.due_collected_cash)}", totalDueCollectedCash, currency, valueColor = Color(0xFF047857))
+                }
+
+                // Inflow subtotal
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.total_cash_in), fontSize = 11.5.sp, color = Color(0xFF065F46), fontWeight = FontWeight.SemiBold)
+                    Text("+ %.2f %s".format(totalCashIn + startingCash, currency), fontSize = 12.sp, color = Color(0xFF065F46), fontWeight = FontWeight.Bold)
+                }
+
+                DashedDivider(Modifier.padding(vertical = 6.dp))
+
+                // Outflow
+                if (totalExpenses > 0) {
+                    ReconciliationRow("- ${stringResource(R.string.op_expenses)}", totalExpenses, currency, valueColor = ShiftColors.Danger)
+                }
+                if (totalStaffAdvanceCash > 0) {
+                    ReconciliationRow("- ${stringResource(R.string.employer_cash)}", totalStaffAdvanceCash, currency, valueColor = ShiftColors.Danger)
+                }
+                if (totalPurchasesCash > 0) {
+                    ReconciliationRow("- ${stringResource(R.string.paid_out)}", totalPurchasesCash, currency, valueColor = ShiftColors.Danger)
+                }
+
+                // Outflow subtotal
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.total_cash_out), fontSize = 11.5.sp, color = Color(0xFFB91C1C), fontWeight = FontWeight.SemiBold)
+                    Text("- %.2f %s".format(totalCashOut, currency), fontSize = 12.sp, color = Color(0xFFB91C1C), fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // EXPECTED CASH CALLOUT
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFECFDF5))
+                        .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(10.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                stringResource(R.string.cash_in_drawer),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF065F46)
+                            )
+                            Text(
+                                "Starting Float + Inflows - Outflows",
+                                fontSize = 9.5.sp,
+                                color = Color(0xFF047857)
+                            )
+                        }
+                        Text(
+                            "%.2f %s".format(expectedCash, currency),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF065F46)
+                        )
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // CARD 3: ACTUAL COUNT & VARIANCE
+        // ==========================================
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(Modifier.fillMaxWidth().height(4.dp).background(ShiftColors.Primary))
+            Column(Modifier.padding(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("⚖️", fontSize = 16.sp)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.variance_over_short),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = ShiftColors.Charcoal
+                    )
+                }
+
+                DashedDivider(Modifier.padding(vertical = 10.dp))
+
+                // Actual Cash Input Field
+                NumberField(
+                    label = stringResource(R.string.actual_cash_count_currency, currency),
+                    value = actualCashCount,
+                    onChange = onActualCashCountChange,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                // Variance Status Banner
+                if (variance == null) {
+                    Surface(
+                        color = ShiftColors.Bg,
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("ℹ️", fontSize = 14.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "Enter physical cash in drawer to calculate variance",
+                                fontSize = 11.5.sp,
+                                color = ShiftColors.TextMuted
+                            )
+                        }
+                    }
+                } else {
+                    val isBalanced = Math.abs(variance) < 0.001
+                    val isOver = variance > 0
+                    val bgColor = when {
+                        isBalanced -> Color(0xFFF0FDF4)
+                        isOver -> Color(0xFFECFDF5)
+                        else -> Color(0xFFFEF2F2)
+                    }
+                    val borderColor = when {
+                        isBalanced -> Color(0xFFBBF7D0)
+                        isOver -> Color(0xFFA7F3D0)
+                        else -> Color(0xFFFECACA)
+                    }
+                    val textColor = when {
+                        isBalanced -> Color(0xFF15803D)
+                        isOver -> Color(0xFF047857)
+                        else -> Color(0xFFB91C1C)
+                    }
+                    val iconSymbol = when {
+                        isBalanced -> "✓"
+                        isOver -> "▲"
+                        else -> "▼"
+                    }
+                    val statusText = when {
+                        isBalanced -> stringResource(R.string.balanced)
+                        isOver -> "Cash Over"
+                        else -> "Cash Short"
+                    }
+
+                    Surface(
+                        color = bgColor,
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(iconSymbol, fontWeight = FontWeight.Bold, color = textColor, fontSize = 14.sp)
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        statusText,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = textColor
+                                    )
+                                }
+                                Text(
+                                    "${if (variance > 0) "+" else ""}${String.format(Locale.US, "%.2f", variance)} $currency",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 15.sp,
+                                    color = textColor
+                                )
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Expected: %.2f %s • Actual: %.2f %s".format(
+                                    expectedCash, currency, actualCountVal ?: 0.0, currency
+                                ),
+                                fontSize = 10.5.sp,
+                                color = textColor.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // CARD 4: SECONDARY & OPERATIONAL TRACKING
+        // ==========================================
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ShiftColors.Border),
+            elevation = CardDefaults.cardElevation(2.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(Modifier.fillMaxWidth().height(4.dp).background(ShiftColors.Purple))
+            Column(Modifier.padding(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("📋", fontSize = 16.sp)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Operational & Receivables Tracking",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = ShiftColors.Charcoal
+                    )
+                }
+
+                DashedDivider(Modifier.padding(vertical = 10.dp))
+
+                ReconciliationRow(
+                    label = stringResource(R.string.due_sales_credit_entries),
+                    value = totalDueCredit,
+                    currency = currency,
+                    note = "Tracked as Receivables • Excluded from sales & drawer"
+                )
+
+                if (staffMealsCount > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.pdf_staff_meals), fontSize = 12.5.sp, color = ShiftColors.TextMuted, fontWeight = FontWeight.Medium)
+                            Text("Complimentary • Non-revenue metric", fontSize = 9.5.sp, color = ShiftColors.TextMuted)
+                        }
+                        Text(stringResource(R.string.people_count, staffMealsCount), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Text)
+                    }
+                }
+
+                if (totalWalkout > 0) {
+                    ReconciliationRow(
+                        label = stringResource(R.string.walk_out),
+                        value = totalWalkout,
+                        currency = currency,
+                        valueColor = ShiftColors.Danger
+                    )
+                }
+
+                if (muasselCount > 0 || outdoorMuasselCount > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(stringResource(R.string.muassel), fontSize = 12.5.sp, color = ShiftColors.TextMuted, fontWeight = FontWeight.Medium)
+                        Text("${muasselCount + outdoorMuasselCount} pcs", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = ShiftColors.Purple)
+                    }
+                }
+
+                // Optional Notes Input
+                Spacer(Modifier.height(8.dp))
+                FieldLabel(stringResource(R.string.closing_notes))
+                Spacer(Modifier.height(4.dp))
+                LojiaTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    placeholder = { Text(stringResource(R.string.closing_notes)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReconciliationRow(
+    label: String,
+    value: Double,
+    currency: String,
+    bold: Boolean = false,
+    valueColor: Color = ShiftColors.Text,
+    note: String? = null
+) {
+    if (value <= 0) return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(label, fontSize = 12.5.sp, color = ShiftColors.TextMuted, fontWeight = FontWeight.Medium)
+            if (!note.isNullOrBlank()) {
+                Text(note, fontSize = 9.5.sp, color = ShiftColors.TextMuted)
+            }
+        }
+        Text(
+            "%.2f %s".format(value, currency),
+            fontSize = 13.sp,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.SemiBold,
+            color = valueColor
+        )
+    }
+}
+
+/* ----------------------------------------------------------------------
+ * LEGACY / RECEIPT SUMMARY OVERLOAD (for compatibility)
  * ---------------------------------------------------------------------- */
 @Composable
 private fun ReceiptSummary(
@@ -1906,94 +2587,27 @@ private fun ReceiptSummary(
     totalStaffCash: Double, totalStaffBank: Double, totalWalkout: Double,
     totalItems: Double, netCash: Double, netMada: Double
 ) {
-    val hasData = listOf(
-        cash, mada, gross, expenses, totalCredit, totalOldDueCash,
-        totalOldDueBank, totalStaffCash, totalStaffBank, totalWalkout, totalItems
-    ).any { it > 0 }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
-            .border(1.dp, ShiftColors.Border, RoundedCornerShape(12.dp))
-    ) {
-        Box(Modifier.fillMaxWidth().height(4.dp).background(ShiftColors.Charcoal))
-        Column(Modifier.padding(14.dp)) {
-            Text(
-                stringResource(R.string.live_summary),
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = ShiftColors.Charcoal
-            )
-            DashedDivider(Modifier.padding(vertical = 10.dp))
-
-            if (!hasData) {
-                Text(
-                    stringResource(R.string.no_transactions_yet),
-                    color = ShiftColors.TextMuted,
-                    fontSize = 12.5.sp,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                    textAlign = TextAlign.Center
-                )
-            } else {
-                ReceiptRow(stringResource(R.string.cash_sales), cash)
-                ReceiptRow(stringResource(R.string.mada_bank), mada)
-                ReceiptRow(stringResource(R.string.gross_revenue), gross, bold = true, valueColor = ShiftColors.NetCashGreen, suffix = " ${stringResource(R.string.currency_unit)}")
-                ReceiptRow(stringResource(R.string.op_expenses), expenses)
-                ReceiptRow(stringResource(R.string.new_due), totalCredit)
-                ReceiptRow(stringResource(R.string.due_collected_cash), totalOldDueCash)
-                ReceiptRow(stringResource(R.string.due_collected_bank), totalOldDueBank)
-                ReceiptRow(stringResource(R.string.employer_cash), totalStaffCash)
-                ReceiptRow(stringResource(R.string.employer_bank), totalStaffBank)
-                ReceiptRow(stringResource(R.string.walk_out), totalWalkout)
-                ReceiptRow(stringResource(R.string.paid_out), totalItems)
-            }
-
-            DashedDivider(Modifier.padding(vertical = 10.dp), color = ShiftColors.TextMuted)
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(ShiftColors.Bg)
-                    .border(1.dp, ShiftColors.Border, RoundedCornerShape(8.dp))
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(stringResource(R.string.net_cash), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = ShiftColors.NetCashGreen, letterSpacing = 0.5.sp)
-                    Text("%.2f ${stringResource(R.string.currency_unit)}".format(netCash), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.net_mada_bank), fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = ShiftColors.NetMadaBlue, letterSpacing = 0.5.sp)
-                    Text("%.2f ${stringResource(R.string.currency_unit)}".format(netMada), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetMadaBlue)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ReceiptRow(label: String, value: Double, bold: Boolean = false, valueColor: Color = ShiftColors.Text, suffix: String = "") {
-    if (value <= 0) return
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, fontSize = 12.5.sp, color = ShiftColors.TextMuted, fontWeight = FontWeight.Medium)
-        Text(
-            stringResource(R.string.msg_2f_2).format(value) + suffix,
-            fontSize = 13.sp,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Bold,
-            color = valueColor
-        )
-    }
+    PosReconciliationSummary(
+        startingCash = 0.0,
+        cashSales = cash,
+        madaSales = mada,
+        digitalWalletSales = 0.0,
+        totalExpenses = expenses,
+        totalDueCredit = totalCredit,
+        totalDueCollectedCash = totalOldDueCash,
+        totalDueCollectedBank = totalOldDueBank,
+        totalStaffAdvanceCash = totalStaffCash,
+        totalStaffAdvanceBank = totalStaffBank,
+        totalWalkout = totalWalkout,
+        totalPurchasesCash = totalItems,
+        staffMealsCount = 0,
+        muasselCount = 0,
+        outdoorMuasselCount = 0,
+        actualCashCount = "",
+        onActualCashCountChange = {},
+        notes = "",
+        onNotesChange = {}
+    )
 }
 
 @Composable
@@ -2012,7 +2626,8 @@ private fun DashedDivider(modifier: Modifier = Modifier, color: Color = ShiftCol
  * STICKY BOTTOM BAR
  * ---------------------------------------------------------------------- */
 @Composable
-private fun StickySummaryBar(netCash: Double) {
+private fun StickySummaryBar(expectedCash: Double, variance: Double? = null) {
+    val currency = stringResource(R.string.currency_unit)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -2022,8 +2637,41 @@ private fun StickySummaryBar(netCash: Double) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(stringResource(R.string.net_cash), fontSize = 12.5.sp, color = ShiftColors.Text, fontWeight = FontWeight.Medium)
-        Text("%.2f ${stringResource(R.string.currency_unit)}".format(netCash), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
+        Column {
+            Text(stringResource(R.string.cash_in_drawer), fontSize = 11.sp, color = ShiftColors.TextMuted, fontWeight = FontWeight.Medium)
+            Text("%.2f %s".format(expectedCash, currency), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = ShiftColors.NetCashGreen)
+        }
+        if (variance != null) {
+            val isOver = variance > 0
+            val isBalanced = Math.abs(variance) < 0.001
+            val textColor = when {
+                isBalanced -> Color(0xFF15803D)
+                isOver -> Color(0xFF047857)
+                else -> Color(0xFFB91C1C)
+            }
+            val label = when {
+                isBalanced -> stringResource(R.string.balanced)
+                isOver -> "Over"
+                else -> "Short"
+            }
+            Surface(
+                color = when {
+                    isBalanced -> Color(0xFFF0FDF4)
+                    isOver -> Color(0xFFECFDF5)
+                    else -> Color(0xFFFEF2F2)
+                },
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, textColor.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    text = "$label: ${if (variance > 0) "+" else ""}${String.format(Locale.US, "%.2f", variance)} $currency",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
     }
 }
 

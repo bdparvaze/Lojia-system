@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.lojia.pos.BuildConfig
-import com.lojia.pos.auth.DevCredentials
 import com.lojia.pos.util.SecurityUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -114,15 +113,15 @@ abstract class AppDatabase : RoomDatabase() {
                     UserProfile(
                         id = 1,
                         fullName = "Demo Owner",
-                        username = DevCredentials.DEFAULT_USERNAME,
-                        email = "demo@lojia.local",
-                        passwordHash = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PASSWORD),
+                        username = "demo",
+                        email = "demo@example.com",
+                        passwordHash = SecurityUtils.hashSecret("demo123"),
                         securityQuestion = "What is your primary store location?",
                         securityAnswer = "demo",
-                        phone = "",
+                        phone = "+1 555 0199",
                         designation = "Store Owner & Manager",
                         nationalIdOrPassport = "",
-                        address = "Demo City",
+                        address = "123 Commercial Avenue",
                         profilePictureUri = "",
                         avatarIndex = 0,
                         dateOfBirthOrJoin = "01 Jan 2024",
@@ -139,15 +138,15 @@ abstract class AppDatabase : RoomDatabase() {
                 reportDao.saveBusinessProfile(
                     BusinessProfile(
                         id = 1,
-                        businessName = "Lojia",
-                        vatNumber = "",
-                        phone = "",
-                        email = "contact@lojia.local",
-                        address = "Demo City",
+                        businessName = "Demo Store (Debug)",
+                        vatNumber = "310000000000003",
+                        phone = "+1 555 0100",
+                        email = "store@example.com",
+                        address = "123 Commercial Avenue",
                         workingHours = "08:00 AM - 10:00 PM",
                         currency = "USD",
                         country = "United States",
-                        vatRate = 0.0,
+                        vatRate = 5.0,
                         isTaxEnabled = false,
                         isTaxIncluded = true,
                         logoUri = ""
@@ -158,8 +157,8 @@ abstract class AppDatabase : RoomDatabase() {
                     ShopReceiptConfig(
                         id = 1,
                         shopLogo = "store_logo_default",
-                        customHeader = "Welcome to Lojia",
-                        customFooterText = "Thank you, visit again!",
+                        customHeader = "Demo Store",
+                        customFooterText = "Thank you for shopping with us!",
                         showTaxNumber = true,
                         showCashierName = true,
                         showBarcode = true,
@@ -169,46 +168,46 @@ abstract class AppDatabase : RoomDatabase() {
 
                 reportDao.insertUser(
                     User(
-                        username = DevCredentials.DEFAULT_USERNAME,
-                        passwordHash = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PASSWORD),
+                        username = "demo",
+                        passwordHash = SecurityUtils.hashSecret("demo123"),
                         role = "ADMIN",
                         pin = ""
                     )
                 )
 
-                reportDao.insertCashier(Cashier(name = "Lojia Manager", pin = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN), role = "ADMIN"))
-                reportDao.insertCashier(Cashier(name = "Ahmed Al-Harbi", pin = SecurityUtils.hashSecret("1111"), role = "CASHIER"))
-                reportDao.insertCashier(Cashier(name = "Fahad Al-Otaibi", pin = SecurityUtils.hashSecret("2222"), role = "CASHIER"))
-                reportDao.insertCashier(Cashier(name = "Sultan Al-Ghamdi", pin = SecurityUtils.hashSecret("3333"), role = "CASHIER"))
+                reportDao.insertCashier(Cashier(name = "Manager (Demo)", pin = SecurityUtils.hashSecret("123456"), role = "ADMIN"))
+                reportDao.insertCashier(Cashier(name = "Cashier 1 (Demo)", pin = SecurityUtils.hashSecret("1111"), role = "CASHIER"))
+                reportDao.insertCashier(Cashier(name = "Cashier 2 (Demo)", pin = SecurityUtils.hashSecret("2222"), role = "CASHIER"))
 
-                val catHookah = posDao.insertCategory(POSCategory(name = "شيشة و رؤوس", iconName = "SmokeFree", colorHex = "#4CAF50"))
-                val catDrinks = posDao.insertCategory(POSCategory(name = "مشروبات وقهوة", iconName = "Coffee", colorHex = "#6366F1"))
-                val catFood = posDao.insertCategory(POSCategory(name = "مأكولات وخفايف", iconName = "Restaurant", colorHex = "#F59E0B"))
+                val catDrinks = posDao.insertCategory(POSCategory(name = "Beverages / المشروبات", iconName = "Coffee", colorHex = "#3B82F6"))
+                val catFood = posDao.insertCategory(POSCategory(name = "Food & Bakery / المأكولات", iconName = "Restaurant", colorHex = "#F59E0B"))
+                val catRetail = posDao.insertCategory(POSCategory(name = "Specialty & Retail / منتجات عامة", iconName = "Category", colorHex = "#10B981"))
 
-                posDao.insertProduct(POSProduct(name = "تغيير راس بلوبيري", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "101", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس تفاحتين فاخر", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "102", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس علك مستكا", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "103", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس ليمون نعناع", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "104", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس مكس", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "105", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس عنب ساده", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "106", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس عنب توت", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "107", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس عنب نعناع", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "108", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس بطيخ نعناع", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "109", unit = "head"))
-                posDao.insertProduct(POSProduct(name = "تغيير راس تفاحتين نخلة", categoryId = catHookah.toInt(), price = 25.0, costPrice = 5.0, stockQuantity = 500.0, minStockAlert = 20.0, barcode = "110", unit = "head"))
+                // Beverages
+                posDao.insertProduct(POSProduct(name = "Espresso / اسبريسو", categoryId = catDrinks.toInt(), price = 3.50, costPrice = 0.80, stockQuantity = 300.0, minStockAlert = 20.0, barcode = "101", unit = "cup"))
+                posDao.insertProduct(POSProduct(name = "Cappuccino / كابتشينو", categoryId = catDrinks.toInt(), price = 4.50, costPrice = 1.20, stockQuantity = 250.0, minStockAlert = 20.0, barcode = "102", unit = "cup"))
+                posDao.insertProduct(POSProduct(name = "Iced Latte / لاتيه مثلج", categoryId = catDrinks.toInt(), price = 5.00, costPrice = 1.40, stockQuantity = 200.0, minStockAlert = 15.0, barcode = "103", unit = "cup"))
+                posDao.insertProduct(POSProduct(name = "Turkish Tea / شاي تركي", categoryId = catDrinks.toInt(), price = 2.50, costPrice = 0.50, stockQuantity = 400.0, minStockAlert = 25.0, barcode = "104", unit = "cup"))
+                posDao.insertProduct(POSProduct(name = "Mineral Water / مياه معدنية", categoryId = catDrinks.toInt(), price = 1.50, costPrice = 0.40, stockQuantity = 500.0, minStockAlert = 30.0, barcode = "105", unit = "bottle"))
 
-                posDao.insertProduct(POSProduct(name = "شاي تركي", categoryId = catDrinks.toInt(), price = 5.0, costPrice = 1.0, stockQuantity = 300.0, minStockAlert = 15.0, barcode = "201", unit = "cup"))
-                posDao.insertProduct(POSProduct(name = "قهوة تركي", categoryId = catDrinks.toInt(), price = 10.0, costPrice = 2.0, stockQuantity = 200.0, minStockAlert = 15.0, barcode = "202", unit = "cup"))
-                posDao.insertProduct(POSProduct(name = "اسبريسو دبل", categoryId = catDrinks.toInt(), price = 12.0, costPrice = 3.0, stockQuantity = 150.0, minStockAlert = 20.0, barcode = "203", unit = "cup"))
-                posDao.insertProduct(POSProduct(name = "سبانش لاتيه", categoryId = catDrinks.toInt(), price = 18.0, costPrice = 5.0, stockQuantity = 120.0, minStockAlert = 15.0, barcode = "204", unit = "cup"))
-                posDao.insertProduct(POSProduct(name = "ماء نقي بارد", categoryId = catDrinks.toInt(), price = 2.0, costPrice = 0.5, stockQuantity = 400.0, minStockAlert = 30.0, barcode = "301", unit = "bottle"))
+                // Food
+                posDao.insertProduct(POSProduct(name = "Club Sandwich / كلوب ساندويتش", categoryId = catFood.toInt(), price = 6.50, costPrice = 2.20, stockQuantity = 80.0, minStockAlert = 10.0, barcode = "201", unit = "pcs"))
+                posDao.insertProduct(POSProduct(name = "Butter Croissant / كرواسون", categoryId = catFood.toInt(), price = 3.00, costPrice = 0.90, stockQuantity = 100.0, minStockAlert = 15.0, barcode = "202", unit = "pcs"))
+                posDao.insertProduct(POSProduct(name = "Cheese Muffin / مافن جبن", categoryId = catFood.toInt(), price = 3.50, costPrice = 1.00, stockQuantity = 90.0, minStockAlert = 10.0, barcode = "203", unit = "pcs"))
+                posDao.insertProduct(POSProduct(name = "Caesar Salad / سلطة سيزر", categoryId = catFood.toInt(), price = 7.00, costPrice = 2.50, stockQuantity = 60.0, minStockAlert = 10.0, barcode = "204", unit = "bowl"))
 
-                posDao.insertModifier(POSModifier(name = "راس إضافي", optionGroup = "خيارات الشيشة", extraPrice = 10.0))
-                posDao.insertModifier(POSModifier(name = "سيروب نكهة إضافية", optionGroup = "إضافات", extraPrice = 5.0))
-                posDao.insertModifier(POSModifier(name = "حليب مضاعف", optionGroup = "إضافات قهوة", extraPrice = 4.0))
+                // Retail
+                posDao.insertProduct(POSProduct(name = "Coffee Beans 250g / بن قهوة مختصة", categoryId = catRetail.toInt(), price = 14.00, costPrice = 6.50, stockQuantity = 50.0, minStockAlert = 8.0, barcode = "301", unit = "pack"))
+                posDao.insertProduct(POSProduct(name = "Premium Tea Tin 100g / علبة شاي فاخر", categoryId = catRetail.toInt(), price = 12.00, costPrice = 5.00, stockQuantity = 45.0, minStockAlert = 8.0, barcode = "302", unit = "can"))
+                posDao.insertProduct(POSProduct(name = "Reusable Travel Mug / كوب حراري", categoryId = catRetail.toInt(), price = 15.00, costPrice = 6.00, stockQuantity = 35.0, minStockAlert = 5.0, barcode = "303", unit = "pcs"))
 
-                posDao.insertDiscount(POSDiscount(name = "خصم موظفين 20%", percentage = 20.0, isPercentage = true, code = "STAFF20"))
-                posDao.insertDiscount(POSDiscount(name = "عرض خاص 10%", percentage = 10.0, isPercentage = true, code = "PROMO10"))
-                posDao.insertDiscount(POSDiscount(name = "خصم مباشر 5 ريال", fixedAmount = 5.0, isPercentage = false, code = "FLAT5"))
+                posDao.insertModifier(POSModifier(name = "Extra Shot / جرعة إضافية", optionGroup = "Coffee Options", extraPrice = 1.0))
+                posDao.insertModifier(POSModifier(name = "Oat Milk / حليب شوفان", optionGroup = "Milk Options", extraPrice = 0.75))
+                posDao.insertModifier(POSModifier(name = "Vanilla Syrup / سيروب فانيلا", optionGroup = "Syrup", extraPrice = 0.50))
+
+                posDao.insertDiscount(POSDiscount(name = "Staff 20% / خصم موظفين", percentage = 20.0, isPercentage = true, code = "STAFF20"))
+                posDao.insertDiscount(POSDiscount(name = "Promo 10% / عرض ترويجي", percentage = 10.0, isPercentage = true, code = "PROMO10"))
+                posDao.insertDiscount(POSDiscount(name = "Flat $5 / خصم مباشر", fixedAmount = 5.0, isPercentage = false, code = "FLAT5"))
 
                 val activeSessionId = reportDao.insertShiftSession(
                     ShiftSession(
@@ -286,15 +285,15 @@ abstract class AppDatabase : RoomDatabase() {
                 reportDao.saveBusinessProfile(
                     BusinessProfile(
                         id = 1,
-                        businessName = "",
+                        businessName = "My Store",
                         vatNumber = "",
                         phone = "",
                         email = "",
                         address = "",
-                        currency = "SAR",
-                        country = "Saudi Arabia",
-                        vatRate = 15.0,
-                        isTaxEnabled = true,
+                        currency = "USD",
+                        country = "United States",
+                        vatRate = 0.0,
+                        isTaxEnabled = false,
                         isTaxIncluded = true
                     )
                 )
@@ -302,7 +301,7 @@ abstract class AppDatabase : RoomDatabase() {
                     ShopReceiptConfig(
                         id = 1,
                         shopLogo = "store_logo_default",
-                        customHeader = "Welcome to Lojia",
+                        customHeader = "Welcome",
                         customFooterText = "Thank you, visit again!",
                         showTaxNumber = true,
                         showCashierName = true,

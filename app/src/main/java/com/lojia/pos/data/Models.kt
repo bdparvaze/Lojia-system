@@ -6,36 +6,35 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.lojia.pos.R
-import com.lojia.pos.auth.DevCredentials
 import com.lojia.pos.util.SecurityUtils
 
 @Entity(tableName = "users")
 data class User(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val username: String,
-    val passwordHash: String = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PASSWORD),
+    val passwordHash: String = "",
     val role: String = "ADMIN", // ADMIN, CASHIER
-    val pin: String = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PIN),
+    val pin: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "user_profile")
 data class UserProfile(
     @PrimaryKey val id: Int = 1,
-    val fullName: String = "Demo Owner",
-    val username: String = "demo",
-    val email: String = "demo@lojia.local",
+    val fullName: String = "Store Owner",
+    val username: String = "",
+    val email: String = "",
     @ColumnInfo(name = "passwordHash")
-    val passwordHash: String = SecurityUtils.hashSecret(DevCredentials.DEFAULT_PASSWORD),
-    val securityQuestion: String = "What is your primary store location?",
-    val securityAnswer: String = "demo",
+    val passwordHash: String = "",
+    val securityQuestion: String = "",
+    val securityAnswer: String = "",
     val phone: String = "",
     val designation: String = "Store Owner & Manager",
     val nationalIdOrPassport: String = "",
-    val address: String = "Demo City",
+    val address: String = "",
     val profilePictureUri: String = "",
     val avatarIndex: Int = 0,
-    val dateOfBirthOrJoin: String = "01 Jan 2024",
+    val dateOfBirthOrJoin: String = "",
     val emergencyContact: String = "",
     val pin: String = "",
     val isBiometricEnabled: Boolean = false,
@@ -49,7 +48,7 @@ data class UserProfile(
 data class ShopReceiptConfig(
     @PrimaryKey val id: Int = 1,
     val shopLogo: String = "store_logo_default",
-    val customHeader: String = "Welcome to Lojia",
+    val customHeader: String = "Welcome",
     val customFooterText: String = "Thank you, visit again!",
     val showTaxNumber: Boolean = true,
     val showCashierName: Boolean = true,
@@ -117,11 +116,173 @@ data class ShiftReport(
     val purchasedItemsJson: String = "[]",
     val notes: String = ""
 ) {
+    // 1. Total Sales (by payment method only - cash + card/mada + digital wallet)
+    // Note: Due/Credit sales are NOT added to Sales cash figures. They are tracked as Receivables.
     val totalSales: Double
         get() = grossCash + madaPayments + digitalWallet
 
+    // Parsed JSON Collection Lists
+    val previousDueCollectionsList: List<PreviousDueCollectionItem>
+        get() = try {
+            val arr = org.json.JSONArray(previousDueCollectionsJson)
+            val list = mutableListOf<PreviousDueCollectionItem>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                list.add(
+                    PreviousDueCollectionItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        customerName = obj.optString("customerName", obj.optString("receiptNo", "")),
+                        amount = obj.optDouble("amount", 0.0),
+                        paymentMode = obj.optString("paymentMode", obj.optString("type", "CASH")),
+                        note = obj.optString("note", "")
+                    )
+                )
+            }
+            list
+        } catch (e: Exception) { emptyList() }
+
+    val dueCreditEntriesList: List<DueCreditItem>
+        get() = try {
+            val arr = org.json.JSONArray(dueCreditEntriesJson)
+            val list = mutableListOf<DueCreditItem>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                list.add(
+                    DueCreditItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        customerName = obj.optString("customerName", obj.optString("receiptNo", "")),
+                        amount = obj.optDouble("amount", 0.0),
+                        note = obj.optString("note", ""),
+                        phone = obj.optString("phone", "")
+                    )
+                )
+            }
+            list
+        } catch (e: Exception) { emptyList() }
+
+    val staffAdvancesList: List<StaffAdvanceItem>
+        get() = try {
+            val arr = org.json.JSONArray(staffAdvancesJson)
+            val list = mutableListOf<StaffAdvanceItem>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                list.add(
+                    StaffAdvanceItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        staffName = obj.optString("staffName", obj.optString("name", "")),
+                        amount = obj.optDouble("amount", 0.0),
+                        reason = obj.optString("reason", obj.optString("type", "CASH"))
+                    )
+                )
+            }
+            list
+        } catch (e: Exception) { emptyList() }
+
+    val purchasedItemsList: List<PurchasedInventoryItem>
+        get() = try {
+            val arr = org.json.JSONArray(purchasedItemsJson)
+            val list = mutableListOf<PurchasedInventoryItem>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val qty = obj.optDouble("quantity", obj.optDouble("qty", 1.0))
+                val unitPrice = obj.optDouble("unitPrice", obj.optDouble("price", 0.0))
+                val total = obj.optDouble("totalAmount", obj.optDouble("total", qty * unitPrice))
+                list.add(
+                    PurchasedInventoryItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        itemName = obj.optString("itemName", obj.optString("name", "")),
+                        quantity = qty,
+                        unitPrice = unitPrice,
+                        totalAmount = total,
+                        paidVia = obj.optString("paidVia", "CASH"),
+                        supplier = obj.optString("supplier", "")
+                    )
+                )
+            }
+            list
+        } catch (e: Exception) { emptyList() }
+
+    val unpaidBillsList: List<UnpaidBillItem>
+        get() = try {
+            val arr = org.json.JSONArray(unpaidBillsJson)
+            val list = mutableListOf<UnpaidBillItem>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                list.add(
+                    UnpaidBillItem(
+                        id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                        tableOrOrderRef = obj.optString("tableOrOrderRef", obj.optString("description", "")),
+                        amount = obj.optDouble("amount", 0.0),
+                        reason = obj.optString("reason", "")
+                    )
+                )
+            }
+            list
+        } catch (e: Exception) { emptyList() }
+
+    // Due / Receivables Tracking
+    val totalDueCredit: Double
+        get() = dueCreditEntriesList.sumOf { it.amount }
+
+    val totalDueIssued: Double
+        get() = totalDueCredit
+
+    val totalPreviousDueCash: Double
+        get() = previousDueCollectionsList.filter { it.paymentMode.equals("CASH", ignoreCase = true) }.sumOf { it.amount }
+
+    val totalDueCollectedCash: Double
+        get() = totalPreviousDueCash
+
+    val totalPreviousDueBank: Double
+        get() = previousDueCollectionsList.filter { !it.paymentMode.equals("CASH", ignoreCase = true) }.sumOf { it.amount }
+
+    val totalDueCollectedBank: Double
+        get() = totalPreviousDueBank
+
+    val totalDueCollected: Double
+        get() = previousDueCollectionsList.sumOf { it.amount }
+
+    // Staff Advances
+    val totalStaffAdvances: Double
+        get() = staffAdvancesList.sumOf { it.amount }
+
+    val totalStaffAdvancesAmount: Double
+        get() = totalStaffAdvances
+
+    // Purchases
+    val totalCashPurchases: Double
+        get() = purchasedItemsList.filter { it.paidVia.equals("CASH", ignoreCase = true) }.sumOf { it.totalAmount }
+
+    val totalPurchasedCash: Double
+        get() = totalCashPurchases
+
+    val totalPurchasedBank: Double
+        get() = purchasedItemsList.filter { !it.paidVia.equals("CASH", ignoreCase = true) }.sumOf { it.totalAmount }
+
+    val totalPurchasedAll: Double
+        get() = purchasedItemsList.sumOf { it.totalAmount }
+
+    val totalUnpaidLoss: Double
+        get() = unpaidBillsList.sumOf { it.amount }
+
+    // 2. Cash Inflow & Outflow Formulas
+    val totalCashIn: Double
+        get() = grossCash + totalPreviousDueCash
+
+    val totalCashOut: Double
+        get() = totalExpenses + totalStaffAdvances + totalCashPurchases
+
+    // 3. Expected Cash in Drawer
+    val expectedCashInDrawer: Double
+        get() = totalCashIn - totalCashOut
+
     val netCash: Double
-        get() = grossCash - totalExpenses
+        get() = expectedCashInDrawer
+
+    fun variance(actualCashCount: Double): Double = actualCashCount - expectedCashInDrawer
+
+    val netCardAndDigital: Double
+        get() = madaPayments + digitalWallet + totalPreviousDueBank
 }
 
 @Entity(tableName = "draft_reports")
@@ -143,7 +304,10 @@ data class DraftReport(
     val unpaidBillsJson: String = "[]",
     val purchasedItemsJson: String = "[]",
     val notes: String = ""
-)
+) {
+    val totalSales: Double
+        get() = grossCash + madaPayments + digitalWallet
+}
 
 data class DueCreditItem(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -197,11 +361,11 @@ data class AuditLog(
 @Entity(tableName = "business_profile")
 data class BusinessProfile(
     @PrimaryKey val id: Int = 1,
-    val businessName: String = "Lojia",
+    val businessName: String = "My Store",
     val vatNumber: String = "",
     val phone: String = "",
-    val email: String = "contact@lojia.local",
-    val address: String = "Demo City",
+    val email: String = "",
+    val address: String = "",
     val workingHours: String = "08:00 AM - 10:00 PM",
     val currency: String = "USD",
     val country: String = "United States",

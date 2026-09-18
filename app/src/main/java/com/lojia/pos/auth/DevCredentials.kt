@@ -1,11 +1,13 @@
 package com.lojia.pos.auth
 
+import com.lojia.pos.BuildConfig
+
 /**
- * Development & Debug authentication credentials.
- * Used exclusively for debug seed insertion and local testing.
+ * Development & Debug placeholder references.
+ * Strictly empty in Release builds to guarantee zero hardcoded working credentials.
  */
 object DevCredentials {
-    const val DEFAULT_USERNAME = "demo"
-    const val DEFAULT_PASSWORD = "admin123"
-    const val DEFAULT_PIN = "123456"
+    val DEFAULT_USERNAME: String = if (BuildConfig.DEBUG) "demo" else ""
+    val DEFAULT_PASSWORD: String = if (BuildConfig.DEBUG) "admin123" else ""
+    val DEFAULT_PIN: String = if (BuildConfig.DEBUG) "123456" else ""
 }

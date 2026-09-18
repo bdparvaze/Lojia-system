@@ -182,13 +182,21 @@ object PdfReportGenerator {
         val shift: String,
         val date: String,
         val financialBreakdown: String,
-        val grossCash: String,
-        val madaBank: String,
+        val salesSummary: String,
+        val cashSales: String,
+        val cardMadaSales: String,
         val digitalWallet: String,
         val grossTotalSales: String,
+        val cashDrawerReconciliation: String,
+        val startingCash: String,
+        val cashIn: String,
+        val cashOut: String,
         val expenses: String,
-        val netCashInDrawer: String,
+        val expectedCashInDrawer: String,
+        val actualCashCount: String,
+        val variance: String,
         val netMadaBank: String,
+        val otherTracking: String,
         val dueSales: String,
         val dueCollection: String,
         val employerAdvances: String,
@@ -209,10 +217,10 @@ object PdfReportGenerator {
         val notes: String,
         val cashierSign: String,
         val supervisorSign: String,
-        val page: String
+        val page: String,
+        val computerGeneratedNotice: String
     )
 
-    
     private fun getPdfStrings(context: Context, language: AppLanguage): PdfStrings {
         val locale = try {
             java.util.Locale.forLanguageTag(language.code)
@@ -223,6 +231,67 @@ object PdfReportGenerator {
         config.setLocale(locale)
         val localizedContext = context.createConfigurationContext(config)
 
+        val salesSummaryStr = when (language) {
+            AppLanguage.ARABIC -> "ملخص المبيعات"
+            AppLanguage.BENGALI -> "বিক্রয় সারাংশ"
+            else -> "Sales Summary"
+        }
+        val cashSalesStr = when (language) {
+            AppLanguage.ARABIC -> "مبيعات نقدية"
+            AppLanguage.BENGALI -> "নগদ বিক্রয়"
+            else -> "Cash Sales"
+        }
+        val cardMadaSalesStr = when (language) {
+            AppLanguage.ARABIC -> "مبيعات مدى / بطاقات"
+            AppLanguage.BENGALI -> "কার্ড / মাদা বিক্রয়"
+            else -> "Card / Mada Sales"
+        }
+        val cashReconciliationStr = when (language) {
+            AppLanguage.ARABIC -> "مطابقة درج النقدية"
+            AppLanguage.BENGALI -> "ক্যাশ ড্রয়ার সমন্বয়"
+            else -> "Cash Drawer Reconciliation"
+        }
+        val startingCashStr = when (language) {
+            AppLanguage.ARABIC -> "النقد الافتتاحي (العُهدة)"
+            AppLanguage.BENGALI -> "প্রারম্ভিক নগদ (ওপেনিং ফ্লোট)"
+            else -> "Starting Cash (Opening Float)"
+        }
+        val cashInStr = when (language) {
+            AppLanguage.ARABIC -> "نقد داخل (إيداعات + تحصيل آجل)"
+            AppLanguage.BENGALI -> "নগদ জমা (পে-ইন + পূর্বের বাকি আদায়)"
+            else -> "Cash In (Pay-Ins + Previous Due Collections)"
+        }
+        val cashOutStr = when (language) {
+            AppLanguage.ARABIC -> "نقد خارج (مصروفات + سلف + مشتريات)"
+            AppLanguage.BENGALI -> "নগদ খরচ (ব্যয় + অগ্রিম + নগদ ক্রয়)"
+            else -> "Cash Out (Expenses + Advances + Purchases)"
+        }
+        val expectedCashStr = when (language) {
+            AppLanguage.ARABIC -> "النقد المتوقع في الدرج"
+            AppLanguage.BENGALI -> "ড্রয়ারে প্রত্যাশিত নগদ"
+            else -> "Expected Cash in Drawer"
+        }
+        val actualCashCountStr = when (language) {
+            AppLanguage.ARABIC -> "الجرد الفعلي للنقد"
+            AppLanguage.BENGALI -> "প্রকৃত নগদ গণনা"
+            else -> "Actual Cash Count"
+        }
+        val varianceStr = when (language) {
+            AppLanguage.ARABIC -> "الفارق (زيادة / عجز)"
+            AppLanguage.BENGALI -> "পার্থক্য (অতিরিক্ত / ঘাটতি)"
+            else -> "Variance (Over / Short)"
+        }
+        val otherTrackingStr = when (language) {
+            AppLanguage.ARABIC -> "متابعات تشغيلية أخرى"
+            AppLanguage.BENGALI -> "অন্যান্য ট্র্যাকিং ও অপারেশনাল মেট্রিক্স"
+            else -> "Other Tracking & Operational Metrics"
+        }
+        val noticeStr = when (language) {
+            AppLanguage.ARABIC -> "هذا التقرير تم إنشاؤه آلياً بواسطة النظام"
+            AppLanguage.BENGALI -> "এটি সিস্টেম দ্বারা তৈরি শিফট রিপোর্ট"
+            else -> "This is a computer-generated shift report"
+        }
+
         return PdfStrings(
             title = localizedContext.getString(com.lojia.pos.R.string.shift_closing_and_revenue_report),
             officialReport = localizedContext.getString(com.lojia.pos.R.string.pdf_official_report),
@@ -231,13 +300,21 @@ object PdfReportGenerator {
             shift = localizedContext.getString(com.lojia.pos.R.string.pdf_shift),
             date = localizedContext.getString(com.lojia.pos.R.string.pdf_date),
             financialBreakdown = localizedContext.getString(com.lojia.pos.R.string.pdf_financial_breakdown),
-            grossCash = localizedContext.getString(com.lojia.pos.R.string.pdf_gross_cash),
-            madaBank = localizedContext.getString(com.lojia.pos.R.string.pdf_mada_bank),
+            salesSummary = salesSummaryStr,
+            cashSales = cashSalesStr,
+            cardMadaSales = cardMadaSalesStr,
             digitalWallet = localizedContext.getString(com.lojia.pos.R.string.pdf_digital_wallet),
             grossTotalSales = localizedContext.getString(com.lojia.pos.R.string.pdf_gross_total_sales),
+            cashDrawerReconciliation = cashReconciliationStr,
+            startingCash = startingCashStr,
+            cashIn = cashInStr,
+            cashOut = cashOutStr,
             expenses = localizedContext.getString(com.lojia.pos.R.string.pdf_expenses),
-            netCashInDrawer = localizedContext.getString(com.lojia.pos.R.string.pdf_net_cash_in_drawer),
+            expectedCashInDrawer = expectedCashStr,
+            actualCashCount = actualCashCountStr,
+            variance = varianceStr,
             netMadaBank = localizedContext.getString(com.lojia.pos.R.string.pdf_net_mada_bank),
+            otherTracking = otherTrackingStr,
             dueSales = localizedContext.getString(com.lojia.pos.R.string.pdf_due_sales),
             dueCollection = localizedContext.getString(com.lojia.pos.R.string.pdf_due_collection),
             employerAdvances = localizedContext.getString(com.lojia.pos.R.string.pdf_employer_advances),
@@ -258,7 +335,8 @@ object PdfReportGenerator {
             notes = localizedContext.getString(com.lojia.pos.R.string.pdf_notes_1),
             cashierSign = localizedContext.getString(com.lojia.pos.R.string.pdf_cashier_sign_1),
             supervisorSign = localizedContext.getString(com.lojia.pos.R.string.pdf_supervisor_sign),
-            page = localizedContext.getString(com.lojia.pos.R.string.pdf_page)
+            page = localizedContext.getString(com.lojia.pos.R.string.pdf_page),
+            computerGeneratedNotice = noticeStr
         )
     }
     fun generatePresetLogoBitmap(presetKey: String, size: Int = 200): Bitmap {
@@ -518,6 +596,26 @@ object PdfReportGenerator {
         }
     }
 
+    fun extractStartingCashFromNotes(notes: String): Double? {
+        val regex = Regex("""(?:Starting Cash|Starting Float|Float|Opening Cash)[:=]\s*([0-9]+(?:\.[0-9]+)?)""", RegexOption.IGNORE_CASE)
+        return regex.find(notes)?.groupValues?.get(1)?.toDoubleOrNull()
+    }
+
+    fun extractActualCashFromNotes(notes: String): Double? {
+        val regex = Regex("""(?:Actual Cash Count|Actual Cash|Actual Count|Actual)[:=]\s*([0-9]+(?:\.[0-9]+)?)""", RegexOption.IGNORE_CASE)
+        return regex.find(notes)?.groupValues?.get(1)?.toDoubleOrNull()
+    }
+
+    fun cleanDisplayNotes(notes: String): String {
+        return notes
+            .replace(Regex("""(?:Starting Cash|Starting Float|Float|Opening Cash)[:=]\s*[0-9]+(?:\.[0-9]+)?""", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("""(?:Actual Cash Count|Actual Cash|Actual Count|Actual)[:=]\s*[0-9]+(?:\.[0-9]+)?""", RegexOption.IGNORE_CASE), "")
+            .split("|")
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !it.equals("Saved from Shift Closing Ledger", ignoreCase = true) }
+            .joinToString(" | ")
+    }
+
     private fun buildShiftReportQrText(
         context: Context,
         report: ShiftReport,
@@ -530,11 +628,19 @@ object PdfReportGenerator {
         val vatNo = businessProfile?.vatNumber ?: "310123456700003"
         val pStr = getPdfStrings(context, language)
 
+        val startingCash = extractStartingCashFromNotes(report.notes) ?: 0.0
+        val actualCashCount = extractActualCashFromNotes(report.notes)
+        val cashIn = report.totalDueCollectedCash
+        val cashOut = report.totalCashOut
+        val expectedCashInDrawer = startingCash + report.grossCash + cashIn - cashOut
+        val variance = actualCashCount?.let { it - expectedCashInDrawer }
+
         val dueCreditEntries = parseDueCreditEntries(report.dueCreditEntriesJson)
         val dueCollectionEntries = parseDueCollectionEntries(report.previousDueCollectionsJson)
         val staffAdvanceEntries = parseStaffAdvanceEntries(report.staffAdvancesJson)
         val walkoutEntries = parseWalkoutEntries(report.unpaidBillsJson)
         val purchasedItems = parsePurchasedItems(report.purchasedItemsJson)
+        val displayNotes = cleanDisplayNotes(report.notes)
 
         return buildString {
             appendLine("=== $bizName ===")
@@ -543,37 +649,41 @@ object PdfReportGenerator {
             appendLine("${pStr.date}: ${dateFormatter.format(Date(report.dateInMillis))}")
             appendLine("${pStr.shift}: ${getLocalizedShiftName(language, report.shift)} | ${pStr.cashier}: ${report.cashierName}")
             appendLine("--------------------------------")
+            appendLine("[1. SALES SUMMARY]")
+            appendLine("${pStr.cashSales}: ${MoneyFormat.format(report.grossCash, currency)}")
+            appendLine("${pStr.cardMadaSales}: ${MoneyFormat.format(report.madaPayments, currency)}")
+            if (report.digitalWallet > 0) {
+                appendLine("${pStr.digitalWallet}: ${MoneyFormat.format(report.digitalWallet, currency)}")
+            }
             appendLine("${pStr.grossTotalSales}: ${MoneyFormat.format(report.totalSales, currency)}")
-            appendLine("${pStr.grossCash}: ${MoneyFormat.format(report.grossCash, currency)}")
-            appendLine("${pStr.madaBank}: ${MoneyFormat.format(report.madaPayments, currency)}")
-            appendLine("${pStr.digitalWallet}: ${MoneyFormat.format(report.digitalWallet, currency)}")
-            appendLine("${pStr.expenses}: ${MoneyFormat.format(report.totalExpenses, currency)}")
-            appendLine("${pStr.netCashInDrawer}: ${MoneyFormat.format(report.netCash, currency)}")
-            appendLine("${pStr.netMadaBank}: ${MoneyFormat.format(report.madaPayments, currency)}")
-            if (dueCreditEntries.isNotEmpty()) {
-                appendLine("--- ${pStr.dueSales} (${dueCreditEntries.size}) ---")
-                dueCreditEntries.forEach { appendLine("Rcpt ${it.receiptNo} (${it.customerName}): ${MoneyFormat.format(it.amount, currency)}") }
+            appendLine("--------------------------------")
+            appendLine("[2. CASH DRAWER RECONCILIATION]")
+            if (startingCash > 0) {
+                appendLine("${pStr.startingCash}: ${MoneyFormat.format(startingCash, currency)}")
             }
-            if (dueCollectionEntries.isNotEmpty()) {
-                appendLine("--- ${pStr.dueCollection} (${dueCollectionEntries.size}) ---")
-                dueCollectionEntries.forEach { appendLine("Rcpt ${it.receiptNo} (${it.paymentMode}): ${MoneyFormat.format(it.amount, currency)}") }
+            appendLine("(+) ${pStr.cashSales}: ${MoneyFormat.format(report.grossCash, currency)}")
+            if (cashIn > 0) {
+                appendLine("(+) ${pStr.cashIn}: ${MoneyFormat.format(cashIn, currency)}")
             }
-            if (staffAdvanceEntries.isNotEmpty()) {
-                appendLine("--- ${pStr.employerAdvances} (${staffAdvanceEntries.size}) ---")
-                staffAdvanceEntries.forEach { appendLine("${it.staffName} (${it.paymentMode}): ${MoneyFormat.format(it.amount, currency)}") }
+            appendLine("(-) ${pStr.cashOut}: ${MoneyFormat.format(cashOut, currency)}")
+            appendLine("${pStr.expectedCashInDrawer}: ${MoneyFormat.format(expectedCashInDrawer, currency)}")
+            if (actualCashCount != null) {
+                appendLine("${pStr.actualCashCount}: ${MoneyFormat.format(actualCashCount, currency)}")
+                val varStr = if (variance != null) {
+                    when {
+                        variance == 0.0 -> "0.00 (Balanced)"
+                        variance > 0.0 -> "+${MoneyFormat.format(variance, currency)} (Over)"
+                        else -> "-${MoneyFormat.format(Math.abs(variance), currency)} (Short)"
+                    }
+                } else "N/A"
+                appendLine("${pStr.variance}: $varStr")
             }
-            if (walkoutEntries.isNotEmpty()) {
-                appendLine("--- ${pStr.walkoutBills} (${walkoutEntries.size}) ---")
-                walkoutEntries.forEach { appendLine("Ref ${it.tableOrOrderRef}: ${MoneyFormat.format(it.amount, currency)}") }
-            }
-            if (purchasedItems.isNotEmpty()) {
-                appendLine("--- ${pStr.paidOutItems} (${purchasedItems.size}) ---")
-                purchasedItems.forEach { appendLine("${it.itemName} (${it.quantity.toInt()}x): ${MoneyFormat.format(it.totalAmount, currency)}") }
-            }
-            appendLine("--- ${pStr.operationalMetrics} ---")
-            appendLine("${pStr.staffMeals}: ${report.staffMealsCount} | ${pStr.regularMuassel}: ${report.muasselQty.toInt()} | ${pStr.outdoorMuassel}: ${report.outdoorShishaQty.toInt()}")
-            if (report.notes.isNotBlank()) {
-                appendLine("${pStr.notes}: ${report.notes}")
+            appendLine("--------------------------------")
+            appendLine("[3. OTHER TRACKING]")
+            appendLine("${pStr.dueSales}: ${MoneyFormat.format(report.totalDueCredit, currency)} (${dueCreditEntries.size})")
+            appendLine("${pStr.staffMeals}: ${report.staffMealsCount}")
+            if (displayNotes.isNotBlank()) {
+                appendLine("${pStr.notes}: $displayNotes")
             }
             appendLine("================================")
             appendLine(context.getString(R.string.verified_by_lojia_pos))
@@ -820,8 +930,9 @@ object PdfReportGenerator {
     }
 
     /**
-     * Generates an individual Shift Report PDF document with multi-entry breakdown tables,
-     * multi-language support, and multi-page pagination.
+     * Generates an individual Shift Report PDF document following international retail POS standards
+     * (Square / Loyverse / Lightspeed style), with clean 3-section layout, audit-ready reconciliation,
+     * multi-entry breakdown tables, multi-language support, and multi-page pagination.
      */
     fun generateSingleShiftReportPdf(
         context: Context,
@@ -833,11 +944,19 @@ object PdfReportGenerator {
         val currency = MoneyFormat.resolveCurrency(businessProfile?.currency)
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
+        val startingCash = extractStartingCashFromNotes(report.notes) ?: 0.0
+        val actualCashCount = extractActualCashFromNotes(report.notes)
+        val cashIn = report.totalDueCollectedCash
+        val cashOut = report.totalCashOut
+        val expectedCashInDrawer = startingCash + report.grossCash + cashIn - cashOut
+        val variance = actualCashCount?.let { it - expectedCashInDrawer }
+
         val dueCreditEntries = parseDueCreditEntries(report.dueCreditEntriesJson)
         val dueCollectionEntries = parseDueCollectionEntries(report.previousDueCollectionsJson)
         val staffAdvanceEntries = parseStaffAdvanceEntries(report.staffAdvancesJson)
         val walkoutEntries = parseWalkoutEntries(report.unpaidBillsJson)
         val purchasedItems = parsePurchasedItems(report.purchasedItemsJson)
+        val displayNotes = cleanDisplayNotes(report.notes)
 
         val pdfDocument = PdfDocument()
         var pageNum = 1
@@ -846,39 +965,44 @@ object PdfReportGenerator {
         var canvas = page.canvas
 
         val primaryPaint = Paint().apply {
-            color = Color.rgb(30, 58, 138) // Deep Blue
+            color = Color.rgb(30, 58, 138) // Deep Navy
             isAntiAlias = true
         }
         val headerTextPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 15f
+            textSize = 14f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAntiAlias = true
         }
         val subheaderTextPaint = Paint().apply {
             color = Color.rgb(226, 232, 240)
-            textSize = 9.5f
+            textSize = 9f
             isAntiAlias = true
         }
-        val titlePaint = Paint().apply {
+        val sectionTitlePaint = Paint().apply {
             color = Color.rgb(15, 23, 42)
-            textSize = 13.5f
+            textSize = 11.5f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAntiAlias = true
         }
         val textPaint = Paint().apply {
             color = Color.rgb(30, 41, 59)
-            textSize = 10f
+            textSize = 9.5f
             isAntiAlias = true
         }
         val textBoldPaint = Paint().apply {
             color = Color.rgb(15, 23, 42)
-            textSize = 10f
+            textSize = 9.5f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAntiAlias = true
         }
+        val secondaryPaint = Paint().apply {
+            color = Color.rgb(100, 116, 139)
+            textSize = 8.5f
+            isAntiAlias = true
+        }
         val linePaint = Paint().apply {
-            color = Color.rgb(203, 213, 225)
+            color = Color.rgb(226, 232, 240)
             strokeWidth = 1f
             isAntiAlias = true
         }
@@ -886,15 +1010,20 @@ object PdfReportGenerator {
             color = Color.rgb(248, 250, 252)
             isAntiAlias = true
         }
+        val highlightBgPaint = Paint().apply {
+            color = Color.rgb(240, 253, 244) // Light Emerald
+            isAntiAlias = true
+        }
         val emeraldPaint = Paint().apply {
-            color = Color.rgb(16, 185, 129)
-            textSize = 11.5f
+            color = Color.rgb(5, 150, 105)
+            textSize = 10.5f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAntiAlias = true
         }
-        val secondaryPaint = Paint().apply {
-            color = Color.rgb(100, 116, 139)
-            textSize = 9f
+        val rosePaint = Paint().apply {
+            color = Color.rgb(220, 38, 38)
+            textSize = 10.5f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             isAntiAlias = true
         }
         val tableHeaderPaint = Paint().apply {
@@ -909,8 +1038,22 @@ object PdfReportGenerator {
         val margin = 36f
         var currentY = margin
 
+        fun drawFooter() {
+            val footerY = PAGE_HEIGHT - 22f
+            canvas.drawLine(margin, footerY - 8f, PAGE_WIDTH - margin, footerY - 8f, linePaint)
+            val genTimeStr = "${context.getString(R.string.pdf_date)}: ${dateFormatter.format(Date())}"
+            canvas.drawText(genTimeStr, margin, footerY + 2f, secondaryPaint)
+            val noticeStr = pStr.computerGeneratedNotice
+            val noticeWidth = secondaryPaint.measureText(noticeStr)
+            canvas.drawText(noticeStr, (PAGE_WIDTH - noticeWidth) / 2f, footerY + 2f, secondaryPaint)
+            val pageStr = "${pStr.page} $pageNum"
+            val pageWidth = secondaryPaint.measureText(pageStr)
+            canvas.drawText(pageStr, PAGE_WIDTH - margin - pageWidth, footerY + 2f, secondaryPaint)
+        }
+
         fun ensureSpace(neededHeight: Float) {
-            if (currentY + neededHeight > PAGE_HEIGHT - 35f) {
+            if (currentY + neededHeight > PAGE_HEIGHT - 45f) {
+                drawFooter()
                 pdfDocument.finishPage(page)
 
                 pageNum++
@@ -920,16 +1063,24 @@ object PdfReportGenerator {
 
                 currentY = margin
 
-                // Draw Top Header on new page
+                // Draw Top Mini Header on new page
                 val miniBox = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 24f)
                 canvas.drawRoundRect(miniBox, 4f, 4f, primaryPaint)
-                canvas.drawText("${businessProfile?.businessName ?: context.getString(R.string.default_business_name)} — ${pStr.title} (${pStr.page} $pageNum)", margin + 10f, currentY + 16f, headerTextPaint)
+                canvas.drawText(
+                    "${businessProfile?.businessName ?: context.getString(R.string.default_business_name)} — ${pStr.title} (${pStr.page} $pageNum)",
+                    margin + 10f,
+                    currentY + 16f,
+                    headerTextPaint.apply { textSize = 10.5f }
+                )
+                headerTextPaint.textSize = 14f
                 currentY += 34f
             }
         }
 
-        // 1. Header Banner
-        val headerHeight = 75f
+        // ==========================================
+        // 1. HEADER (Business Info, Logo, Metadata)
+        // ==========================================
+        val headerHeight = 72f
         val headerRect = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + headerHeight)
         canvas.drawRoundRect(headerRect, 8f, 8f, primaryPaint)
 
@@ -937,57 +1088,52 @@ object PdfReportGenerator {
         val vatNo = businessProfile?.vatNumber ?: "310123456700003"
         val phone = businessProfile?.phone ?: "+966 50 123 4567"
 
-        val logoSize = 54f
-        val logoX = PAGE_WIDTH - margin - logoSize - 14f
+        val logoSize = 52f
+        val logoX = PAGE_WIDTH - margin - logoSize - 12f
         val logoY = currentY + (headerHeight - logoSize) / 2f
         drawBusinessLogoBadge(canvas, context, businessProfile?.logoUri, bizName, logoX, logoY, logoSize)
 
-        canvas.drawText(bizName, margin + 16f, currentY + 26f, headerTextPaint)
-        canvas.drawText(context.getString(R.string.pdf_vat_reg_no_tel, vatNo, phone), margin + 16f, currentY + 44f, subheaderTextPaint)
-        canvas.drawText(context.getString(R.string.pdf_location, businessProfile?.address ?: context.getString(R.string.pdf_default_location)), margin + 16f, currentY + 60f, subheaderTextPaint)
+        canvas.drawText(bizName, margin + 14f, currentY + 24f, headerTextPaint)
+        canvas.drawText(context.getString(R.string.pdf_vat_reg_no_tel, vatNo, phone), margin + 14f, currentY + 42f, subheaderTextPaint)
+        canvas.drawText(context.getString(R.string.pdf_location, businessProfile?.address ?: context.getString(R.string.pdf_default_location)), margin + 14f, currentY + 58f, subheaderTextPaint)
 
         val badgeText = pStr.officialReport
         val badgeWidth = subheaderTextPaint.measureText(badgeText)
-        canvas.drawText(badgeText, logoX - badgeWidth - 12f, currentY + 26f, subheaderTextPaint)
+        canvas.drawText(badgeText, logoX - badgeWidth - 12f, currentY + 24f, subheaderTextPaint)
 
-        currentY += headerHeight + 20f
+        currentY += headerHeight + 14f
 
-        // 2. Title & Shift Details
-        canvas.drawText(pStr.title, margin, currentY, titlePaint)
-        currentY += 14f
-
-        val infoBoxHeight = 86f
+        // Shift Metadata Card + QR Code
+        val infoBoxHeight = 78f
         val infoBox = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + infoBoxHeight)
-        canvas.drawRoundRect(infoBox, 8f, 8f, boxBgPaint)
-        canvas.drawRoundRect(infoBox, 8f, 8f, Paint().apply { color = Color.rgb(226, 232, 240); style = Paint.Style.STROKE; strokeWidth = 1f })
+        canvas.drawRoundRect(infoBox, 6f, 6f, boxBgPaint)
+        canvas.drawRoundRect(infoBox, 6f, 6f, Paint().apply { color = Color.rgb(226, 232, 240); style = Paint.Style.STROKE; strokeWidth = 1f })
 
-        // Left shift metadata
-        canvas.drawText("${pStr.reportId}: #${report.id.toString().padStart(6, '0')}", margin + 14f, currentY + 22f, textBoldPaint)
-        canvas.drawText("${pStr.cashier}: ${report.cashierName}", margin + 14f, currentY + 44f, textBoldPaint)
-        canvas.drawText("${pStr.shift}: ${getLocalizedShiftName(language, report.shift)}", margin + 14f, currentY + 66f, textBoldPaint)
+        // Left Shift info
+        canvas.drawText("${pStr.reportId}: #${report.id.toString().padStart(6, '0')}", margin + 12f, currentY + 20f, textBoldPaint)
+        canvas.drawText("${pStr.shift}: ${getLocalizedShiftName(language, report.shift)}", margin + 12f, currentY + 40f, textBoldPaint)
+        canvas.drawText("${pStr.cashier}: ${report.cashierName}", margin + 12f, currentY + 60f, textBoldPaint)
 
-        canvas.drawText("${pStr.date}: ${dateFormatter.format(Date(report.dateInMillis))}", margin + 175f, currentY + 22f, textPaint)
-        val certText = context.getString(R.string.official_digital_verification)
-        canvas.drawText(certText, margin + 175f, currentY + 44f, secondaryPaint)
+        // Middle Shift info
+        canvas.drawText("${pStr.date}: ${dateFormatter.format(Date(report.dateInMillis))}", margin + 170f, currentY + 20f, textPaint)
+        canvas.drawText(context.getString(R.string.official_digital_verification), margin + 170f, currentY + 40f, secondaryPaint)
 
-        // Draw dedicated QR Code Card container on the right side of the info box
-        val qrCardSize = 76f
+        // Right QR Container Card
+        val qrCardSize = 68f
         val qrCardRight = PAGE_WIDTH - margin - 6f
         val qrCardLeft = qrCardRight - qrCardSize
         val qrCardTop = currentY + (infoBoxHeight - qrCardSize) / 2f
         val qrCardBottom = qrCardTop + qrCardSize
 
-        // White card background with sleek rounded corners & border for the QR code
         val qrCardBg = RectF(qrCardLeft, qrCardTop, qrCardRight, qrCardBottom)
-        canvas.drawRoundRect(qrCardBg, 6f, 6f, Paint().apply { color = Color.WHITE; style = Paint.Style.FILL })
-        canvas.drawRoundRect(qrCardBg, 6f, 6f, Paint().apply { color = Color.rgb(203, 213, 225); style = Paint.Style.STROKE; strokeWidth = 1f })
+        canvas.drawRoundRect(qrCardBg, 5f, 5f, Paint().apply { color = Color.WHITE; style = Paint.Style.FILL })
+        canvas.drawRoundRect(qrCardBg, 5f, 5f, Paint().apply { color = Color.rgb(203, 213, 225); style = Paint.Style.STROKE; strokeWidth = 1f })
 
-        // Generate and draw the modern styled QR Code
         val qrText = buildShiftReportQrText(context, report, businessProfile, currency, dateFormatter)
         val qrBitmap = generateStyledQrCodeBitmap(qrText, 350)
         if (qrBitmap != null) {
-            val qrPadding = 5f
-            val qrImageSize = qrCardSize - (qrPadding * 2f) - 8f // space for caption at bottom
+            val qrPadding = 4f
+            val qrImageSize = qrCardSize - (qrPadding * 2f) - 8f
             val qrImageLeft = qrCardLeft + (qrCardSize - qrImageSize) / 2f
             val qrImageTop = qrCardTop + qrPadding
 
@@ -995,98 +1141,234 @@ object PdfReportGenerator {
             val dstRectF = RectF(qrImageLeft, qrImageTop, qrImageLeft + qrImageSize, qrImageTop + qrImageSize)
             canvas.drawBitmap(qrBitmap, srcRect, dstRectF, null)
 
-            // Modern micro badge label below QR Code
             val captionPaint = Paint().apply {
                 color = Color.rgb(30, 58, 138)
-                textSize = 5.5f
+                textSize = 5f
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 isAntiAlias = true
             }
             val scanLabel = context.getString(R.string.scan_data_label)
             val scanWidth = captionPaint.measureText(scanLabel)
-            canvas.drawText(scanLabel, qrCardLeft + (qrCardSize - scanWidth) / 2f, qrCardBottom - 3f, captionPaint)
+            canvas.drawText(scanLabel, qrCardLeft + (qrCardSize - scanWidth) / 2f, qrCardBottom - 2.5f, captionPaint)
         }
 
-        currentY += infoBoxHeight + 16f
+        currentY += infoBoxHeight + 14f
 
-        // 3. Financial Revenue Breakdown
-        canvas.drawText(pStr.financialBreakdown, margin, currentY, textBoldPaint)
-        currentY += 10f
+        // Helper to draw section header pill
+        fun drawSectionHeader(sectionNum: String, title: String) {
+            ensureSpace(28f)
+            val pillWidth = 24f
+            val pillRect = RectF(margin, currentY, margin + pillWidth, currentY + 16f)
+            canvas.drawRoundRect(pillRect, 3f, 3f, primaryPaint)
+            val pillNumPaint = Paint().apply { color = Color.WHITE; textSize = 8.5f; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); isAntiAlias = true }
+            val numW = pillNumPaint.measureText(sectionNum)
+            canvas.drawText(sectionNum, margin + (pillWidth - numW) / 2f, currentY + 11.5f, pillNumPaint)
 
-        fun drawFinRow(label: String, valueStr: String, isBold: Boolean = false, isHighlight: Boolean = false) {
-            ensureSpace(22f)
-            val rowRect = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 20f)
-            if (isBold) {
+            canvas.drawText(title, margin + pillWidth + 8f, currentY + 12.5f, sectionTitlePaint)
+            currentY += 22f
+        }
+
+        // Helper to draw clean financial table row
+        fun drawDataRow(
+            label: String,
+            valueStr: String,
+            isBold: Boolean = false,
+            isHighlight: Boolean = false,
+            customPaint: Paint? = null,
+            indent: Float = 0f
+        ) {
+            ensureSpace(19f)
+            val rowRect = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 18f)
+            if (isHighlight) {
+                canvas.drawRoundRect(rowRect, 3f, 3f, highlightBgPaint)
+            } else if (isBold) {
                 canvas.drawRect(rowRect, tableHeaderPaint)
             }
-            canvas.drawLine(margin, currentY + 20f, PAGE_WIDTH - margin, currentY + 20f, linePaint)
+            canvas.drawLine(margin, currentY + 18f, PAGE_WIDTH - margin, currentY + 18f, linePaint)
 
-            val p = if (isBold) textBoldPaint else textPaint
-            val vp = if (isHighlight) emeraldPaint else p
+            val lp = if (isBold) textBoldPaint else textPaint
+            val vp = customPaint ?: if (isHighlight) emeraldPaint else lp
 
-            canvas.drawText(label, margin + 12f, currentY + 14f, p)
+            canvas.drawText(label, margin + 10f + indent, currentY + 12.5f, lp)
             val vWidth = vp.measureText(valueStr)
-            canvas.drawText(valueStr, PAGE_WIDTH - margin - vWidth - 12f, currentY + 14f, vp)
-            currentY += 20f
+            canvas.drawText(valueStr, PAGE_WIDTH - margin - vWidth - 10f, currentY + 12.5f, vp)
+            currentY += 18f
         }
 
-        drawFinRow(pStr.grossCash, MoneyFormat.format(report.grossCash, currency))
-        drawFinRow(pStr.madaBank, MoneyFormat.format(report.madaPayments, currency))
-        drawFinRow(pStr.digitalWallet, MoneyFormat.format(report.digitalWallet, currency))
-        drawFinRow(pStr.grossTotalSales, MoneyFormat.format(report.totalSales, currency), isBold = true, isHighlight = true)
-        drawFinRow(pStr.expenses, MoneyFormat.format(report.totalExpenses, currency))
-        drawFinRow(pStr.netCashInDrawer, MoneyFormat.format(report.netCash, currency), isBold = true)
-        drawFinRow(pStr.netMadaBank, MoneyFormat.format(report.madaPayments, currency), isBold = true)
+        // ==========================================
+        // SECTION 1: SALES SUMMARY (Payment Methods Only)
+        // ==========================================
+        drawSectionHeader("1", pStr.salesSummary)
+        drawDataRow(pStr.cashSales, MoneyFormat.format(report.grossCash, currency))
+        drawDataRow(pStr.cardMadaSales, MoneyFormat.format(report.madaPayments, currency))
+        if (report.digitalWallet > 0) {
+            drawDataRow(pStr.digitalWallet, MoneyFormat.format(report.digitalWallet, currency))
+        }
+        drawDataRow(pStr.grossTotalSales, MoneyFormat.format(report.totalSales, currency), isBold = true, isHighlight = true)
 
+        ensureSpace(14f)
+        val salesNote = when (language) {
+            AppLanguage.ARABIC -> "* لا تشمل المبيعات الآجلة أو وجبات الموظفين في إجمالي المبيعات"
+            AppLanguage.BENGALI -> "* বাকি বিক্রয় বা স্টাফ খাবার মোট বিক্রয়ে অন্তর্ভুক্ত নয়"
+            else -> "* Excludes Due / Credit Sales and Staff Meals (tracked separately)"
+        }
+        canvas.drawText(salesNote, margin + 10f, currentY + 9f, secondaryPaint)
         currentY += 16f
 
-        // Helper to draw custom breakdown tables
+        // ==========================================
+        // SECTION 2: CASH DRAWER RECONCILIATION
+        // ==========================================
+        drawSectionHeader("2", pStr.cashDrawerReconciliation)
+        drawDataRow(pStr.startingCash, MoneyFormat.format(startingCash, currency))
+        drawDataRow("(+) ${pStr.cashSales}", "+ " + MoneyFormat.format(report.grossCash, currency))
+        if (cashIn > 0) {
+            drawDataRow("(+) ${pStr.cashIn}", "+ " + MoneyFormat.format(cashIn, currency))
+        }
+        if (report.totalExpenses > 0) {
+            drawDataRow("   • ${pStr.expenses}", "- " + MoneyFormat.format(report.totalExpenses, currency), indent = 8f)
+        }
+        if (report.totalStaffAdvancesAmount > 0) {
+            drawDataRow("   • ${pStr.employerAdvances}", "- " + MoneyFormat.format(report.totalStaffAdvancesAmount, currency), indent = 8f)
+        }
+        if (report.totalPurchasedCash > 0) {
+            drawDataRow("   • ${pStr.paidOutItems}", "- " + MoneyFormat.format(report.totalPurchasedCash, currency), indent = 8f)
+        }
+        drawDataRow("(-) ${pStr.cashOut}", "- " + MoneyFormat.format(cashOut, currency), isBold = (cashOut > 0 && report.totalExpenses == 0.0 && report.totalStaffAdvancesAmount == 0.0 && report.totalPurchasedCash == 0.0))
+
+        // Expected Cash in Drawer
+        drawDataRow(pStr.expectedCashInDrawer, MoneyFormat.format(expectedCashInDrawer, currency), isBold = true, isHighlight = true)
+
+        // Actual Cash Count & Variance
+        if (actualCashCount != null) {
+            drawDataRow(pStr.actualCashCount, MoneyFormat.format(actualCashCount, currency), isBold = true)
+            val varianceStr = when {
+                variance == null -> "N/A"
+                variance == 0.0 -> "${MoneyFormat.format(0.0, currency)} (Balanced)"
+                variance > 0.0 -> "+${MoneyFormat.format(variance, currency)} (Over)"
+                else -> "-${MoneyFormat.format(Math.abs(variance), currency)} (Short)"
+            }
+            val varPaint = when {
+                variance == null -> textPaint
+                variance >= 0.0 -> emeraldPaint
+                else -> rosePaint
+            }
+            drawDataRow(pStr.variance, varianceStr, isBold = true, customPaint = varPaint)
+        } else {
+            drawDataRow(pStr.actualCashCount, "[ _______________________ ]", isBold = false)
+            drawDataRow(pStr.variance, "[ _______________________ ] (Pending Count)", isBold = false)
+        }
+
+        currentY += 12f
+
+        // ==========================================
+        // SECTION 3: TAX & VAT SUMMARY
+        // ==========================================
+        val taxTitle = when (language) {
+            AppLanguage.ARABIC -> "ملخص ضريبة القيمة المضافة (15%)"
+            AppLanguage.BENGALI -> "কর ও ভ্যাট সারাংশ (১৫%)"
+            else -> "Tax & VAT Summary (15% VAT)"
+        }
+        val netTaxableStr = when (language) {
+            AppLanguage.ARABIC -> "المبيعات الخاضعة للضريبة (قبل الضريبة)"
+            AppLanguage.BENGALI -> "করযোগ্য মোট বিক্রয় (ভ্যাট বাদে)"
+            else -> "Net Taxable Sales (Excl. VAT)"
+        }
+        val vatStr = when (language) {
+            AppLanguage.ARABIC -> "ضريبة القيمة المضافة (15%)"
+            AppLanguage.BENGALI -> "ভ্যাট (১৫%)"
+            else -> "VAT Amount (15%)"
+        }
+        val grossTaxStr = when (language) {
+            AppLanguage.ARABIC -> "إجمالي المبيعات شامل الضريبة"
+            AppLanguage.BENGALI -> "মোট বিক্রয় (ভ্যাটসহ)"
+            else -> "Gross Total Sales (Incl. VAT)"
+        }
+
+        val netTaxableVal = report.totalSales / 1.15
+        val vatVal = report.totalSales - netTaxableVal
+
+        drawSectionHeader("3", taxTitle)
+        drawDataRow(netTaxableStr, MoneyFormat.format(netTaxableVal, currency))
+        drawDataRow(vatStr, MoneyFormat.format(vatVal, currency))
+        drawDataRow(grossTaxStr, MoneyFormat.format(report.totalSales, currency), isBold = true, isHighlight = true)
+
+        currentY += 12f
+
+        // ==========================================
+        // SECTION 4: OTHER TRACKING & OPERATIONAL METRICS
+        // ==========================================
+        drawSectionHeader("4", pStr.otherTracking)
+
+        val dueCountStr = if (dueCreditEntries.isNotEmpty()) " (${dueCreditEntries.size} ${pStr.customer})" else ""
+        drawDataRow("${pStr.dueSales}$dueCountStr", MoneyFormat.format(report.totalDueCredit, currency))
+        drawDataRow(pStr.staffMeals, "${report.staffMealsCount}x")
+        if (report.muasselQty > 0 || report.outdoorShishaQty > 0) {
+            drawDataRow("${pStr.regularMuassel} / ${pStr.outdoorMuassel}", "${report.muasselQty.toInt()} / ${report.outdoorShishaQty.toInt()}")
+        }
+        if (report.totalUnpaidLoss > 0) {
+            drawDataRow(pStr.walkoutBills, MoneyFormat.format(report.totalUnpaidLoss, currency))
+        }
+
+        if (displayNotes.isNotBlank()) {
+            ensureSpace(26f)
+            val noteBox = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 22f)
+            canvas.drawRoundRect(noteBox, 4f, 4f, boxBgPaint)
+            canvas.drawRoundRect(noteBox, 4f, 4f, Paint().apply { color = Color.rgb(226, 232, 240); style = Paint.Style.STROKE; strokeWidth = 1f })
+            canvas.drawText("${pStr.notes}: $displayNotes", margin + 10f, currentY + 14f, textPaint)
+            currentY += 28f
+        } else {
+            currentY += 12f
+        }
+
+        // ==========================================
+        // DETAIL BREAKDOWN TABLES (Multi-Page Safe)
+        // ==========================================
         fun drawSectionTable(title: String, headers: List<String>, rows: List<List<String>>, totalAmountStr: String) {
             if (rows.isEmpty()) return
-            ensureSpace(40f + (rows.size * 20f))
+            ensureSpace(40f + (rows.size * 19f))
 
             canvas.drawText(title, margin, currentY, textBoldPaint)
-            currentY += 8f
+            currentY += 6f
 
             // Header Row
-            val tableH = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 18f)
+            val tableH = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 17f)
             canvas.drawRect(tableH, primaryPaint)
 
             val col1X = margin + 10f
             val col2X = margin + 180f
-            val col3X = PAGE_WIDTH - margin - 120f
+            val col3X = PAGE_WIDTH - margin - 110f
 
-            val headerP = Paint().apply { color = Color.WHITE; textSize = 9f; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); isAntiAlias = true }
-            canvas.drawText(headers[0], col1X, currentY + 13f, headerP)
-            if (headers.size > 1) canvas.drawText(headers[1], col2X, currentY + 13f, headerP)
-            if (headers.size > 2) canvas.drawText(headers[2], col3X, currentY + 13f, headerP)
+            val headerP = Paint().apply { color = Color.WHITE; textSize = 8.5f; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD); isAntiAlias = true }
+            canvas.drawText(headers[0], col1X, currentY + 12f, headerP)
+            if (headers.size > 1) canvas.drawText(headers[1], col2X, currentY + 12f, headerP)
+            if (headers.size > 2) canvas.drawText(headers[2], col3X, currentY + 12f, headerP)
 
-            currentY += 18f
+            currentY += 17f
 
             // Data Rows
             rows.forEachIndexed { idx, row ->
-                ensureSpace(20f)
+                ensureSpace(18f)
                 if (idx % 2 == 1) {
-                    canvas.drawRect(RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 18f), zebraPaint)
+                    canvas.drawRect(RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 17f), zebraPaint)
                 }
-                canvas.drawText(row[0], col1X, currentY + 13f, textPaint)
-                if (row.size > 1) canvas.drawText(row[1], col2X, currentY + 13f, textPaint)
+                canvas.drawText(row[0], col1X, currentY + 12f, textPaint)
+                if (row.size > 1) canvas.drawText(row[1], col2X, currentY + 12f, textPaint)
                 if (row.size > 2) {
                     val w = textBoldPaint.measureText(row[2])
-                    canvas.drawText(row[2], PAGE_WIDTH - margin - w - 10f, currentY + 13f, textBoldPaint)
+                    canvas.drawText(row[2], PAGE_WIDTH - margin - w - 10f, currentY + 12f, textBoldPaint)
                 }
-                canvas.drawLine(margin, currentY + 18f, PAGE_WIDTH - margin, currentY + 18f, linePaint)
-                currentY += 18f
+                canvas.drawLine(margin, currentY + 17f, PAGE_WIDTH - margin, currentY + 17f, linePaint)
+                currentY += 17f
             }
 
             // Subtotal row
-            ensureSpace(20f)
-            canvas.drawRect(RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 20f), tableHeaderPaint)
-            canvas.drawText("${pStr.total}:", col1X, currentY + 14f, textBoldPaint)
+            ensureSpace(19f)
+            canvas.drawRect(RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 18f), tableHeaderPaint)
+            canvas.drawText("${pStr.total}:", col1X, currentY + 13f, textBoldPaint)
             val totW = emeraldPaint.measureText(totalAmountStr)
-            canvas.drawText(totalAmountStr, PAGE_WIDTH - margin - totW - 10f, currentY + 14f, emeraldPaint)
-            canvas.drawLine(margin, currentY + 20f, PAGE_WIDTH - margin, currentY + 20f, linePaint)
-            currentY += 26f
+            canvas.drawText(totalAmountStr, PAGE_WIDTH - margin - totW - 10f, currentY + 13f, emeraldPaint)
+            canvas.drawLine(margin, currentY + 18f, PAGE_WIDTH - margin, currentY + 18f, linePaint)
+            currentY += 22f
         }
 
         // Table 1: Due Sales (Credit Entries)
@@ -1129,33 +1411,18 @@ object PdfReportGenerator {
             totalAmountStr = MoneyFormat.format(purchasedItems.sumOf { it.totalAmount }, currency)
         )
 
-        // Operational Metrics Section
-        ensureSpace(50f)
-        canvas.drawText(pStr.operationalMetrics, margin, currentY, textBoldPaint)
-        currentY += 8f
-
-        val opsBox = RectF(margin, currentY, PAGE_WIDTH - margin, currentY + 40f)
-        canvas.drawRoundRect(opsBox, 6f, 6f, boxBgPaint)
-        canvas.drawRoundRect(opsBox, 6f, 6f, Paint().apply { color = Color.rgb(226, 232, 240); style = Paint.Style.STROKE; strokeWidth = 1f })
-
-        canvas.drawText("${pStr.staffMeals}: ${report.staffMealsCount}", margin + 12f, currentY + 16f, textPaint)
-        canvas.drawText("${pStr.regularMuassel}: ${report.muasselQty.toInt()}", margin + 180f, currentY + 16f, textPaint)
-        canvas.drawText("${pStr.outdoorMuassel}: ${report.outdoorShishaQty.toInt()}", margin + 350f, currentY + 16f, textPaint)
-
-        if (report.notes.isNotBlank()) {
-            canvas.drawText("${pStr.notes}: ${report.notes}", margin + 12f, currentY + 32f, secondaryPaint)
-        }
-        currentY += 54f
-
-        // Signatures Section
-        ensureSpace(70f)
+        // ==========================================
+        // SIGNATURES & AUTHORIZATION
+        // ==========================================
+        ensureSpace(65f)
         val signY = currentY + 30f
         canvas.drawLine(margin + 20f, signY, margin + 200f, signY, linePaint)
-        canvas.drawText("${pStr.cashierSign}: ${report.cashierName}", margin + 20f, signY + 16f, textBoldPaint)
+        canvas.drawText("${pStr.cashierSign}: ${report.cashierName}", margin + 20f, signY + 14f, textBoldPaint)
 
         canvas.drawLine(PAGE_WIDTH - margin - 200f, signY, PAGE_WIDTH - margin - 20f, signY, linePaint)
-        canvas.drawText(pStr.supervisorSign, PAGE_WIDTH - margin - 200f, signY + 16f, textBoldPaint)
+        canvas.drawText(pStr.supervisorSign, PAGE_WIDTH - margin - 200f, signY + 14f, textBoldPaint)
 
+        drawFooter()
         pdfDocument.finishPage(page)
 
         val fileName = "Shift_Report_${report.cashierName.replace(" ", "_")}_${report.shift}_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.pdf"

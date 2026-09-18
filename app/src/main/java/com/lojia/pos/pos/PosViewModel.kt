@@ -42,6 +42,7 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
     private val posDao = db.posDao()
     private val reportDao = db.reportDao()
     val syncManager = ConfigurationSyncManager.getInstance(application)
+    val printerManager = com.lojia.pos.printer.BluetoothPrinterManager(application)
 
     val currentLanguage: StateFlow<AppLanguage> = syncManager.currentLanguage
     val currentCountry: StateFlow<AppCountry> = syncManager.currentCountry
@@ -391,11 +392,64 @@ class PosViewModel(application: Application) : AndroidViewModel(application) {
                 val finalizedSale = sale.copy(id = saleId.toInt())
                 _completedSale.value = finalizedSale
                 _uiToast.emit(UiText.StringResource(R.string.payment_success))
+
+                // Optional Bluetooth thermal receipt print (never blocks sales if printer fails or unconfigured)
+                printReceiptForSale(finalizedSale, items)
+
                 clearCart()
                 InventoryCheckScheduler.triggerImmediateCheck(context)
                 onComplete(finalizedSale)
             } catch (e: Exception) {
                 _uiToast.emit(UiText.DynamicString("Checkout failed: ${e.localizedMessage ?: "Database error"}"))
+            }
+        }
+    }
+
+    /**
+     * Prints sale receipt to configured ESC/POS Bluetooth printer.
+     * Silent failure model — POS checkout is never blocked or failed if printer is disconnected.
+     */
+    fun printReceiptForSale(sale: POSSale, items: List<CartItem>) {
+        if (printerManager.getSavedPrinterAddress().isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                val biz = businessProfile.value ?: BusinessProfile()
+                val rc = receiptConfig.value ?: ShopReceiptConfig()
+                val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                val dateStr = formatter.format(Date(sale.timestamp))
+                val curr = biz.currency.ifBlank { "$" }
+
+                val receiptItems: List<Pair<String, Pair<Double, Double>>> = items.map { item ->
+                    Pair(item.product.name, Pair(item.quantity, item.lineTotal))
+                }
+
+                val formattedText = printerManager.buildReceiptText(
+                    businessName = biz.businessName.ifBlank { "Lojia Store" },
+                    businessAddress = biz.address,
+                    businessPhone = biz.phone,
+                    vatNumber = biz.vatNumber,
+                    customHeader = rc.customHeader,
+                    customFooterText = rc.customFooterText,
+                    showTaxNumber = rc.showTaxNumber,
+                    showCashierName = rc.showCashierName,
+                    receiptId = sale.invoiceNumber,
+                    dateTimeStr = dateStr,
+                    cashierName = sale.cashierName,
+                    customerName = sale.customerName,
+                    items = receiptItems,
+                    subtotal = sale.subtotal,
+                    discount = 0.0,
+                    tax = sale.vatAmount,
+                    grandTotal = sale.totalAmount,
+                    paymentMethod = sale.paymentMethod,
+                    currencySymbol = curr
+                )
+
+                printerManager.printFormattedText(formattedText)
+            } catch (e: Exception) {
+                // Log and swallow error — printer failures must never block POS sales
+                android.util.Log.e("PosViewModel", "Optional printer output failed", e)
             }
         }
     }

@@ -153,6 +153,13 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
     private val reportViewModel: ReportViewModel by viewModels()
     private val posViewModel: PosViewModel by viewModels()
 
+    private val userInteractionTime = kotlinx.coroutines.flow.MutableStateFlow(System.currentTimeMillis())
+
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        userInteractionTime.value = System.currentTimeMillis()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -178,6 +185,8 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             intervalMinutes = 60L
         )
 
+        handleAuthIntent(intent)
+
         setContent {
             val currentLanguage by reportViewModel.currentLanguage.collectAsState()
             val userProfile by reportViewModel.userProfile.collectAsState()
@@ -202,7 +211,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             var previewReport by remember { mutableStateOf<ShiftReport?>(null) }
             var previewSale by remember { mutableStateOf<POSSale?>(null) }
             var isAuthenticated by remember { mutableStateOf(false) }
-            var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+            val lastInteractionTime by userInteractionTime.collectAsState()
 
             LaunchedEffect(isAuthenticated, lastInteractionTime, userProfile?.autoLockMinutes) {
                 val lockMinutes = userProfile?.autoLockMinutes ?: 5
@@ -240,7 +249,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                             language = currentLanguage,
                             onAuthenticated = {
                                 isAuthenticated = true
-                                lastInteractionTime = System.currentTimeMillis()
+                                userInteractionTime.value = System.currentTimeMillis()
                                 userProfile?.let {
                                     reportViewModel.preferencesRepository.saveUserSession(
                                         username = it.username,
@@ -258,16 +267,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                         )
                     } else {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    awaitPointerEventScope {
-                                        while (true) {
-                                            awaitPointerEvent(PointerEventPass.Initial)
-                                            lastInteractionTime = System.currentTimeMillis()
-                                        }
-                                    }
-                                }
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             val focusManager = LocalFocusManager.current
                             val isRootScreen = when (navState) {
@@ -464,7 +464,11 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                                                 report = report,
                                                 businessProfile = businessProfile,
                                                 language = currentLanguage,
-                                                onDismiss = { previewReport = null }
+                                                onDismiss = { previewReport = null },
+                                                onOpenPrinterSettings = {
+                                                    reportViewModel.switchModule(AppModule.SHOPPING)
+                                                    navState = AppNavState.Shop.SettingsDetail("printers")
+                                                }
                                             )
                                         }
 
@@ -474,7 +478,11 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
                                                 sale = sale,
                                                 businessProfile = businessProfile,
                                                 language = currentLanguage,
-                                                onDismiss = { previewSale = null }
+                                                onDismiss = { previewSale = null },
+                                                onOpenPrinterSettings = {
+                                                    reportViewModel.switchModule(AppModule.SHOPPING)
+                                                    navState = AppNavState.Shop.SettingsDetail("printers")
+                                                }
                                             )
                                         }
                                     }
@@ -486,7 +494,19 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        handleAuthIntent(intent)
     }
+
+    private fun handleAuthIntent(intent: android.content.Intent?) {
+        val uri = intent?.data ?: return
+        if (uri.scheme == "com.lojia.pos" && uri.host == "oauth2callback") {
+            reportViewModel.handleDriveAuthRedirect(uri)
+        }
+    }
+}
 
 /**
  * Isolated Navigation Host for switching between Shop and Shift Report modules.

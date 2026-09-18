@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode.scanning)
     implementation("com.google.zxing:core:3.5.3")
+    implementation("com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0")
     ksp(libs.androidx.room.compiler)
 
     debugImplementation(libs.androidx.ui.tooling)

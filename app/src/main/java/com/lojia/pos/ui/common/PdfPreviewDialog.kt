@@ -68,10 +68,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.lojia.pos.data.*
-
 import com.lojia.pos.ui.theme.*
 import com.lojia.pos.util.MoneyFormat
 import com.lojia.pos.util.PdfReportGenerator
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 import java.text.SimpleDateFormat
 
@@ -87,15 +90,20 @@ fun ShiftReportPreviewDialog(
     report: ShiftReport,
     businessProfile: BusinessProfile?,
     language: AppLanguage,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onOpenPrinterSettings: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val printerManager = remember(context) { com.lojia.pos.printer.BluetoothPrinterManager(context) }
     val currencyCode = businessProfile?.currency
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     var isExporting by remember { mutableStateOf(false) }
     var exportedUri by remember { mutableStateOf<Uri?>(null) }
     var exportSuccessMessage by remember { mutableStateOf<String?>(null) }
+    var printerErrorMessage by remember { mutableStateOf<String?>(null) }
+    var isPrinting by remember { mutableStateOf(false) }
 
     val titleLabel = stringResource(R.string.shift_closing_revenue_cert)
     val dateLabel = stringResource(R.string.date_2)
@@ -118,6 +126,13 @@ fun ShiftReportPreviewDialog(
     val outdoorMuasselLabel = stringResource(R.string.outdoor_muassel)
     val notesLabel = stringResource(R.string.notes)
 
+    val startingCash = PdfReportGenerator.extractStartingCashFromNotes(report.notes) ?: 0.0
+    val actualCashCount = PdfReportGenerator.extractActualCashFromNotes(report.notes)
+    val cashIn = report.totalDueCollectedCash
+    val cashOut = report.totalCashOut
+    val expectedCashInDrawer = startingCash + report.grossCash + cashIn - cashOut
+    val variance = actualCashCount?.let { it - expectedCashInDrawer }
+
     val defaultBizName = stringResource(R.string.default_business_name)
     val reportText = buildString {
         appendLine("========================================")
@@ -129,23 +144,52 @@ fun ShiftReportPreviewDialog(
         appendLine("$cashierLabel: ${report.cashierName}")
         appendLine("VAT ID: ${businessProfile?.vatNumber ?: "310123456700003"}")
         appendLine("----------------------------------------")
+        appendLine("[1. SALES SUMMARY]")
         appendLine("$grossCashLabel: ${MoneyFormat.format(report.grossCash, currencyCode)}")
         appendLine("$madaLabel: ${MoneyFormat.format(report.madaPayments, currencyCode)}")
-        appendLine("$walletLabel: ${MoneyFormat.format(report.digitalWallet, currencyCode)}")
-        appendLine("----------------------------------------")
+        if (report.digitalWallet > 0) {
+            appendLine("$walletLabel: ${MoneyFormat.format(report.digitalWallet, currencyCode)}")
+        }
         appendLine("$totalRevenueLabel: ${MoneyFormat.format(report.totalSales, currencyCode)}")
-        appendLine("$expensesLabel: ${MoneyFormat.format(report.totalExpenses, currencyCode)}")
-        appendLine("$netCashLabel: ${MoneyFormat.format(report.netCash, currencyCode)}")
-        appendLine("$netMadaLabel: ${MoneyFormat.format(report.madaPayments, currencyCode)}")
         appendLine("----------------------------------------")
+        appendLine("[2. CASH DRAWER RECONCILIATION]")
+        if (startingCash > 0) {
+            appendLine("Starting Cash: ${MoneyFormat.format(startingCash, currencyCode)}")
+        }
+        appendLine("(+) $grossCashLabel: ${MoneyFormat.format(report.grossCash, currencyCode)}")
+        if (cashIn > 0) {
+            appendLine("(+) Cash In: ${MoneyFormat.format(cashIn, currencyCode)}")
+        }
+        appendLine("(-) Cash Out: ${MoneyFormat.format(cashOut, currencyCode)}")
+        appendLine("$netCashLabel: ${MoneyFormat.format(expectedCashInDrawer, currencyCode)}")
+        if (actualCashCount != null) {
+            appendLine("Actual Cash Count: ${MoneyFormat.format(actualCashCount, currencyCode)}")
+            val varText = when {
+                variance == null -> "N/A"
+                variance == 0.0 -> "${MoneyFormat.format(0.0, currencyCode)} (Balanced)"
+                variance > 0.0 -> "+${MoneyFormat.format(variance, currencyCode)} (Over)"
+                else -> "-${MoneyFormat.format(Math.abs(variance), currencyCode)} (Short)"
+            }
+            appendLine("Variance (Over/Short): $varText")
+        }
+        appendLine("----------------------------------------")
+        appendLine("[3. TAX & VAT SUMMARY (15% VAT)]")
+        val netTax = report.totalSales / 1.15
+        val vatTax = report.totalSales - netTax
+        appendLine("Net Taxable Sales: ${MoneyFormat.format(netTax, currencyCode)}")
+        appendLine("VAT Amount (15%): ${MoneyFormat.format(vatTax, currencyCode)}")
+        appendLine("Total Gross (Incl. VAT): ${MoneyFormat.format(report.totalSales, currencyCode)}")
+        appendLine("----------------------------------------")
+        appendLine("[4. OTHER TRACKING]")
+        appendLine("$dueSalesLabel: ${MoneyFormat.format(report.totalDueCredit, currencyCode)}")
         appendLine("$staffMealsLabel: ${report.staffMealsCount}")
-        appendLine("$muasselLabel: ${report.muasselQty.toInt()}")
-        appendLine("$outdoorMuasselLabel: ${report.outdoorShishaQty.toInt()}")
-        if (report.notes.isNotBlank()) {
-            appendLine("$notesLabel: ${report.notes}")
+        val cleanNotes = PdfReportGenerator.cleanDisplayNotes(report.notes)
+        if (cleanNotes.isNotBlank()) {
+            appendLine("$notesLabel: $cleanNotes")
         }
         appendLine("========================================")
-        appendLine("         System: Lojia POS v1.0")
+        appendLine("  This is a computer-generated shift report")
+        appendLine("         System: Lojia POS")
         appendLine("========================================")
     }
 
@@ -182,6 +226,51 @@ fun ShiftReportPreviewDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (printerErrorMessage != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.PrintDisabled,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Printer Warning",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = printerErrorMessage ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            if (onOpenPrinterSettings != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        onDismiss()
+                                        onOpenPrinterSettings()
+                                    },
+                                    modifier = Modifier.align(Alignment.End)
+                                ) {
+                                    Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Open Printer Settings", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Success banner if exported
                 if (exportSuccessMessage != null) {
                     Surface(
@@ -232,6 +321,61 @@ fun ShiftReportPreviewDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Thermal Print Z-Report Button
+                Button(
+                    onClick = {
+                        printerErrorMessage = null
+                        if (!printerManager.isPrinterConfigured()) {
+                            printerErrorMessage = "No Bluetooth thermal printer selected or connected. Please configure a printer in Settings."
+                        } else {
+                            isPrinting = true
+                            scope.launch {
+                                try {
+                                    val zReportText = printerManager.buildZReportText(
+                                        businessName = businessProfile?.businessName?.ifBlank { "Lojia Store" } ?: "Lojia Store",
+                                        businessAddress = businessProfile?.address ?: "",
+                                        businessPhone = businessProfile?.phone ?: "",
+                                        vatNumber = businessProfile?.vatNumber ?: "",
+                                        report = report,
+                                        currencySymbol = currencyCode ?: "$"
+                                    )
+
+                                    val res = printerManager.printFormattedText(zReportText)
+                                    isPrinting = false
+                                    res.fold(
+                                        onSuccess = {
+                                            Toast.makeText(context, "Z-Report sent to Bluetooth printer!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onFailure = { err ->
+                                            printerErrorMessage = "Printer error: ${err.message ?: "Could not connect to printer."}"
+                                        }
+                                    )
+                                } catch (e: Exception) {
+                                    isPrinting = false
+                                    printerErrorMessage = "Print error: ${e.message}"
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentEmerald),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isPrinting,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("print_z_report_btn")
+                ) {
+                    if (isPrinting) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PureWhite, strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Printing Z-Report...", fontWeight = FontWeight.Bold)
+                    } else {
+                        Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Print Z-Report (Shift Close)", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -349,14 +493,22 @@ fun SaleReceiptPreviewDialog(
     sale: POSSale,
     businessProfile: BusinessProfile?,
     language: AppLanguage,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onOpenPrinterSettings: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val db = remember(context) { AppDatabase.getInstance(context) }
+    val printerManager = remember(context) { com.lojia.pos.printer.BluetoothPrinterManager(context) }
+    val receiptConfigState by db.reportDao().getReceiptConfig().collectAsState(initial = null)
+
     val currencyCode = businessProfile?.currency
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
     var exportedUri by remember { mutableStateOf<Uri?>(null) }
     var exportSuccessMessage by remember { mutableStateOf<String?>(null) }
+    var printerErrorMessage by remember { mutableStateOf<String?>(null) }
+    var isPrinting by remember { mutableStateOf(false) }
 
     val isVoided = sale.isVoided
     val taxInvoiceTitle = if (isVoided) "VOIDED / REFUNDED INVOICE" else stringResource(R.string.simplified_tax_invoice)
@@ -439,6 +591,51 @@ fun SaleReceiptPreviewDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (printerErrorMessage != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.PrintDisabled,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Printer Warning",
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = printerErrorMessage ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            if (onOpenPrinterSettings != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        onDismiss()
+                                        onOpenPrinterSettings()
+                                    },
+                                    modifier = Modifier.align(Alignment.End)
+                                ) {
+                                    Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Open Printer Settings", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if (exportSuccessMessage != null) {
                     Surface(
                         color = AccentEmerald.copy(alpha = 0.12f),
@@ -488,6 +685,82 @@ fun SaleReceiptPreviewDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Main Action: Print Receipt
+                Button(
+                    onClick = {
+                        printerErrorMessage = null
+                        if (!printerManager.isPrinterConfigured()) {
+                            printerErrorMessage = "No Bluetooth thermal printer selected or connected. Please configure a printer in Settings."
+                        } else {
+                            isPrinting = true
+                            scope.launch {
+                                try {
+                                    val saleItems = withContext(Dispatchers.IO) {
+                                        db.posDao().getSaleItems(sale.id)
+                                    }
+
+                                    val formattedItems: List<Pair<String, Pair<Double, Double>>> = saleItems.map { item ->
+                                        Pair(item.productName, Pair(item.quantity, item.totalPrice))
+                                    }
+
+                                    val formattedText = printerManager.buildReceiptText(
+                                        businessName = businessProfile?.businessName?.ifBlank { "Lojia Store" } ?: "Lojia Store",
+                                        businessAddress = businessProfile?.address ?: "",
+                                        businessPhone = businessProfile?.phone ?: "",
+                                        vatNumber = businessProfile?.vatNumber ?: "",
+                                        customHeader = receiptConfigState?.customHeader ?: "",
+                                        customFooterText = receiptConfigState?.customFooterText ?: "",
+                                        showTaxNumber = receiptConfigState?.showTaxNumber ?: true,
+                                        showCashierName = receiptConfigState?.showCashierName ?: true,
+                                        receiptId = sale.invoiceNumber,
+                                        dateTimeStr = dateFormatter.format(Date(sale.timestamp)),
+                                        cashierName = sale.cashierName,
+                                        customerName = sale.customerName,
+                                        items = formattedItems,
+                                        subtotal = sale.subtotal,
+                                        discount = 0.0,
+                                        tax = sale.vatAmount,
+                                        grandTotal = sale.totalAmount,
+                                        paymentMethod = sale.paymentMethod,
+                                        currencySymbol = currencyCode ?: "$"
+                                    )
+
+                                    val printResult = printerManager.printFormattedText(formattedText)
+                                    isPrinting = false
+                                    printResult.fold(
+                                        onSuccess = {
+                                            Toast.makeText(context, "Receipt sent to printer!", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onFailure = { err ->
+                                            printerErrorMessage = "Printer error: ${err.message ?: "Failed to send to printer."}"
+                                        }
+                                    )
+                                } catch (e: Exception) {
+                                    isPrinting = false
+                                    printerErrorMessage = "Print error: ${e.message}"
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentEmerald),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isPrinting,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("print_thermal_receipt_btn")
+                ) {
+                    if (isPrinting) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PureWhite, strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Printing Receipt...", fontWeight = FontWeight.Bold)
+                    } else {
+                        Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Print Receipt", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),

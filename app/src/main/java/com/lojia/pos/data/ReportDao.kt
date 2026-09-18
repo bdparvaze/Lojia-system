@@ -11,6 +11,9 @@ interface ReportDao {
     @Query("SELECT * FROM shift_reports ORDER BY dateInMillis DESC, id DESC")
     suspend fun getAllShiftReportsList(): List<ShiftReport>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShiftReports(reports: List<ShiftReport>)
+
     @Query("SELECT * FROM shift_reports WHERE id = :id LIMIT 1")
     suspend fun getShiftReportById(id: Int): ShiftReport?
 
@@ -23,6 +26,12 @@ interface ReportDao {
     // Shift Sessions (Live cash drawer & open/close shifts)
     @Query("SELECT * FROM shift_sessions ORDER BY openedAt DESC")
     fun getAllShiftSessions(): Flow<List<ShiftSession>>
+
+    @Query("SELECT * FROM shift_sessions ORDER BY openedAt DESC")
+    suspend fun getAllShiftSessionsList(): List<ShiftSession>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShiftSessions(sessions: List<ShiftSession>)
 
     @Query("SELECT * FROM shift_sessions WHERE status = 'OPEN' ORDER BY openedAt DESC LIMIT 1")
     fun getActiveShiftSession(): Flow<ShiftSession?>
@@ -43,6 +52,12 @@ interface ReportDao {
     @Query("SELECT * FROM cash_movements ORDER BY timestamp DESC LIMIT 50")
     fun getAllCashMovements(): Flow<List<CashMovement>>
 
+    @Query("SELECT * FROM cash_movements ORDER BY timestamp DESC")
+    suspend fun getAllCashMovementsList(): List<CashMovement>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCashMovements(movements: List<CashMovement>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCashMovement(movement: CashMovement): Long
 
@@ -60,6 +75,12 @@ interface ReportDao {
     @Query("SELECT * FROM cashiers ORDER BY name ASC")
     fun getAllCashiers(): Flow<List<Cashier>>
 
+    @Query("SELECT * FROM cashiers ORDER BY name ASC")
+    suspend fun getAllCashiersList(): List<Cashier>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCashiers(cashiers: List<Cashier>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCashier(cashier: Cashier): Long
 
@@ -69,6 +90,12 @@ interface ReportDao {
     // Users & Auth
     @Query("SELECT * FROM users ORDER BY username ASC")
     fun getAllUsers(): Flow<List<User>>
+
+    @Query("SELECT * FROM users ORDER BY username ASC")
+    suspend fun getAllUsersList(): List<User>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUsers(users: List<User>)
 
     @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
     suspend fun getUserByUsername(username: String): User?
@@ -102,6 +129,12 @@ interface ReportDao {
     @Query("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 200")
     fun getAllAuditLogs(): Flow<List<AuditLog>>
 
+    @Query("SELECT * FROM audit_logs ORDER BY timestamp DESC")
+    suspend fun getAllAuditLogsList(): List<AuditLog>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAuditLogs(logs: List<AuditLog>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAuditLog(log: AuditLog): Long
 
@@ -118,6 +151,12 @@ interface ReportDao {
     // App Settings
     @Query("SELECT * FROM app_settings")
     fun getAllSettings(): Flow<List<AppSetting>>
+
+    @Query("SELECT * FROM app_settings")
+    suspend fun getAllSettingsList(): List<AppSetting>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSettings(settings: List<AppSetting>)
 
     @Query("SELECT value FROM app_settings WHERE `key` = :key LIMIT 1")
     fun observeSetting(key: String): Flow<String?>

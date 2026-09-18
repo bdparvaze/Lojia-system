@@ -8,6 +8,12 @@ interface POSDao {
     @Query("SELECT * FROM pos_categories ORDER BY name ASC")
     fun getAllCategories(): Flow<List<POSCategory>>
 
+    @Query("SELECT * FROM pos_categories ORDER BY name ASC")
+    suspend fun getAllCategoriesList(): List<POSCategory>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCategories(categories: List<POSCategory>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: POSCategory): Long
 
@@ -16,6 +22,12 @@ interface POSDao {
 
     @Query("SELECT * FROM pos_products WHERE active = 1 ORDER BY name ASC")
     fun getAllProducts(): Flow<List<POSProduct>>
+
+    @Query("SELECT * FROM pos_products")
+    suspend fun getAllProductsList(): List<POSProduct>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertProducts(products: List<POSProduct>)
 
     @Query("SELECT * FROM pos_products WHERE active = 1")
     suspend fun getAllProductsOnce(): List<POSProduct>
@@ -51,6 +63,12 @@ interface POSDao {
     @Query("SELECT * FROM pos_modifiers WHERE active = 1 ORDER BY name ASC")
     fun getAllModifiers(): Flow<List<POSModifier>>
 
+    @Query("SELECT * FROM pos_modifiers")
+    suspend fun getAllModifiersList(): List<POSModifier>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertModifiers(modifiers: List<POSModifier>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertModifier(modifier: POSModifier): Long
 
@@ -59,6 +77,12 @@ interface POSDao {
 
     @Query("SELECT * FROM pos_discounts WHERE active = 1 ORDER BY name ASC")
     fun getAllDiscounts(): Flow<List<POSDiscount>>
+
+    @Query("SELECT * FROM pos_discounts")
+    suspend fun getAllDiscountsList(): List<POSDiscount>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDiscounts(discounts: List<POSDiscount>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDiscount(discount: POSDiscount): Long
@@ -69,6 +93,12 @@ interface POSDao {
     // Sales
     @Query("SELECT * FROM pos_sales ORDER BY timestamp DESC")
     fun getAllSales(): Flow<List<POSSale>>
+
+    @Query("SELECT * FROM pos_sales ORDER BY timestamp DESC")
+    suspend fun getAllSalesList(): List<POSSale>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSales(sales: List<POSSale>)
 
     @Query("SELECT * FROM pos_sales WHERE timestamp >= :startTime AND timestamp <= :endTime ORDER BY timestamp DESC")
     fun getSalesInRange(startTime: Long, endTime: Long): Flow<List<POSSale>>
@@ -84,6 +114,9 @@ interface POSDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSaleItems(items: List<POSSaleItem>)
+
+    @Query("SELECT * FROM pos_sale_items")
+    suspend fun getAllSaleItemsList(): List<POSSaleItem>
 
     @Transaction
     suspend fun processCheckoutTransaction(
@@ -131,6 +164,12 @@ interface POSDao {
     @Query("SELECT * FROM pos_customers ORDER BY name ASC")
     fun getAllCustomers(): Flow<List<POSCustomer>>
 
+    @Query("SELECT * FROM pos_customers")
+    suspend fun getAllCustomersList(): List<POSCustomer>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCustomers(customers: List<POSCustomer>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCustomer(customer: POSCustomer): Long
 
@@ -139,6 +178,12 @@ interface POSDao {
 
     @Query("SELECT * FROM pos_employees WHERE active = 1 ORDER BY name ASC")
     fun getAllEmployees(): Flow<List<POSEmployee>>
+
+    @Query("SELECT * FROM pos_employees")
+    suspend fun getAllEmployeesList(): List<POSEmployee>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEmployees(employees: List<POSEmployee>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEmployee(employee: POSEmployee): Long
@@ -149,6 +194,12 @@ interface POSDao {
     @Query("SELECT * FROM pos_suppliers ORDER BY name ASC")
     fun getAllSuppliers(): Flow<List<POSSupplier>>
 
+    @Query("SELECT * FROM pos_suppliers")
+    suspend fun getAllSuppliersList(): List<POSSupplier>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSuppliers(suppliers: List<POSSupplier>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSupplier(supplier: POSSupplier): Long
 
@@ -157,6 +208,12 @@ interface POSDao {
 
     @Query("SELECT * FROM pos_stock_adjustments ORDER BY timestamp DESC LIMIT 100")
     fun getAllStockAdjustments(): Flow<List<POSStockAdjustment>>
+
+    @Query("SELECT * FROM pos_stock_adjustments ORDER BY timestamp DESC")
+    suspend fun getAllStockAdjustmentsList(): List<POSStockAdjustment>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStockAdjustments(adjustments: List<POSStockAdjustment>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStockAdjustment(adjustment: POSStockAdjustment): Long

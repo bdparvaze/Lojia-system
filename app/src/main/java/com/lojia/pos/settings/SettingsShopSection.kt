@@ -17,10 +17,10 @@ import com.lojia.pos.util.SecurityUtils
 
 
 import android.content.Intent
-
 import android.net.Uri
-
+import android.os.Build
 import android.widget.Toast
+import kotlinx.coroutines.launch
 
 
 import androidx.compose.animation.*
@@ -143,19 +143,19 @@ fun SettingsShopSection(
     var countrySearch by remember { mutableStateOf("") }
 
     // Profile state
-    var fullName by remember(userProfile) { mutableStateOf(userProfile?.fullName ?: "Demo Owner") }
-    var username by remember(userProfile) { mutableStateOf(userProfile?.username ?: "demo") }
-    var email by remember(userProfile) { mutableStateOf(userProfile?.email ?: "demo@lojia.local") }
-    var password by remember(userProfile) { mutableStateOf(DevCredentials.DEFAULT_PASSWORD) }
-    var securityQuestion by remember(userProfile) { mutableStateOf(userProfile?.securityQuestion ?: "What is your primary store location?") }
-    var securityAnswer by remember(userProfile) { mutableStateOf(userProfile?.securityAnswer ?: "demo") }
+    var fullName by remember(userProfile) { mutableStateOf(userProfile?.fullName ?: "Store Owner") }
+    var username by remember(userProfile) { mutableStateOf(userProfile?.username ?: "") }
+    var email by remember(userProfile) { mutableStateOf(userProfile?.email ?: "") }
+    var password by remember(userProfile) { mutableStateOf("") }
+    var securityQuestion by remember(userProfile) { mutableStateOf(userProfile?.securityQuestion ?: "") }
+    var securityAnswer by remember(userProfile) { mutableStateOf(userProfile?.securityAnswer ?: "") }
     var phone by remember(userProfile) { mutableStateOf(userProfile?.phone ?: "") }
-    var address by remember(userProfile) { mutableStateOf(userProfile?.address ?: "Demo City") }
+    var address by remember(userProfile) { mutableStateOf(userProfile?.address ?: "") }
 
     // Security state
     val preferencesRepository = remember(context) { com.lojia.pos.data.PreferencesRepository.getInstance(context) }
-    var biometricEnabled by remember(userProfile) { mutableStateOf(userProfile?.isBiometricEnabled ?: false) }
-    var quickPinEnabled by remember { mutableStateOf(preferencesRepository.isQuickLoginEnabled()) }
+    var biometricEnabled by remember { mutableStateOf(preferencesRepository.isBiometricEnabled()) }
+    var quickLoginEnabled by remember { mutableStateOf(preferencesRepository.isQuickLoginEnabled() && preferencesRepository.hasPinConfigured()) }
     var showQuickPinDialog by remember { mutableStateOf(false) }
     var pinValue by remember(userProfile) { mutableStateOf(userProfile?.pin.orEmpty()) }
     var showChangePinModal by remember { mutableStateOf(false) }
@@ -637,7 +637,115 @@ fun SettingsShopSection(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Option 1: Biometric Login
+                    // Option 1: Quick Login (PIN)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        shadowElevation = 1.dp,
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .background(Color(0xFFEFF6FF), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Lock,
+                                            contentDescription = "Quick Login",
+                                            tint = Color(0xFF3858F6),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            text = "Quick Login",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF1E293B)
+                                        )
+                                        Text(
+                                            text = if (quickLoginEnabled) "Active with 4-digit PIN" else "Login quickly with a 4-digit PIN",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (quickLoginEnabled) Color(0xFF3858F6) else Color(0xFF64748B)
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = quickLoginEnabled,
+                                    onCheckedChange = { enable ->
+                                        if (enable) {
+                                            if (preferencesRepository.hasPinConfigured() && !preferencesRepository.getStoredPinHash().isNullOrBlank()) {
+                                                quickLoginEnabled = true
+                                                preferencesRepository.setQuickLoginEnabled(true)
+                                                Toast.makeText(context, "Quick Login enabled", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                showQuickPinDialog = true
+                                            }
+                                        } else {
+                                            quickLoginEnabled = false
+                                            preferencesRepository.setQuickLoginEnabled(false)
+                                            // Disabling Quick Login also disables Biometric unlock as required
+                                            biometricEnabled = false
+                                            preferencesRepository.setBiometricEnabled(false)
+                                            persistProfile(bio = false)
+                                            Toast.makeText(context, "Quick Login disabled", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFF3858F6),
+                                        uncheckedThumbColor = Color.White,
+                                        uncheckedTrackColor = Color(0xFFCBD5E1)
+                                    )
+                                )
+                            }
+                            if (quickLoginEnabled) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                HorizontalDivider(color = Color(0xFFF1F5F9))
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showQuickPinDialog = true }
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Change 4-Digit PIN",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF3858F6)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = Color(0xFF94A3B8),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Option 2: Biometric Login
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = Color.White,
@@ -678,9 +786,13 @@ fun SettingsShopSection(
                                         color = Color(0xFF1E293B)
                                     )
                                     Text(
-                                        text = if (biometricEnabled) stringResource(R.string.biometric_enabled_desc) else stringResource(R.string.biometric_disabled_desc),
+                                        text = if (!quickLoginEnabled) "Requires Quick Login and PIN as fallback"
+                                               else if (biometricEnabled) stringResource(R.string.biometric_enabled_desc)
+                                               else stringResource(R.string.biometric_disabled_desc),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = if (biometricEnabled) Color(0xFF16A34A) else Color(0xFF64748B)
+                                        color = if (!quickLoginEnabled) Color(0xFF94A3B8)
+                                                else if (biometricEnabled) Color(0xFF16A34A)
+                                                else Color(0xFF64748B)
                                     )
                                 }
                             }
@@ -688,6 +800,13 @@ fun SettingsShopSection(
                                 checked = biometricEnabled,
                                 onCheckedChange = { enable ->
                                     if (enable) {
+                                        // 3. First check that Quick Login is already enabled and a PIN exists (as fallback)
+                                        if (!quickLoginEnabled || !preferencesRepository.hasPinConfigured()) {
+                                            Toast.makeText(context, "Please enable Quick Login with a PIN first before activating Biometric.", Toast.LENGTH_LONG).show()
+                                            showQuickPinDialog = true
+                                            return@Switch
+                                        }
+
                                         val fragActivity = context as? FragmentActivity
                                         val bioStatus = BiometricAuthManager.checkBiometricAvailability(context)
                                         if (fragActivity != null && bioStatus == BiometricStatus.AVAILABLE) {
@@ -701,16 +820,7 @@ fun SettingsShopSection(
                                                         is BiometricAuthResult.Success -> {
                                                             biometricEnabled = true
                                                             preferencesRepository.setBiometricEnabled(true)
-                                                            preferencesRepository.setQuickLoginEnabled(true)
-                                                            if (!preferencesRepository.hasPinConfigured() || preferencesRepository.getStoredPinHash().isNullOrBlank()) {
-                                                                val defaultPin = pinValue.ifBlank { "1234" }
-                                                                preferencesRepository.setQuickPin(defaultPin)
-                                                                pinValue = defaultPin
-                                                                persistProfile(bio = true, p = defaultPin)
-                                                            } else {
-                                                                persistProfile(bio = true)
-                                                            }
-                                                            quickPinEnabled = true
+                                                            persistProfile(bio = true)
                                                             Toast.makeText(context, context.getString(R.string.biometric_login_enabled), Toast.LENGTH_SHORT).show()
                                                         }
                                                         is BiometricAuthResult.Failed -> {
@@ -726,24 +836,12 @@ fun SettingsShopSection(
                                         } else {
                                             biometricEnabled = true
                                             preferencesRepository.setBiometricEnabled(true)
-                                            preferencesRepository.setQuickLoginEnabled(true)
-                                            if (!preferencesRepository.hasPinConfigured() || preferencesRepository.getStoredPinHash().isNullOrBlank()) {
-                                                val defaultPin = pinValue.ifBlank { "1234" }
-                                                preferencesRepository.setQuickPin(defaultPin)
-                                                pinValue = defaultPin
-                                                persistProfile(bio = true, p = defaultPin)
-                                            } else {
-                                                persistProfile(bio = true)
-                                            }
-                                            quickPinEnabled = true
+                                            persistProfile(bio = true)
                                             Toast.makeText(context, context.getString(R.string.biometric_login_enabled), Toast.LENGTH_SHORT).show()
                                         }
                                     } else {
                                         biometricEnabled = false
                                         preferencesRepository.setBiometricEnabled(false)
-                                        if (!quickPinEnabled) {
-                                            preferencesRepository.setQuickLoginEnabled(false)
-                                        }
                                         persistProfile(bio = false)
                                         Toast.makeText(context, context.getString(R.string.biometric_login_disabled), Toast.LENGTH_SHORT).show()
                                     }
@@ -755,107 +853,6 @@ fun SettingsShopSection(
                                     uncheckedTrackColor = Color(0xFFCBD5E1)
                                 )
                             )
-                        }
-                    }
-
-                    // Option 2: Quick PIN Login
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color.White,
-                        shadowElevation = 1.dp,
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 18.dp, vertical = 16.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(42.dp)
-                                            .background(Color(0xFFEFF6FF), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Lock,
-                                            contentDescription = "Quick PIN",
-                                            tint = Color(0xFF3858F6),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                    Column {
-                                        Text(
-                                            text = "Quick PIN Login",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF1E293B)
-                                        )
-                                        Text(
-                                            text = if (quickPinEnabled) "4-digit Quick PIN is active" else "Login quickly with a 4-digit PIN",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = if (quickPinEnabled) Color(0xFF3858F6) else Color(0xFF64748B)
-                                        )
-                                    }
-                                }
-                                Switch(
-                                    checked = quickPinEnabled,
-                                    onCheckedChange = { enable ->
-                                        if (enable) {
-                                            showQuickPinDialog = true
-                                        } else {
-                                            quickPinEnabled = false
-                                            if (!biometricEnabled) {
-                                                preferencesRepository.setQuickLoginEnabled(false)
-                                            }
-                                            persistProfile(p = "")
-                                            Toast.makeText(context, "Quick PIN Login disabled", Toast.LENGTH_SHORT).show()
-                                        }
-                                    },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = Color(0xFF3858F6),
-                                        uncheckedThumbColor = Color.White,
-                                        uncheckedTrackColor = Color(0xFFCBD5E1)
-                                    )
-                                )
-                            }
-                            if (quickPinEnabled) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                HorizontalDivider(color = Color(0xFFF1F5F9))
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { showQuickPinDialog = true }
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Change 4-Digit PIN",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFF3858F6)
-                                    )
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                                        contentDescription = null,
-                                        tint = Color(0xFF94A3B8),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
                         }
                     }
 
@@ -1503,39 +1500,342 @@ fun SettingsShopSection(
         )
     }
 
-    // 7. Printers Dialog
+    // 7. Printers Dialog (Bluetooth ESC/POS Thermal Printer Configuration)
     if (activeSubDialog == "printers") {
+        val printerManager = remember(context) { com.lojia.pos.printer.BluetoothPrinterManager(context) }
+        var pairedPrinters by remember { mutableStateOf(printerManager.getPairedPrinters()) }
+        var selectedAddress by remember { mutableStateOf(printerManager.getSavedPrinterAddress()) }
+        var selectedWidthMm by remember { mutableIntStateOf(printerManager.getSavedPaperWidthMm()) }
+        var isPrintingTest by remember { mutableStateOf(false) }
+        var isTestingConn by remember { mutableStateOf(false) }
+        var connectionStatusMessage by remember { mutableStateOf<String?>(null) }
+        var isConnectedSuccess by remember { mutableStateOf<Boolean?>(null) }
+
+        val scope = rememberCoroutineScope()
+        val bluetoothPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+        ) { _ ->
+            pairedPrinters = printerManager.getPairedPrinters()
+        }
+
         AlertDialog(
             onDismissRequest = { activeSubDialog = null },
             title = { Text(stringResource(R.string.printers_configuration), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.verticalScroll(rememberScrollState()).imePadding()) {
-                    LojiaTextField(
-                        value = printerName,
-                        onValueChange = { printerName = it },
-                        label = { Text(stringResource(R.string.printer_name)) },
-                        modifier = Modifier.fillMaxWidth()
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .imePadding()
+                ) {
+                    Text(
+                        "Configure ESC/POS Bluetooth Thermal Receipt Printer",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    // Connection Status Card
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = when (isConnectedSuccess) {
+                                true -> Color(0xFFDCFCE7)
+                                false -> Color(0xFFFEE2E2)
+                                null -> Color(0xFFF1F5F9)
+                            }
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = when (isConnectedSuccess) {
+                                            true -> Icons.Outlined.CheckCircle
+                                            false -> Icons.Outlined.ErrorOutline
+                                            null -> Icons.Outlined.BluetoothSearching
+                                        },
+                                        contentDescription = null,
+                                        tint = when (isConnectedSuccess) {
+                                            true -> Color(0xFF16A34A)
+                                            false -> Color(0xFFDC2626)
+                                            null -> Color(0xFF475569)
+                                        },
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (selectedAddress.isBlank()) "No Printer Selected"
+                                        else if (isConnectedSuccess == true) "Connected"
+                                        else if (isConnectedSuccess == false) "Connection Failed"
+                                        else "Status: Configured",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = when (isConnectedSuccess) {
+                                            true -> Color(0xFF15803D)
+                                            false -> Color(0xFFB91C1C)
+                                            null -> Color(0xFF334155)
+                                        }
+                                    )
+                                }
+
+                                if (selectedAddress.isNotBlank()) {
+                                    TextButton(
+                                        onClick = {
+                                            isTestingConn = true
+                                            scope.launch {
+                                                val res = printerManager.testConnection(selectedAddress)
+                                                isTestingConn = false
+                                                res.fold(
+                                                    onSuccess = {
+                                                        isConnectedSuccess = true
+                                                        connectionStatusMessage = "Successfully communicated with printer $selectedAddress"
+                                                    },
+                                                    onFailure = { err ->
+                                                        isConnectedSuccess = false
+                                                        connectionStatusMessage = "Connection test failed: ${err.message}"
+                                                    }
+                                                )
+                                            }
+                                        },
+                                        enabled = !isTestingConn
+                                    ) {
+                                        if (isTestingConn) {
+                                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                                        } else {
+                                            Text("Connect Test", fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (connectionStatusMessage != null) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    connectionStatusMessage ?: "",
+                                    fontSize = 12.sp,
+                                    color = if (isConnectedSuccess == true) Color(0xFF166534) else Color(0xFF991B1B)
+                                )
+                            }
+                        }
+                    }
+
+                    // Paper Width Selection
+                    Text("Paper Width", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = selectedWidthMm == 58,
+                            onClick = {
+                                selectedWidthMm = 58
+                                if (selectedAddress.isNotBlank()) {
+                                    printerManager.savePrinterConfig(selectedAddress, 58)
+                                }
+                            },
+                            label = { Text("58 mm (Standard)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = selectedWidthMm == 80,
+                            onClick = {
+                                selectedWidthMm = 80
+                                if (selectedAddress.isNotBlank()) {
+                                    printerManager.savePrinterConfig(selectedAddress, 80)
+                                }
+                            },
+                            label = { Text("80 mm (Wide)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    HorizontalDivider(color = Color(0xFFE2E8F0))
+
+                    // Paired Devices Header & Refresh
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.autocut_receipts), fontSize = 14.sp)
-                        Switch(checked = autoCut, onCheckedChange = { autoCut = it })
+                        Text("Paired Bluetooth Printers", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        IconButton(onClick = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                bluetoothPermissionLauncher.launch(
+                                    arrayOf(
+                                        android.Manifest.permission.BLUETOOTH_CONNECT,
+                                        android.Manifest.permission.BLUETOOTH_SCAN
+                                    )
+                                )
+                            } else {
+                                pairedPrinters = printerManager.getPairedPrinters()
+                            }
+                        }) {
+                            Icon(Icons.Outlined.Refresh, contentDescription = "Refresh Printers")
+                        }
                     }
+
+                    if (pairedPrinters.isEmpty()) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    "No paired Bluetooth printers found.",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF92400E)
+                                )
+                                Text(
+                                    "Please pair your thermal printer in Android Bluetooth Settings first, then tap Refresh.",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFFB45309)
+                                )
+                            }
+                        }
+                    } else {
+                        pairedPrinters.forEach { device ->
+                            val isSelected = device.address == selectedAddress
+                            Card(
+                                onClick = {
+                                    selectedAddress = device.address
+                                    printerManager.savePrinterConfig(device.address, selectedWidthMm)
+                                    isConnectedSuccess = null
+                                    connectionStatusMessage = "Selected ${device.name}"
+                                    Toast.makeText(context, "Selected ${device.name}", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) Color(0xFFDCFCE7) else Color(0xFFF8FAFC)
+                                ),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) Color(0xFF16A34A) else Color(0xFFCBD5E1)
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(device.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Text(device.address, fontSize = 12.sp, color = Color.Gray)
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            selectedAddress = device.address
+                                            printerManager.savePrinterConfig(device.address, selectedWidthMm)
+                                            isTestingConn = true
+                                            scope.launch {
+                                                val res = printerManager.testConnection(device.address)
+                                                isTestingConn = false
+                                                res.fold(
+                                                    onSuccess = {
+                                                        isConnectedSuccess = true
+                                                        connectionStatusMessage = "Connected to ${device.name}"
+                                                        Toast.makeText(context, "Connected to ${device.name}", Toast.LENGTH_SHORT).show()
+                                                    },
+                                                    onFailure = { err ->
+                                                        isConnectedSuccess = false
+                                                        connectionStatusMessage = "Connection failed: ${err.message}"
+                                                    }
+                                                )
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isSelected) Color(0xFF16A34A) else Color(0xFF0284C7)
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(if (isSelected) "Connected" else "Connect", fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Print Test Receipt Button
                     Button(
-                        onClick = { Toast.makeText(context, context.getString(R.string.printing_test_receipt), Toast.LENGTH_SHORT).show() },
+                        enabled = selectedAddress.isNotBlank() && !isPrintingTest,
+                        onClick = {
+                            isPrintingTest = true
+                            scope.launch {
+                                val testReceipt = printerManager.buildReceiptText(
+                                    businessName = businessProfile?.businessName ?: "Lojia Store",
+                                    businessAddress = businessProfile?.address ?: "123 Main St",
+                                    businessPhone = businessProfile?.phone ?: "+123456789",
+                                    vatNumber = businessProfile?.vatNumber ?: "",
+                                    customHeader = receiptConfig?.customHeader ?: "",
+                                    customFooterText = receiptConfig?.customFooterText ?: "",
+                                    showTaxNumber = receiptConfig?.showTaxNumber ?: true,
+                                    showCashierName = receiptConfig?.showCashierName ?: true,
+                                    receiptId = "TEST-001",
+                                    dateTimeStr = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
+                                    cashierName = "Test Cashier",
+                                    customerName = "Sample Customer",
+                                    items = listOf(
+                                        Pair("Thermal Printer Test Item", Pair(1.0, 10.00)),
+                                        Pair("Sample Product Demo", Pair(2.0, 15.50))
+                                    ),
+                                    subtotal = 25.50,
+                                    discount = 0.0,
+                                    tax = 3.83,
+                                    grandTotal = 29.33,
+                                    paymentMethod = "TEST PRINT",
+                                    currencySymbol = businessProfile?.currency ?: "$"
+                                )
+
+                                val result = printerManager.printFormattedText(testReceipt)
+                                isPrintingTest = false
+                                result.fold(
+                                    onSuccess = {
+                                        isConnectedSuccess = true
+                                        Toast.makeText(context, "Test receipt printed successfully!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onFailure = { err ->
+                                        isConnectedSuccess = false
+                                        connectionStatusMessage = "Printer error: ${err.message}"
+                                        Toast.makeText(context, "Printer error: ${err.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Outlined.Print, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.print_test_receipt))
+                        if (isPrintingTest) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Printing Test Receipt...")
+                        } else {
+                            Icon(Icons.Outlined.Print, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.print_test_receipt))
+                        }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { activeSubDialog = null }) { Text(stringResource(R.string.done_1)) }
+                TextButton(onClick = { activeSubDialog = null }) {
+                    Text(stringResource(R.string.done_1))
+                }
             }
         )
     }
@@ -2278,10 +2578,14 @@ fun SettingsShopSection(
         AlertDialog(
             onDismissRequest = {
                 showQuickPinDialog = false
+                if (!preferencesRepository.hasPinConfigured()) {
+                    quickLoginEnabled = false
+                    preferencesRepository.setQuickLoginEnabled(false)
+                }
             },
             title = {
                 Text(
-                    text = "Set 4-Digit Quick PIN",
+                    text = if (preferencesRepository.hasPinConfigured()) "Change 4-Digit Quick PIN" else "Set 4-Digit Quick PIN",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = Color(0xFF1E293B)
@@ -2329,9 +2633,9 @@ fun SettingsShopSection(
                             preferencesRepository.setQuickLoginEnabled(true)
                             pinValue = tempPin
                             persistProfile(p = tempPin)
-                            quickPinEnabled = true
+                            quickLoginEnabled = true
                             showQuickPinDialog = false
-                            Toast.makeText(context, "4-digit Quick PIN saved successfully!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Quick PIN saved & Quick Login enabled!", Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3858F6))
@@ -2343,6 +2647,10 @@ fun SettingsShopSection(
                 TextButton(
                     onClick = {
                         showQuickPinDialog = false
+                        if (!preferencesRepository.hasPinConfigured()) {
+                            quickLoginEnabled = false
+                            preferencesRepository.setQuickLoginEnabled(false)
+                        }
                     }
                 ) {
                     Text("Cancel", color = Color(0xFF64748B))

@@ -9,6 +9,7 @@ import com.lojia.pos.auth.*
 import com.lojia.pos.pos.*
 import com.lojia.pos.report.*
 import com.lojia.pos.settings.*
+import com.lojia.pos.sync.*
 
 
 import android.app.Application
@@ -31,6 +32,7 @@ import com.lojia.pos.util.ShiftReportSyncScheduler
 import com.lojia.pos.util.ShiftReportSyncWorker
 
 
+import java.util.Locale
 import kotlinx.coroutines.delay
 
 
@@ -188,6 +190,221 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     private val _backupProgress = MutableStateFlow(0f)
     val backupProgress: StateFlow<Float> = _backupProgress.asStateFlow()
 
+    // Google Drive Cloud Backup State
+    private val _driveAccountInfo = MutableStateFlow(GoogleDriveManager.getAccountInfo(context))
+    val driveAccountInfo: StateFlow<DriveAccountInfo> = _driveAccountInfo.asStateFlow()
+
+    private val _isDriveUploading = MutableStateFlow(false)
+    val isDriveUploading: StateFlow<Boolean> = _isDriveUploading.asStateFlow()
+
+    private val _isDriveDownloading = MutableStateFlow(false)
+    val isDriveDownloading: StateFlow<Boolean> = _isDriveDownloading.asStateFlow()
+
+    private val _isDriveLoadingList = MutableStateFlow(false)
+    val isDriveLoadingList: StateFlow<Boolean> = _isDriveLoadingList.asStateFlow()
+
+    private val _driveBackupsList = MutableStateFlow<List<DriveBackupItem>>(emptyList())
+    val driveBackupsList: StateFlow<List<DriveBackupItem>> = _driveBackupsList.asStateFlow()
+
+    fun refreshDriveAccount() {
+        _driveAccountInfo.value = GoogleDriveManager.getAccountInfo(context)
+        if (_driveAccountInfo.value.isConnected) {
+            fetchGoogleDriveBackups()
+        }
+    }
+
+    fun connectGoogleDrive(activityContext: android.content.Context) {
+        val authUrl = GoogleDriveManager.buildAuthUrl(activityContext)
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(authUrl)).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        activityContext.startActivity(intent)
+    }
+
+    fun disconnectGoogleDrive() {
+        GoogleDriveManager.disconnect(context)
+        _driveAccountInfo.value = GoogleDriveManager.getAccountInfo(context)
+        _driveBackupsList.value = emptyList()
+        viewModelScope.launch {
+            _uiMessage.emit(UiText.StringResource(R.string.drive_not_connected))
+        }
+    }
+
+    fun handleDriveAuthRedirect(uri: android.net.Uri, onComplete: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val code = uri.getQueryParameter("code")
+            if (code.isNullOrEmpty()) {
+                val error = uri.getQueryParameter("error") ?: "Authorization cancelled or failed"
+                _uiMessage.emit(UiText.DynamicString(error))
+                onComplete(false)
+                return@launch
+            }
+            val result = GoogleDriveManager.handleOAuthCallback(context, code)
+            result.onSuccess { account: DriveAccountInfo ->
+                _driveAccountInfo.value = account
+                val emailStr = account.email ?: "Google Account"
+                _uiMessage.emit(UiText.StringResource(R.string.drive_connected_as, emailStr))
+                fetchGoogleDriveBackups()
+                onComplete(true)
+            }.onFailure { err ->
+                val msg = err.localizedMessage ?: "Drive authentication failed"
+                _uiMessage.emit(UiText.DynamicString(msg))
+                onComplete(false)
+            }
+        }
+    }
+
+    fun backupToGoogleDrive(
+        onSuccess: (DriveBackupItem) -> Unit = {},
+        onFailure: (String) -> Unit = {}
+    ) {
+        if (_isDriveUploading.value || _isBackingUp.value) return
+        viewModelScope.launch {
+            _isDriveUploading.value = true
+            _isBackingUp.value = true
+            _backupProgress.value = 0.2f
+            delay(150)
+            _backupProgress.value = 0.5f
+
+            val result = GoogleDriveManager.uploadBackup(context, db)
+            _backupProgress.value = 1.0f
+            _isDriveUploading.value = false
+            _isBackingUp.value = false
+
+            result.onSuccess { item ->
+                val now = System.currentTimeMillis()
+                lastBackupTime.value = now
+                prefs.edit().putLong("last_backup_time", now).apply()
+
+                _uiMessage.emit(UiText.StringResource(R.string.drive_backup_success, item.name))
+                NotificationHelper.sendTestPushNotification(
+                    context,
+                    "☁️ Google Drive Backup",
+                    "Uploaded ${item.name} (${item.description}) to Google Drive App Folder."
+                )
+                fetchGoogleDriveBackups()
+                onSuccess(item)
+            }.onFailure { error ->
+                val msg = error.localizedMessage ?: "Failed to upload to Google Drive"
+                _uiMessage.emit(UiText.DynamicString(msg))
+                onFailure(msg)
+            }
+        }
+    }
+
+    fun fetchGoogleDriveBackups(
+        onResult: (List<DriveBackupItem>) -> Unit = {}
+    ) {
+        if (!GoogleDriveManager.isConnected(context)) return
+        viewModelScope.launch {
+            _isDriveLoadingList.value = true
+            val result = GoogleDriveManager.listBackups(context)
+            _isDriveLoadingList.value = false
+            result.onSuccess { list ->
+                _driveBackupsList.value = list
+                onResult(list)
+            }.onFailure { error ->
+                val msg = error.localizedMessage ?: "Failed to fetch Drive backups"
+                _uiMessage.emit(UiText.DynamicString(msg))
+            }
+        }
+    }
+
+    fun restoreFromGoogleDrive(
+        item: DriveBackupItem,
+        onSuccess: (Int) -> Unit = {},
+        onFailure: (String) -> Unit = {}
+    ) {
+        if (_isDriveDownloading.value || _isBackingUp.value) return
+        viewModelScope.launch {
+            _isDriveDownloading.value = true
+            _isBackingUp.value = true
+            val downloadResult = GoogleDriveManager.downloadBackup(context, item.id)
+
+            downloadResult.onSuccess { jsonString ->
+                val activeUser = userProfile.value?.fullName ?: "Admin"
+                val restoreResult = OfflineBackupManager.restoreBackupFromString(
+                    jsonString,
+                    db,
+                    sourceDescription = "Google Drive (${item.name})",
+                    adminUser = activeUser
+                )
+                _isDriveDownloading.value = false
+                _isBackingUp.value = false
+
+                restoreResult.onSuccess { count ->
+                    syncManager.forceSync { _: Boolean, _: String -> }
+                    _uiMessage.emit(UiText.StringResource(R.string.restore_success_msg, count))
+                    NotificationHelper.sendTestPushNotification(
+                        context,
+                        "🔄 Google Drive Data Restored",
+                        "Restored $count records from Google Drive (${item.name})."
+                    )
+                    onSuccess(count)
+                }.onFailure { restoreErr ->
+                    val msg = restoreErr.localizedMessage ?: "Failed to restore backup"
+                    _uiMessage.emit(UiText.StringResource(R.string.invalid_backup_file))
+                    onFailure(msg)
+                }
+            }.onFailure { downloadErr ->
+                _isDriveDownloading.value = false
+                _isBackingUp.value = false
+                val msg = downloadErr.localizedMessage ?: "Failed to download backup from Google Drive"
+                _uiMessage.emit(UiText.DynamicString(msg))
+                onFailure(msg)
+            }
+        }
+    }
+
+    fun parseDriveBackupSummary(
+        item: DriveBackupItem,
+        onResult: (BackupSummary?) -> Unit
+    ) {
+        viewModelScope.launch {
+            val downloadResult = GoogleDriveManager.downloadBackup(context, item.id)
+            downloadResult.onSuccess { jsonString ->
+                val summaryResult = OfflineBackupManager.parseBackupSummaryFromString(jsonString)
+                onResult(summaryResult.getOrNull())
+            }.onFailure {
+                onResult(null)
+            }
+        }
+    }
+
+    // =========================================================================
+    // Firebase Cloud Sync (Offline-First multi-device sync with Room primary)
+    // =========================================================================
+    val firebaseSyncState: StateFlow<FirebaseSyncStatusState> = FirebaseCloudSyncManager.syncState
+
+    fun toggleFirebaseCloudSync(enabled: Boolean) {
+        FirebaseCloudSyncManager.setSyncEnabled(context, enabled)
+        viewModelScope.launch {
+            if (enabled) {
+                _uiMessage.emit(UiText.StringResource(R.string.firebase_sync_enable))
+            } else {
+                _uiMessage.emit(UiText.StringResource(R.string.firebase_sync_disabled))
+            }
+        }
+    }
+
+    fun syncFirebaseNow(
+        onComplete: (Boolean, String) -> Unit = { _, _ -> }
+    ) {
+        viewModelScope.launch {
+            val result = FirebaseCloudSyncManager.performSync(context, isManual = true)
+            if (result.success) {
+                _uiMessage.emit(UiText.StringResource(R.string.firebase_sync_success))
+            } else {
+                _uiMessage.emit(UiText.DynamicString(result.message))
+            }
+            onComplete(result.success, result.message)
+        }
+    }
+
+    fun updateFirebaseCustomUrl(url: String) {
+        FirebaseCloudSyncManager.setCustomFirebaseUrl(context, url)
+    }
+
     var googleAccount: MutableStateFlow<String> = MutableStateFlow(prefs.getString("google_account", "") ?: "")
     var autoBackupFrequency: MutableStateFlow<String> = MutableStateFlow(prefs.getString("auto_backup_freq", "Daily") ?: "Daily")
     var backupUsingCellular: MutableStateFlow<Boolean> = MutableStateFlow(prefs.getBoolean("backup_cellular", true))
@@ -246,6 +463,113 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun createOfflineBackup(
+        onSuccess: (BackupInfo) -> Unit = {},
+        onFailure: (String) -> Unit = {}
+    ) {
+        if (_isBackingUp.value) return
+        viewModelScope.launch {
+            _isBackingUp.value = true
+            _backupProgress.value = 0.2f
+            delay(200)
+            _backupProgress.value = 0.6f
+
+            val result = OfflineBackupManager.createBackup(context, db)
+            _backupProgress.value = 1.0f
+            _isBackingUp.value = false
+
+            result.onSuccess { info ->
+                val now = System.currentTimeMillis()
+                lastBackupTime.value = now
+                prefs.edit().putLong("last_backup_time", now).apply()
+
+                _uiMessage.emit(UiText.StringResource(R.string.backup_created_success, info.fileName))
+                NotificationHelper.sendTestPushNotification(
+                    context,
+                    "📦 Offline Backup Created",
+                    "Saved to Downloads: ${info.fileName} (${info.totalRecords} records)"
+                )
+                onSuccess(info)
+            }.onFailure { error ->
+                val msg = error.localizedMessage ?: "Failed to create backup"
+                _uiMessage.emit(UiText.DynamicString(msg))
+                onFailure(msg)
+            }
+        }
+    }
+
+    fun parseBackupSummary(
+        uri: android.net.Uri,
+        onResult: (BackupSummary?) -> Unit
+    ) {
+        viewModelScope.launch {
+            val result = OfflineBackupManager.parseBackupSummary(context, uri)
+            onResult(result.getOrNull())
+        }
+    }
+
+    fun restoreOfflineBackup(
+        uri: android.net.Uri,
+        onSuccess: (Int) -> Unit = {},
+        onFailure: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            _isBackingUp.value = true
+            val activeUser = userProfile.value?.fullName ?: "Admin"
+            val result = OfflineBackupManager.restoreBackup(context, uri, db, activeUser)
+            _isBackingUp.value = false
+
+            result.onSuccess { count ->
+                syncManager.forceSync { _: Boolean, _: String -> }
+                _uiMessage.emit(UiText.StringResource(R.string.restore_success_msg, count))
+                NotificationHelper.sendTestPushNotification(
+                    context,
+                    "🔄 Data Restored Successfully",
+                    "Restored $count records into your local store database."
+                )
+                onSuccess(count)
+            }.onFailure { error ->
+                val msg = error.localizedMessage ?: "Failed to restore backup"
+                _uiMessage.emit(UiText.StringResource(R.string.invalid_backup_file))
+                onFailure(msg)
+            }
+        }
+    }
+
+    fun clearAllBusinessData(
+        onSuccess: () -> Unit = {},
+        onFailure: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    db.clearAllTables()
+                    val defaultCashier = Cashier(
+                        id = 0,
+                        name = "Lojia Admin",
+                        role = "ADMIN",
+                        active = true
+                    )
+                    reportDao.insertCashiers(listOf(defaultCashier))
+                    
+                    val defaultProfile = UserProfile(
+                        id = 1,
+                        fullName = "Store Owner",
+                        currentRole = "ADMIN"
+                    )
+                    reportDao.saveUserProfile(defaultProfile)
+                }
+                syncManager.forceSync { _: Boolean, _: String -> }
+                _uiMessage.emit(UiText.StringResource(R.string.all_data_cleared_success))
+                onSuccess()
+            } catch (e: Exception) {
+                val err = e.localizedMessage ?: "Failed to clear data"
+                _uiMessage.emit(UiText.DynamicString(err))
+                onFailure(err)
+            }
+        }
+    }
+
     // Shift Form State
     var selectedCashier = MutableStateFlow("")
     var selectedShift = MutableStateFlow("Day")
@@ -258,6 +582,16 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     var muasselQtyInput = MutableStateFlow("")
     var outdoorShishaQtyInput = MutableStateFlow("")
     var notesInput = MutableStateFlow("")
+
+    var startingCashInput = MutableStateFlow("")
+    var actualCashCountInput = MutableStateFlow("")
+
+    val startingCash: StateFlow<Double> = startingCashInput.map { it.toDoubleOrNull() ?: 0.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val actualCashCount: StateFlow<Double> = actualCashCountInput.map { it.toDoubleOrNull() ?: 0.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val isActualCashEntered: StateFlow<Boolean> = actualCashCountInput.map { it.isNotBlank() && it.toDoubleOrNull() != null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     // Dynamic Section Lists
     val dueCreditItems = MutableStateFlow<List<DueCreditItem>>(emptyList())
@@ -318,11 +652,11 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val totalPreviousDueCash: StateFlow<Double> = previousDueCollections.map { list ->
-        list.filter { it.paymentMode == "CASH" }.sumOf { it.amount }
+        list.filter { it.paymentMode.equals("CASH", ignoreCase = true) }.sumOf { it.amount }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val totalPreviousDueCard: StateFlow<Double> = previousDueCollections.map { list ->
-        list.filter { it.paymentMode != "CASH" }.sumOf { it.amount }
+        list.filter { !it.paymentMode.equals("CASH", ignoreCase = true) }.sumOf { it.amount }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val totalStaffAdvances: StateFlow<Double> = staffAdvances.map { list ->
@@ -334,41 +668,63 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val totalPurchasedCash: StateFlow<Double> = purchasedItems.map { list ->
-        list.filter { it.paidVia == "CASH" }.sumOf { it.totalAmount }
+        list.filter { it.paidVia.equals("CASH", ignoreCase = true) }.sumOf { it.totalAmount }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val totalPurchasedAll: StateFlow<Double> = purchasedItems.map { list ->
         list.sumOf { it.totalAmount }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // Automatic Live Calculations
-    val calculatedTotalGrossSales: StateFlow<Double> = combine(
+    // Automatic Live Calculations following International Standards
+    // 1. Total Sales (payment methods only: Cash + Card/Mada + Digital Wallet)
+    val totalSales: StateFlow<Double> = combine(
         grossCash,
         madaPayments,
-        totalDueCreditAmount
-    ) { cash, mada, due ->
-        cash + mada + due
+        digitalWallet
+    ) { cash, mada, wallet ->
+        cash + mada + wallet
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    val totalRevenue: StateFlow<Double> = calculatedTotalGrossSales
+    val calculatedTotalGrossSales: StateFlow<Double> = totalSales
+    val totalRevenue: StateFlow<Double> = totalSales
 
-    val calculatedTotalExpenses: StateFlow<Double> = combine(
-        totalExpenses,
-        totalPurchasedCash
-    ) { exp, purchCash ->
-        exp + purchCash
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-
-    val calculatedCashInDrawer: StateFlow<Double> = combine(
+    // 2. Cash In & Outflows
+    val totalCashIn: StateFlow<Double> = combine(
         grossCash,
-        totalPreviousDueCash,
-        calculatedTotalExpenses,
-        totalStaffAdvances
-    ) { cash, prevDue, allExp, advances ->
-        cash + prevDue - allExp - advances
+        totalPreviousDueCash
+    ) { cashSales, prevDueCash ->
+        cashSales + prevDueCash
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    val netCash: StateFlow<Double> = calculatedCashInDrawer
+    val totalCashOut: StateFlow<Double> = combine(
+        totalExpenses,
+        totalStaffAdvances,
+        totalPurchasedCash
+    ) { exp, adv, purchCash ->
+        exp + adv + purchCash
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    val calculatedTotalExpenses: StateFlow<Double> = totalCashOut
+
+    // 3. Expected Cash in Drawer & Net Cash
+    val expectedCashInDrawer: StateFlow<Double> = combine(
+        startingCash,
+        totalCashIn,
+        totalCashOut
+    ) { start, cin, cout ->
+        start + cin - cout
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    val calculatedCashInDrawer: StateFlow<Double> = expectedCashInDrawer
+    val netCash: StateFlow<Double> = expectedCashInDrawer
+
+    // 4. Over / Short Cash Variance
+    val cashVariance: StateFlow<Double> = combine(
+        actualCashCount,
+        expectedCashInDrawer
+    ) { actual, expected ->
+        actual - expected
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val calculatedCardAndDigital: StateFlow<Double> = combine(
         madaPayments,
@@ -379,11 +735,11 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     val calculatedNetBalance: StateFlow<Double> = combine(
-        calculatedTotalGrossSales,
-        calculatedTotalExpenses,
+        totalSales,
+        totalCashOut,
         totalUnpaidLoss
-    ) { gross, exp, unpaid ->
-        gross - exp - unpaid
+    ) { sales, exp, unpaid ->
+        sales - exp - unpaid
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     private val _uiMessage = MutableSharedFlow<com.lojia.pos.util.UiText>()
@@ -469,6 +825,10 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         loadDraft()
+        FirebaseCloudSyncManager.init(context)
+        if (FirebaseCloudSyncManager.isSyncEnabled(context)) {
+            FirebaseCloudSyncScheduler.schedulePeriodicSync(context)
+        }
         viewModelScope.launch {
             userProfile.collect { profile ->
                 if (profile != null) {
@@ -741,6 +1101,8 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
         muasselQtyInput.value = ""
         outdoorShishaQtyInput.value = ""
         notesInput.value = ""
+        startingCashInput.value = ""
+        actualCashCountInput.value = ""
         dueCreditItems.value = emptyList()
         previousDueCollections.value = emptyList()
         staffAdvances.value = emptyList()
@@ -779,6 +1141,16 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
 
         viewModelScope.launch {
             val cashier = if (selectedCashier.value.isBlank()) "Standard Cashier" else selectedCashier.value
+            val actualCountVal = actualCashCountInput.value.toDoubleOrNull()
+            val noteParts = mutableListOf<String>()
+            if (actualCountVal != null) {
+                noteParts.add("Actual Cash Count: %.2f".format(Locale.US, actualCountVal))
+            }
+            if (notesInput.value.isNotBlank()) {
+                noteParts.add(notesInput.value)
+            }
+            val formattedNotes = noteParts.joinToString(" | ")
+
             val report = ShiftReport(
                 cashierName = cashier,
                 shift = selectedShift.value,
@@ -795,7 +1167,7 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
                 staffAdvancesJson = serializeAdvances(staffAdvances.value),
                 unpaidBillsJson = serializeUnpaid(unpaidBills.value),
                 purchasedItemsJson = serializePurchased(purchasedItems.value),
-                notes = notesInput.value
+                notes = formattedNotes
             )
             repository.insertReport(report)
             reportDao.insertAuditLog(
@@ -879,6 +1251,13 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
                 expectedCash = startingCash
             )
             reportDao.insertShiftSession(newSession)
+            reportDao.insertAuditLog(
+                AuditLog(
+                    username = cashierName.ifBlank { "Cashier" },
+                    action = "OPEN_SHIFT",
+                    details = "Opened $shiftName shift. Starting Float: $startingCash"
+                )
+            )
             val rawCurr = businessProfile.value?.currency ?: "SAR"
             val curr = if (rawCurr == "SAR") context.getString(R.string.currency_unit) else rawCurr
             NotificationHelper.sendShiftOpenedNotification(context, cashierName, startingCash, curr)
@@ -897,10 +1276,121 @@ class ReportViewModel(application: Application) : AndroidViewModel(application) 
                 notes = notes
             )
             reportDao.updateShiftSession(updated)
+            reportDao.insertAuditLog(
+                AuditLog(
+                    username = session.cashierName,
+                    action = "CLOSE_SHIFT",
+                    details = "Closed ${session.shiftName} shift. Expected Cash: ${session.expectedCash}, Actual Count: $actualCashCount, Variance: $variance. Notes: $notes"
+                )
+            )
+            if (variance != 0.0) {
+                reportDao.insertAuditLog(
+                    AuditLog(
+                        username = session.cashierName,
+                        action = "VARIANCE_RECORDED",
+                        details = "Shift Cash Variance: $variance (${if (variance > 0) "Over" else "Short"})"
+                    )
+                )
+            }
             val rawCurr = businessProfile.value?.currency ?: "SAR"
             val curr = if (rawCurr == "SAR") context.getString(R.string.currency_unit) else rawCurr
             NotificationHelper.sendShiftClosedNotification(context, session.cashierName, variance, curr)
             _uiMessage.emit(UiText.StringResource(R.string.toast_shift_closed_variance, "%.2f".format(variance), curr))
+        }
+    }
+
+    fun closeShiftWithZReport(
+        session: ShiftSession,
+        actualCashCount: Double,
+        notes: String,
+        onReportCreated: (ShiftReport) -> Unit
+    ) {
+        viewModelScope.launch {
+            val variance = actualCashCount - session.expectedCash
+            val updated = session.copy(
+                status = "CLOSED",
+                closedAt = System.currentTimeMillis(),
+                actualCashCount = actualCashCount,
+                variance = variance,
+                notes = notes
+            )
+            reportDao.updateShiftSession(updated)
+
+            val report = ShiftReport(
+                cashierName = session.cashierName,
+                shift = session.shiftName,
+                dateInMillis = System.currentTimeMillis(),
+                grossCash = session.cashSales,
+                madaPayments = session.cardSales,
+                digitalWallet = session.digitalSales,
+                notes = notes
+            )
+            val id = repository.insertReport(report)
+            val finalReport = report.copy(id = id.toInt())
+
+            reportDao.insertAuditLog(
+                AuditLog(
+                    username = session.cashierName,
+                    action = "CLOSE_SHIFT_Z_REPORT",
+                    details = "Closed ${session.shiftName} shift with Z-Report #${finalReport.id}. Total Sales: ${finalReport.totalSales}, Expected Cash: ${session.expectedCash}, Actual Count: $actualCashCount, Variance: $variance"
+                )
+            )
+
+            if (variance != 0.0) {
+                reportDao.insertAuditLog(
+                    AuditLog(
+                        username = session.cashierName,
+                        action = "VARIANCE_RECORDED",
+                        details = "Z-Report #${finalReport.id} Cash Variance: $variance (${if (variance > 0) "Over" else "Short"})"
+                    )
+                )
+            }
+
+            val rawCurr = businessProfile.value?.currency ?: "SAR"
+            val curr = if (rawCurr == "SAR") context.getString(R.string.currency_unit) else rawCurr
+            NotificationHelper.sendShiftClosedNotification(context, session.cashierName, variance, curr)
+            _uiMessage.emit(UiText.StringResource(R.string.toast_shift_closed_variance, "%.2f".format(variance), curr))
+            onReportCreated(finalReport)
+        }
+    }
+
+    fun adminOverrideReport(
+        adminUsername: String,
+        report: ShiftReport,
+        reason: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            repository.insertReport(report)
+            reportDao.insertAuditLog(
+                AuditLog(
+                    username = adminUsername,
+                    action = "ADMIN_REPORT_OVERRIDE",
+                    details = "Admin overridden Shift Report #${report.id} (${report.cashierName}). Reason: $reason"
+                )
+            )
+            _uiMessage.emit(UiText.StringResource(R.string.shift_report_submitted_successfully))
+            onSuccess()
+        }
+    }
+
+    fun adminDeleteReport(
+        adminUsername: String,
+        report: ShiftReport,
+        reason: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            repository.deleteReport(report)
+            reportDao.insertAuditLog(
+                AuditLog(
+                    username = adminUsername,
+                    action = "ADMIN_REPORT_DELETE",
+                    details = "Admin deleted Shift Report #${report.id} (${report.cashierName}). Reason: $reason"
+                )
+            )
+            _uiMessage.emit(UiText.StringResource(R.string.report_deleted))
+            onSuccess()
         }
     }
 

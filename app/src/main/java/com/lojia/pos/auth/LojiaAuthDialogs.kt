@@ -97,15 +97,15 @@ fun LojiaPasswordRecoveryDialog(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = if (isBn) "উত্তর সঠিক! ডেমো পাসওয়ার্ড:" else "Correct! Default credentials:",
+                                text = if (isBn) "উত্তর সঠিক!" else "Identity Verified!",
                                 fontSize = 12.sp,
                                 color = LojiaColors.G500,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Username: ${userProfile?.username ?: DevCredentials.DEFAULT_USERNAME} / Password: ${if (BuildConfig.DEBUG) DevCredentials.DEFAULT_PASSWORD else "******"}",
+                                text = if (isBn) "অ্যাকাউন্ট পুনরুদ্ধার সফল হয়েছে। এগিয়ে যেতে নিচের বোতাম চাপুন।" else "Security verification successful. Click below to continue.",
                                 fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Medium,
                                 color = LojiaColors.N900
                             )
                         }
@@ -117,10 +117,7 @@ fun LojiaPasswordRecoveryDialog(
             if (!isAnswerCorrect) {
                 TextButton(
                     onClick = {
-                        if (recoveryAnswer.trim().equals(actualAnswer.trim(), ignoreCase = true) ||
-                            recoveryAnswer.trim().equals("School", ignoreCase = true) ||
-                            recoveryAnswer.trim().equals("Lojia", ignoreCase = true)
-                        ) {
+                        if (actualAnswer.isNotBlank() && recoveryAnswer.trim().equals(actualAnswer.trim(), ignoreCase = true)) {
                             isAnswerCorrect = true
                         } else {
                             recoveryError = if (isBn) "ভুল উত্তর! আবার চেষ্টা করুন।" else "Incorrect answer! Please try again."

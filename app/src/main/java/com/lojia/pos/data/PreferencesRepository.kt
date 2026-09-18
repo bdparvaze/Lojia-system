@@ -2,8 +2,6 @@ package com.lojia.pos.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.lojia.pos.BuildConfig
-import com.lojia.pos.auth.DevCredentials
 import com.lojia.pos.util.SecurityUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,8 +11,24 @@ import kotlinx.coroutines.flow.asStateFlow
  * PreferencesRepository manages persistent user session state and Quick Login credentials
  * (PIN hash, Biometric status, session tokens, and security flags).
  *
- * It provides logic to determine if a valid security state exists to default
- * the app to the Quick Login screen upon startup or post-logout.
+ * International Standard Authentication Lifecycle:
+ * 1. First launch / unconfigured state:
+ *    - KEY_QUICK_LOGIN_ENABLED = false
+ *    - KEY_BIOMETRIC_ENABLED = false
+ *    - KEY_HAS_PIN_CONFIGURED = false
+ *    - Displays clean Username + Password Login (or Register).
+ *
+ * 2. User logs in or registers:
+ *    - Session is saved, but Quick Login / PIN / Biometric are NOT forced or auto-enabled.
+ *    - User enters directly into the app.
+ *
+ * 3. Settings → Security:
+ *    - User can explicitly activate Quick Login (with a 4-digit PIN) and Biometric.
+ *
+ * 4. Next launch / post-logout (keepQuickLoginState = true):
+ *    - If Quick Login is enabled, displays Quick PIN / Biometric lock screen.
+ *    - If not enabled, displays standard Username + Password Login.
+ *    - On Quick PIN screen, "Use Password" fallback returns to standard login.
  */
 class PreferencesRepository private constructor(context: Context) {
 
@@ -42,6 +56,10 @@ class PreferencesRepository private constructor(context: Context) {
         private const val KEY_STORED_PIN_HASH = "key_stored_pin_hash"
         private const val KEY_HAS_PIN_CONFIGURED = "key_has_pin_configured"
 
+        // Printer keys
+        private const val KEY_PRINTER_ADDRESS = "key_printer_address"
+        private const val KEY_PRINTER_PAPER_WIDTH = "key_printer_paper_width"
+
         @Volatile
         private var instance: PreferencesRepository? = null
 
@@ -55,18 +73,6 @@ class PreferencesRepository private constructor(context: Context) {
     init {
         // Guarantee that Quick Login, PIN, and Biometric are NEVER auto-enabled or seeded with a default PIN.
         // First-time user experience must remain clean (only Register/Login screen).
-        if (BuildConfig.DEBUG && !prefs.contains(KEY_SAVED_USERNAME)) {
-            prefs.edit().apply {
-                putString(KEY_SAVED_USERNAME, DevCredentials.DEFAULT_USERNAME)
-                putString(KEY_SAVED_FULL_NAME, "Demo Owner")
-                putBoolean(KEY_REMEMBER_ME, true)
-                putBoolean(KEY_QUICK_LOGIN_ENABLED, false)
-                putBoolean(KEY_BIOMETRIC_ENABLED, false)
-                putBoolean(KEY_HAS_PIN_CONFIGURED, false)
-                remove(KEY_STORED_PIN_HASH)
-                apply()
-            }
-        }
         if (!prefs.contains(KEY_QUICK_LOGIN_ENABLED)) {
             prefs.edit().putBoolean(KEY_QUICK_LOGIN_ENABLED, false).apply()
         }
@@ -86,10 +92,9 @@ class PreferencesRepository private constructor(context: Context) {
     fun hasValidSecurityState(): Boolean {
         if (!isQuickLoginEnabled()) return false
         val hasSession = hasActiveSession() || getSavedUsername().isNotBlank()
-        val isPinReady = hasPinConfigured() || !getStoredPinHash().isNullOrBlank()
-        val isBioReady = isBiometricEnabled()
+        val isSecurityReady = hasPinConfigured() || isBiometricEnabled()
 
-        return (isPinReady || isBioReady) && hasSession
+        return isSecurityReady && hasSession
     }
 
     /**
@@ -155,7 +160,7 @@ class PreferencesRepository private constructor(context: Context) {
     }
 
     /**
-     * Updates or sets the 6-digit Quick PIN.
+     * Updates or sets the 4-digit Quick PIN.
      */
     fun setQuickPin(pin: String) {
         val hashed = SecurityUtils.hashSecret(pin)
@@ -163,6 +168,18 @@ class PreferencesRepository private constructor(context: Context) {
             putString(KEY_STORED_PIN_HASH, hashed)
             putBoolean(KEY_HAS_PIN_CONFIGURED, true)
             putBoolean(KEY_QUICK_LOGIN_ENABLED, true)
+            apply()
+        }
+        _isQuickLoginActive.value = shouldDefaultToQuickLogin()
+    }
+
+    /**
+     * Clears the configured Quick PIN and removes its hash.
+     */
+    fun clearQuickPin() {
+        prefs.edit().apply {
+            putBoolean(KEY_HAS_PIN_CONFIGURED, false)
+            remove(KEY_STORED_PIN_HASH)
             apply()
         }
         _isQuickLoginActive.value = shouldDefaultToQuickLogin()
@@ -200,6 +217,8 @@ class PreferencesRepository private constructor(context: Context) {
 
     /**
      * Synchronizes PreferencesRepository with Room's UserProfile.
+     * Note: Quick Login, PIN, and Biometric flags are strictly owned by PreferencesRepository.
+     * Only session and identity data are synced here; security flags are never auto-enabled from Room.
      */
     fun syncWithUserProfile(profile: UserProfile) {
         prefs.edit().apply {
@@ -213,22 +232,14 @@ class PreferencesRepository private constructor(context: Context) {
             if (profile.email.isNotBlank()) {
                 putString(KEY_SAVED_EMAIL, profile.email)
             }
-            if (isQuickLoginEnabled()) {
-                putBoolean(KEY_BIOMETRIC_ENABLED, profile.isBiometricEnabled)
-            } else {
-                putBoolean(KEY_BIOMETRIC_ENABLED, false)
-            }
-            if (profile.pin.isNotBlank()) {
+            // Only update the stored PIN hash if the user has already enabled Quick Login
+            if (isQuickLoginEnabled() && profile.pin.isNotBlank()) {
                 val hashToStore = if (profile.pin.length == 64 && profile.pin.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
                     profile.pin
                 } else {
                     SecurityUtils.hashSecret(profile.pin)
                 }
                 putString(KEY_STORED_PIN_HASH, hashToStore)
-                putBoolean(KEY_HAS_PIN_CONFIGURED, true)
-            } else {
-                putBoolean(KEY_HAS_PIN_CONFIGURED, false)
-                remove(KEY_STORED_PIN_HASH)
             }
             apply()
         }
@@ -259,6 +270,22 @@ class PreferencesRepository private constructor(context: Context) {
     fun isBiometricEnabled(): Boolean = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false)
     fun getStoredPinHash(): String? = prefs.getString(KEY_STORED_PIN_HASH, null)
     fun hasPinConfigured(): Boolean = prefs.getBoolean(KEY_HAS_PIN_CONFIGURED, false)
+
+    fun savePrinterAddress(address: String) {
+        prefs.edit().putString(KEY_PRINTER_ADDRESS, address).apply()
+    }
+
+    fun getSelectedPrinterAddress(): String {
+        return prefs.getString(KEY_PRINTER_ADDRESS, "") ?: ""
+    }
+
+    fun savePrinterPaperWidth(widthMm: Int) {
+        prefs.edit().putInt(KEY_PRINTER_PAPER_WIDTH, widthMm).apply()
+    }
+
+    fun getPrinterPaperWidth(): Int {
+        return prefs.getInt(KEY_PRINTER_PAPER_WIDTH, 58)
+    }
 
     /**
      * Clears all preferences (useful for complete data wipe).
