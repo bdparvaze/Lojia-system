@@ -1500,11 +1500,14 @@ fun SettingsShopSection(
         )
     }
 
-    // 7. Printers Dialog (Bluetooth ESC/POS Thermal Printer Configuration)
+    // 7. Printers Dialog (Bluetooth / Network ESC/POS Thermal Printer Configuration)
     if (activeSubDialog == "printers") {
         val printerManager = remember(context) { com.lojia.pos.printer.BluetoothPrinterManager(context) }
+        var connType by remember { mutableStateOf(printerManager.getPrinterConnectionType()) } // "bluetooth" or "network"
         var pairedPrinters by remember { mutableStateOf(printerManager.getPairedPrinters()) }
         var selectedAddress by remember { mutableStateOf(printerManager.getSavedPrinterAddress()) }
+        var networkIp by remember { mutableStateOf(printerManager.getSavedNetworkIp()) }
+        var networkPortStr by remember { mutableStateOf(printerManager.getSavedNetworkPort().toString()) }
         var selectedWidthMm by remember { mutableIntStateOf(printerManager.getSavedPaperWidthMm()) }
         var isPrintingTest by remember { mutableStateOf(false) }
         var isTestingConn by remember { mutableStateOf(false) }
@@ -1529,10 +1532,40 @@ fun SettingsShopSection(
                         .imePadding()
                 ) {
                     Text(
-                        "Configure ESC/POS Bluetooth Thermal Receipt Printer",
+                        "Configure ESC/POS Thermal Receipt Printer (Bluetooth or Network TCP)",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    // Connection Type Selector
+                    Text("Connection Type", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = connType == "bluetooth",
+                            onClick = {
+                                connType = "bluetooth"
+                                printerManager.savePrinterConnectionType("bluetooth")
+                                isConnectedSuccess = null
+                                connectionStatusMessage = null
+                            },
+                            label = { Text("Bluetooth (Mobile)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = connType == "network",
+                            onClick = {
+                                connType = "network"
+                                printerManager.savePrinterConnectionType("network")
+                                isConnectedSuccess = null
+                                connectionStatusMessage = null
+                            },
+                            label = { Text("Wi-Fi / LAN (Counter)") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
                     // Connection Status Card
                     Card(
@@ -1569,7 +1602,8 @@ fun SettingsShopSection(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (selectedAddress.isBlank()) "No Printer Selected"
+                                        text = if (connType == "network" && networkIp.isBlank()) "No Network Printer IP"
+                                        else if (connType == "bluetooth" && selectedAddress.isBlank()) "No Bluetooth Printer Selected"
                                         else if (isConnectedSuccess == true) "Connected"
                                         else if (isConnectedSuccess == false) "Connection Failed"
                                         else "Status: Configured",
@@ -1583,31 +1617,51 @@ fun SettingsShopSection(
                                     )
                                 }
 
-                                if (selectedAddress.isNotBlank()) {
-                                    TextButton(
-                                        onClick = {
-                                            isTestingConn = true
-                                            scope.launch {
-                                                val res = printerManager.testConnection(selectedAddress)
-                                                isTestingConn = false
-                                                res.fold(
-                                                    onSuccess = {
-                                                        isConnectedSuccess = true
-                                                        connectionStatusMessage = "Successfully communicated with printer $selectedAddress"
-                                                    },
-                                                    onFailure = { err ->
-                                                        isConnectedSuccess = false
-                                                        connectionStatusMessage = "Connection test failed: ${err.message}"
-                                                    }
-                                                )
+                                val isConfigured = if (connType == "network") networkIp.isNotBlank() else selectedAddress.isNotBlank()
+                                if (isConfigured) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        TextButton(
+                                            onClick = {
+                                                isTestingConn = true
+                                                scope.launch {
+                                                    val res = printerManager.testConnection()
+                                                    isTestingConn = false
+                                                    res.fold(
+                                                        onSuccess = {
+                                                            isConnectedSuccess = true
+                                                            connectionStatusMessage = "Connected to printer"
+                                                        },
+                                                        onFailure = { err ->
+                                                            isConnectedSuccess = false
+                                                            connectionStatusMessage = "Connection test failed: ${err.message}"
+                                                        }
+                                                    )
+                                                }
+                                            },
+                                            enabled = !isTestingConn
+                                        ) {
+                                            if (isTestingConn) {
+                                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                                            } else {
+                                                Text("Test", fontSize = 12.sp)
                                             }
-                                        },
-                                        enabled = !isTestingConn
-                                    ) {
-                                        if (isTestingConn) {
-                                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-                                        } else {
-                                            Text("Connect Test", fontSize = 12.sp)
+                                        }
+
+                                        TextButton(
+                                            onClick = {
+                                                if (connType == "network") {
+                                                    networkIp = ""
+                                                    printerManager.saveNetworkPrinterConfig("", 9100, selectedWidthMm)
+                                                } else {
+                                                    selectedAddress = ""
+                                                    printerManager.savePrinterConfig("", selectedWidthMm)
+                                                }
+                                                isConnectedSuccess = null
+                                                connectionStatusMessage = "Printer disconnected"
+                                                Toast.makeText(context, "Printer disconnected", Toast.LENGTH_SHORT).show()
+                                            }
+                                        ) {
+                                            Text("Disconnect", fontSize = 12.sp, color = Color(0xFFDC2626))
                                         }
                                     }
                                 }
@@ -1634,7 +1688,9 @@ fun SettingsShopSection(
                             selected = selectedWidthMm == 58,
                             onClick = {
                                 selectedWidthMm = 58
-                                if (selectedAddress.isNotBlank()) {
+                                if (connType == "network") {
+                                    printerManager.saveNetworkPrinterConfig(networkIp, networkPortStr.toIntOrNull() ?: 9100, 58)
+                                } else if (selectedAddress.isNotBlank()) {
                                     printerManager.savePrinterConfig(selectedAddress, 58)
                                 }
                             },
@@ -1645,7 +1701,9 @@ fun SettingsShopSection(
                             selected = selectedWidthMm == 80,
                             onClick = {
                                 selectedWidthMm = 80
-                                if (selectedAddress.isNotBlank()) {
+                                if (connType == "network") {
+                                    printerManager.saveNetworkPrinterConfig(networkIp, networkPortStr.toIntOrNull() ?: 9100, 80)
+                                } else if (selectedAddress.isNotBlank()) {
                                     printerManager.savePrinterConfig(selectedAddress, 80)
                                 }
                             },
@@ -1656,110 +1714,177 @@ fun SettingsShopSection(
 
                     HorizontalDivider(color = Color(0xFFE2E8F0))
 
-                    // Paired Devices Header & Refresh
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Paired Bluetooth Printers", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        IconButton(onClick = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                bluetoothPermissionLauncher.launch(
-                                    arrayOf(
-                                        android.Manifest.permission.BLUETOOTH_CONNECT,
-                                        android.Manifest.permission.BLUETOOTH_SCAN
-                                    )
-                                )
-                            } else {
-                                pairedPrinters = printerManager.getPairedPrinters()
-                            }
-                        }) {
-                            Icon(Icons.Outlined.Refresh, contentDescription = "Refresh Printers")
-                        }
-                    }
+                    // Dynamic Section Based on Connection Type
+                    if (connType == "network") {
+                        Text("Network Printer Setup (TCP / IP)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text(
+                            "Ensure printer and Android POS device are connected to the same Wi-Fi or local network. Standard ESC/POS network port is 9100. Static IP recommended.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-                    if (pairedPrinters.isEmpty()) {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
-                            shape = RoundedCornerShape(8.dp),
+                        OutlinedTextField(
+                            value = networkIp,
+                            onValueChange = { networkIp = it.trim() },
+                            label = { Text("Printer IP Address") },
+                            placeholder = { Text("e.g. 192.168.1.100") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = networkPortStr,
+                            onValueChange = { networkPortStr = it.filter { c -> c.isDigit() } },
+                            label = { Text("Port (Default: 9100)") },
+                            placeholder = { Text("9100") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Button(
+                            onClick = {
+                                val portInt = networkPortStr.toIntOrNull() ?: 9100
+                                printerManager.saveNetworkPrinterConfig(networkIp, portInt, selectedWidthMm)
+                                isTestingConn = true
+                                scope.launch {
+                                    val res = printerManager.testNetworkConnection(networkIp, portInt)
+                                    isTestingConn = false
+                                    res.fold(
+                                        onSuccess = {
+                                            isConnectedSuccess = true
+                                            connectionStatusMessage = "Successfully connected to $networkIp:$portInt"
+                                            Toast.makeText(context, "Connected to network printer", Toast.LENGTH_SHORT).show()
+                                        },
+                                        onFailure = { err ->
+                                            isConnectedSuccess = false
+                                            connectionStatusMessage = "Network printer offline: ${err.message}"
+                                        }
+                                    )
+                                }
+                            },
+                            enabled = networkIp.isNotBlank() && !isTestingConn,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(
-                                    "No paired Bluetooth printers found.",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF92400E)
-                                )
-                                Text(
-                                    "Please pair your thermal printer in Android Bluetooth Settings first, then tap Refresh.",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFFB45309)
-                                )
+                            if (isTestingConn) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
                             }
+                            Text("Save & Connect Network Printer")
                         }
                     } else {
-                        pairedPrinters.forEach { device ->
-                            val isSelected = device.address == selectedAddress
+                        // Bluetooth Section
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Paired Bluetooth Printers", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            IconButton(onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    bluetoothPermissionLauncher.launch(
+                                        arrayOf(
+                                            android.Manifest.permission.BLUETOOTH_CONNECT,
+                                            android.Manifest.permission.BLUETOOTH_SCAN
+                                        )
+                                    )
+                                } else {
+                                    pairedPrinters = printerManager.getPairedPrinters()
+                                }
+                            }) {
+                                Icon(Icons.Outlined.Refresh, contentDescription = "Refresh Printers")
+                            }
+                        }
+
+                        if (pairedPrinters.isEmpty()) {
                             Card(
-                                onClick = {
-                                    selectedAddress = device.address
-                                    printerManager.savePrinterConfig(device.address, selectedWidthMm)
-                                    isConnectedSuccess = null
-                                    connectionStatusMessage = "Selected ${device.name}"
-                                    Toast.makeText(context, "Selected ${device.name}", Toast.LENGTH_SHORT).show()
-                                },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isSelected) Color(0xFFDCFCE7) else Color(0xFFF8FAFC)
-                                ),
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (isSelected) Color(0xFF16A34A) else Color(0xFFCBD5E1)
-                                ),
-                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
+                                shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(
+                                        "No paired Bluetooth printers found.",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF92400E)
+                                    )
+                                    Text(
+                                        "Please pair your thermal printer in Android Bluetooth Settings first, then tap Refresh.",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFFB45309)
+                                    )
+                                }
+                            }
+                        } else {
+                            pairedPrinters.forEach { device ->
+                                val isSelected = device.address == selectedAddress
+                                Card(
+                                    onClick = {
+                                        selectedAddress = device.address
+                                        printerManager.savePrinterConfig(device.address, selectedWidthMm)
+                                        isConnectedSuccess = null
+                                        connectionStatusMessage = "Selected ${device.name}"
+                                        Toast.makeText(context, "Selected ${device.name}", Toast.LENGTH_SHORT).show()
+                                    },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) Color(0xFFDCFCE7) else Color(0xFFF8FAFC)
+                                    ),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (isSelected) Color(0xFF16A34A) else Color(0xFFCBD5E1)
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(device.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                        Text(device.address, fontSize = 12.sp, color = Color.Gray)
-                                    }
-
-                                    Button(
-                                        onClick = {
-                                            selectedAddress = device.address
-                                            printerManager.savePrinterConfig(device.address, selectedWidthMm)
-                                            isTestingConn = true
-                                            scope.launch {
-                                                val res = printerManager.testConnection(device.address)
-                                                isTestingConn = false
-                                                res.fold(
-                                                    onSuccess = {
-                                                        isConnectedSuccess = true
-                                                        connectionStatusMessage = "Connected to ${device.name}"
-                                                        Toast.makeText(context, "Connected to ${device.name}", Toast.LENGTH_SHORT).show()
-                                                    },
-                                                    onFailure = { err ->
-                                                        isConnectedSuccess = false
-                                                        connectionStatusMessage = "Connection failed: ${err.message}"
-                                                    }
-                                                )
-                                            }
-                                        },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isSelected) Color(0xFF16A34A) else Color(0xFF0284C7)
-                                        ),
-                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                        shape = RoundedCornerShape(8.dp)
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(if (isSelected) "Connected" else "Connect", fontSize = 12.sp)
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(device.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                            Text(device.address, fontSize = 12.sp, color = Color.Gray)
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                if (isSelected) {
+                                                    selectedAddress = ""
+                                                    printerManager.savePrinterConfig("", selectedWidthMm)
+                                                    isConnectedSuccess = null
+                                                    connectionStatusMessage = "Disconnected ${device.name}"
+                                                    Toast.makeText(context, "Disconnected ${device.name}", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    selectedAddress = device.address
+                                                    printerManager.savePrinterConfig(device.address, selectedWidthMm)
+                                                    isTestingConn = true
+                                                    scope.launch {
+                                                        val res = printerManager.testConnection(device.address)
+                                                        isTestingConn = false
+                                                        res.fold(
+                                                            onSuccess = {
+                                                                isConnectedSuccess = true
+                                                                connectionStatusMessage = "Connected to ${device.name}"
+                                                                Toast.makeText(context, "Connected to ${device.name}", Toast.LENGTH_SHORT).show()
+                                                            },
+                                                            onFailure = { err ->
+                                                                isConnectedSuccess = false
+                                                                connectionStatusMessage = "Connection failed: ${err.message}"
+                                                            }
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (isSelected) Color(0xFFDC2626) else Color(0xFF0284C7)
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Text(if (isSelected) "Disconnect" else "Connect", fontSize = 12.sp)
+                                        }
                                     }
                                 }
                             }
@@ -1769,8 +1894,9 @@ fun SettingsShopSection(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     // Print Test Receipt Button
+                    val canPrintTest = if (connType == "network") networkIp.isNotBlank() else selectedAddress.isNotBlank()
                     Button(
-                        enabled = selectedAddress.isNotBlank() && !isPrintingTest,
+                        enabled = canPrintTest && !isPrintingTest,
                         onClick = {
                             isPrintingTest = true
                             scope.launch {
@@ -1795,7 +1921,7 @@ fun SettingsShopSection(
                                     discount = 0.0,
                                     tax = 3.83,
                                     grandTotal = 29.33,
-                                    paymentMethod = "TEST PRINT",
+                                    paymentMethod = if (connType == "network") "TCP NETWORK PRINT" else "BLUETOOTH PRINT",
                                     currencySymbol = businessProfile?.currency ?: "$"
                                 )
 

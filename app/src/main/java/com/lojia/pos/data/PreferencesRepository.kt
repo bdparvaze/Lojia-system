@@ -59,6 +59,9 @@ class PreferencesRepository private constructor(context: Context) {
         // Printer keys
         private const val KEY_PRINTER_ADDRESS = "key_printer_address"
         private const val KEY_PRINTER_PAPER_WIDTH = "key_printer_paper_width"
+        private const val KEY_PRINTER_CONN_TYPE = "key_printer_conn_type" // "bluetooth" or "network"
+        private const val KEY_PRINTER_NET_IP = "key_printer_net_ip"
+        private const val KEY_PRINTER_NET_PORT = "key_printer_net_port"
 
         @Volatile
         private var instance: PreferencesRepository? = null
@@ -285,6 +288,30 @@ class PreferencesRepository private constructor(context: Context) {
 
     fun getPrinterPaperWidth(): Int {
         return prefs.getInt(KEY_PRINTER_PAPER_WIDTH, 58)
+    }
+
+    fun savePrinterConnectionType(type: String) {
+        prefs.edit().putString(KEY_PRINTER_CONN_TYPE, type).apply()
+    }
+
+    fun getPrinterConnectionType(): String {
+        return prefs.getString(KEY_PRINTER_CONN_TYPE, "bluetooth") ?: "bluetooth"
+    }
+
+    fun savePrinterNetworkIp(ip: String) {
+        prefs.edit().putString(KEY_PRINTER_NET_IP, ip).apply()
+    }
+
+    fun getPrinterNetworkIp(): String {
+        return prefs.getString(KEY_PRINTER_NET_IP, "") ?: ""
+    }
+
+    fun savePrinterNetworkPort(port: Int) {
+        prefs.edit().putInt(KEY_PRINTER_NET_PORT, port).apply()
+    }
+
+    fun getPrinterNetworkPort(): Int {
+        return prefs.getInt(KEY_PRINTER_NET_PORT, 9100)
     }
 
     /**

@@ -9,9 +9,12 @@ import android.util.Log
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
+import com.dantsu.escposprinter.connection.tcp.TcpConnection
 import com.lojia.pos.data.PreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -81,11 +84,33 @@ class BluetoothPrinterManager(private val context: Context) {
     }
 
     /**
+     * Connection type management ("bluetooth" or "network")
+     */
+    fun getPrinterConnectionType(): String {
+        return prefsRepository.getPrinterConnectionType()
+    }
+
+    fun savePrinterConnectionType(type: String) {
+        prefsRepository.savePrinterConnectionType(type)
+    }
+
+    /**
      * Saves selected printer hardware address and paper width setting in preferences.
      */
     fun savePrinterConfig(address: String, widthMm: Int) {
         prefsRepository.savePrinterAddress(address)
         prefsRepository.savePrinterPaperWidth(widthMm)
+        prefsRepository.savePrinterConnectionType("bluetooth")
+    }
+
+    /**
+     * Saves network printer IP, port and paper width in preferences.
+     */
+    fun saveNetworkPrinterConfig(ip: String, port: Int = 9100, widthMm: Int = 80) {
+        prefsRepository.savePrinterNetworkIp(ip)
+        prefsRepository.savePrinterNetworkPort(port)
+        prefsRepository.savePrinterPaperWidth(widthMm)
+        prefsRepository.savePrinterConnectionType("network")
     }
 
     /**
@@ -93,6 +118,14 @@ class BluetoothPrinterManager(private val context: Context) {
      */
     fun getSavedPrinterAddress(): String {
         return prefsRepository.getSelectedPrinterAddress()
+    }
+
+    fun getSavedNetworkIp(): String {
+        return prefsRepository.getPrinterNetworkIp()
+    }
+
+    fun getSavedNetworkPort(): Int {
+        return prefsRepository.getPrinterNetworkPort()
     }
 
     /**
@@ -103,17 +136,49 @@ class BluetoothPrinterManager(private val context: Context) {
     }
 
     /**
-     * Checks if a printer address has been configured in settings.
+     * Checks if a printer address or IP has been configured in settings.
      */
     fun isPrinterConfigured(): Boolean {
-        return getSavedPrinterAddress().isNotBlank()
+        return if (getPrinterConnectionType() == "network") {
+            getSavedNetworkIp().isNotBlank()
+        } else {
+            getSavedPrinterAddress().isNotBlank()
+        }
     }
 
     /**
-     * Tests Bluetooth socket connection to specified printer address.
+     * Tests Network connection to specified printer IP and Port over TCP socket.
+     */
+    suspend fun testNetworkConnection(ip: String = getSavedNetworkIp(), port: Int = getSavedNetworkPort()): Result<Boolean> = withContext(Dispatchers.IO) {
+        if (ip.isBlank()) {
+            return@withContext Result.failure(IllegalStateException("No network printer IP address specified."))
+        }
+        try {
+            val socket = Socket()
+            socket.connect(InetSocketAddress(ip, port), 3000)
+            val isConnected = socket.isConnected
+            socket.close()
+
+            if (isConnected) {
+                Result.success(true)
+            } else {
+                Result.failure(IllegalStateException("Could not connect to printer at $ip:$port"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Network printer test connection failed ($ip:$port): ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Tests socket connection to specified printer (Bluetooth or Network).
      */
     @SuppressLint("MissingPermission")
     suspend fun testConnection(address: String = getSavedPrinterAddress()): Result<Boolean> = withContext(Dispatchers.IO) {
+        if (getPrinterConnectionType() == "network") {
+            return@withContext testNetworkConnection(getSavedNetworkIp(), getSavedNetworkPort())
+        }
+
         if (address.isBlank()) {
             return@withContext Result.failure(IllegalStateException("No printer address specified."))
         }
@@ -144,19 +209,46 @@ class BluetoothPrinterManager(private val context: Context) {
     }
 
     /**
-     * Prints formatted ESC/POS text asynchronously.
+     * Prints formatted ESC/POS text asynchronously over Bluetooth or Network TCP.
      * Guaranteed NOT to block POS sales if printing fails or printer is disconnected.
      *
      * @param formattedText Raw ESC/POS formatted string using DantSu printer formatting tags.
      * @return Result.success(Unit) or Result.failure(Throwable)
      */
     suspend fun printFormattedText(formattedText: String): Result<Unit> = withContext(Dispatchers.IO) {
+        val connectionType = getPrinterConnectionType()
+        val paperWidth = PrinterPaperWidth.fromWidthMm(getSavedPaperWidthMm())
+
+        if (connectionType == "network") {
+            val ip = getSavedNetworkIp()
+            val port = getSavedNetworkPort()
+            if (ip.isBlank()) {
+                return@withContext Result.failure(IllegalStateException("No Network printer IP configured in settings."))
+            }
+
+            return@withContext try {
+                val tcpConnection = TcpConnection(ip, port, 4000)
+                val printer = EscPosPrinter(
+                    tcpConnection,
+                    paperWidth.dpi,
+                    paperWidth.widthMm.toFloat(),
+                    paperWidth.charsPerLine
+                )
+
+                printer.printFormattedText(formattedText)
+                printer.disconnectPrinter()
+                Log.d(TAG, "Receipt successfully printed over TCP to $ip:$port")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to print to Network ESC/POS thermal printer ($ip:$port): ${e.message}", e)
+                Result.failure(e)
+            }
+        }
+
         val printerAddress = getSavedPrinterAddress()
         if (printerAddress.isBlank()) {
             return@withContext Result.failure(IllegalStateException("No Bluetooth printer selected in settings."))
         }
-
-        val paperWidth = PrinterPaperWidth.fromWidthMm(getSavedPaperWidthMm())
 
         try {
             val connection = BluetoothPrintersConnections.selectFirstPaired()
@@ -416,5 +508,66 @@ class BluetoothPrinterManager(private val context: Context) {
         sb.append("\n\n\n")
 
         return sb.toString()
+    }
+
+    /**
+     * Sends ESC/POS pulse signal (ESC p 0 25 250) over Bluetooth or TCP Network connection to kick open cash drawer.
+     */
+    suspend fun openCashDrawer(): Result<Unit> = withContext(Dispatchers.IO) {
+        val openDrawerBytes = byteArrayOf(0x1B.toByte(), 0x70.toByte(), 0x00.toByte(), 0x19.toByte(), 0xFA.toByte())
+
+        if (getPrinterConnectionType() == "network") {
+            val ip = getSavedNetworkIp()
+            val port = getSavedNetworkPort()
+            if (ip.isBlank()) {
+                return@withContext Result.failure(IllegalStateException("No Network printer IP configured."))
+            }
+            return@withContext try {
+                val tcpConnection = TcpConnection(ip, port, 3000)
+                tcpConnection.connect()
+                if (tcpConnection.isConnected) {
+                    tcpConnection.write(openDrawerBytes)
+                    tcpConnection.disconnect()
+                    Log.d(TAG, "Sent open cash drawer command over TCP to $ip:$port")
+                    Result.success(Unit)
+                } else {
+                    Result.failure(IllegalStateException("Could not connect to network printer at $ip:$port"))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to open cash drawer over network: ${e.message}", e)
+                Result.failure(e)
+            }
+        }
+
+        val printerAddress = getSavedPrinterAddress()
+        if (printerAddress.isBlank()) {
+            return@withContext Result.failure(IllegalStateException("No Bluetooth printer selected."))
+        }
+
+        try {
+            val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                ?: return@withContext Result.failure(IllegalStateException("Bluetooth adapter unavailable."))
+            if (!bluetoothAdapter.isEnabled) {
+                return@withContext Result.failure(IllegalStateException("Bluetooth is disabled."))
+            }
+
+            @SuppressLint("MissingPermission")
+            val device = bluetoothAdapter.getRemoteDevice(printerAddress)
+                ?: return@withContext Result.failure(IllegalStateException("Device not found."))
+
+            val connection = BluetoothConnection(device)
+            connection.connect()
+            if (connection.isConnected) {
+                connection.write(openDrawerBytes)
+                connection.disconnect()
+                Log.d(TAG, "Sent open cash drawer command to $printerAddress")
+                Result.success(Unit)
+            } else {
+                Result.failure(IllegalStateException("Could not connect to printer for cash drawer kick."))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open cash drawer: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 }

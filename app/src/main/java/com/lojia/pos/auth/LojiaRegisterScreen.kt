@@ -144,38 +144,8 @@ fun LojiaRegisterScreen(
     val isSaValid = rSa.trim().isNotEmpty()
     val isTermsValid = agreeTerms
 
-    val regRequirements = remember(isFnValid, isLnValid, isUnValid, isEmValid, isPhoneValid, isPwValid, isCpValid, isSqValid, isSaValid, isTermsValid, isBn) {
-        listOf(
-            Triple(LojiaStrings.get("fieldFirstName", isBn), isFnValid, if (isBn) "লিখুন" else "Enter"),
-            Triple(LojiaStrings.get("fieldLastName", isBn), isLnValid, if (isBn) "লিখুন" else "Enter"),
-            Triple(LojiaStrings.get("fieldUsername", isBn), isUnValid, if (isBn) "৩–২০ অক্ষর" else "3–20 chars"),
-            Triple(LojiaStrings.get("fieldEmail", isBn), isEmValid, if (isBn) "সঠিক ফরম্যাট" else "Valid format"),
-            Triple(LojiaStrings.get("fieldPhone", isBn), isPhoneValid, if (isBn) "৭–১৫ ডিজিট" else "7–15 digits"),
-            Triple(LojiaStrings.get("fieldPassword", isBn), isPwValid, if (isBn) "কমপক্ষে ৮ অক্ষর" else "Min. 8 chars"),
-            Triple(LojiaStrings.get("fieldConfirmPw", isBn), isCpValid, if (isBn) "উভয় পাসওয়ার্ড একই" else "Must match"),
-            Triple(LojiaStrings.get("fieldSecQuestion", isBn), isSqValid, if (isBn) "প্রশ্ন নির্বাচন" else "Select"),
-            Triple(LojiaStrings.get("fieldSecAnswer", isBn), isSaValid, if (isBn) "উত্তর লিখুন" else "Enter answer"),
-            Triple(LojiaStrings.get("fieldTerms", isBn), isTermsValid, if (isBn) "শর্তে টিক দিন" else "Check box")
-        )
-    }
-
-    val regCompletedCount = regRequirements.count { it.second }
-    val regTotalCount = regRequirements.size
-    val regCompletionPercent = (regCompletedCount * 100) / regTotalCount
-    val isFormComplete = regCompletedCount == regTotalCount
-    val pendingRequirements = regRequirements.filter { !it.second }
-
     fun handleRegister() {
         focusManager.clearFocus()
-
-        if (!isFormComplete) {
-            Toast.makeText(
-                context,
-                if (isBn) "রেজিস্ট্রেশন করতে সম্পূর্ণ ডাটা ১০০% পূরণ করুন!" else "Please complete 100% of all required fields!",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
 
         var hasError = false
         if (rFn.trim().isEmpty()) { vFn = FieldValidationState.ERROR; hasError = true }
@@ -219,7 +189,19 @@ fun LojiaRegisterScreen(
             hasError = true
         }
 
-        if (hasError) return
+        if (!agreeTerms) {
+            hasError = true
+        }
+
+        if (hasError) {
+            val toastMsg = if (!agreeTerms) {
+                if (isBn) "রেজিস্ট্রেশন করতে শর্তাবলীতে সম্মত হন এবং সকল তথ্য সঠিকভাবে পূরণ করুন!" else "Please agree to the Terms of Service and fill out all required fields!"
+            } else {
+                if (isBn) "অনুগ্রহ করে সকল তথ্য সঠিকভাবে পূরণ করুন!" else "Please fill out all required fields correctly!"
+            }
+            Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
+            return
+        }
 
         isProcessingReg = true
         coroutineScope.launch {
@@ -264,162 +246,6 @@ fun LojiaRegisterScreen(
                 .padding(horizontal = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Registration Progress Card
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 12.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = if (isFormComplete) Color(0xFFF0FDF4) else Color(0xFFFFFBEB),
-                border = BorderStroke(
-                    1.2.dp,
-                    if (isFormComplete) Color(0xFF86EFAC) else Color(0xFFFCD34D)
-                ),
-                shadowElevation = 2.dp
-            ) {
-                Column(modifier = Modifier.padding(14.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (isFormComplete) Color(0xFF10B981) else Color(0xFFF59E0B)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (isFormComplete) Icons.Default.Check else Icons.Outlined.Assignment,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(17.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(9.dp))
-                            Column {
-                                Text(
-                                    text = LojiaStrings.get("regProgress", isBn),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isFormComplete) Color(0xFF065F46) else Color(0xFF92400E)
-                                )
-                                Text(
-                                    text = if (isFormComplete) {
-                                        if (isBn) "১০০% সম্পূর্ণ · বাটন সচল" else "100% Completed · Button Active"
-                                    } else {
-                                        if (isBn) "$regCompletedCount/$regTotalCount পূরণ হয়েছে (বাকি ${pendingRequirements.size}টি)" else "$regCompletedCount/$regTotalCount filled (${pendingRequirements.size} remaining)"
-                                    },
-                                    fontSize = 11.sp,
-                                    color = if (isFormComplete) Color(0xFF047857) else Color(0xFFB45309)
-                                )
-                            }
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = if (isFormComplete) Color(0xFF10B981) else if (regCompletionPercent >= 50) Color(0xFFF59E0B) else Color(0xFFEF4444)
-                        ) {
-                            Text(
-                                text = "$regCompletionPercent%",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    val animatedProgress by animateFloatAsState(
-                        targetValue = regCompletionPercent / 100f,
-                        animationSpec = tween(durationMillis = 350),
-                        label = "regProgressAnim"
-                    )
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(7.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = if (isFormComplete) Color(0xFF10B981) else if (regCompletionPercent >= 50) Color(0xFFF59E0B) else Color(0xFFEF4444),
-                        trackColor = Color.Black.copy(alpha = 0.08f)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    if (!isFormComplete) {
-                        Text(
-                            text = if (isBn) "❌ যেসব ডাটা এখনও এন্ট্রি হয়নি (বাকি ${pendingRequirements.size}টি):" else "❌ Missing Data (${pendingRequirements.size} remaining):",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFB91C1C),
-                            modifier = Modifier.padding(bottom = 6.dp)
-                        )
-
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            pendingRequirements.forEach { req ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Color.White.copy(alpha = 0.88f))
-                                        .padding(horizontal = 8.dp, vertical = 5.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = null,
-                                        tint = Color(0xFFEF4444),
-                                        modifier = Modifier.size(13.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = req.first,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1F2937)
-                                    )
-                                    Text(
-                                        text = " — ${req.third}",
-                                        fontSize = 10.5.sp,
-                                        color = Color(0xFF6B7280)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFDCFCE7))
-                                .padding(horizontal = 8.dp, vertical = 7.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = LojiaStrings.get("allFieldsCompleted", isBn),
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF065F46)
-                            )
-                        }
-                    }
-                }
-            }
-
             // Card 1: Personal Profile
             LojiaCard(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
                 LojiaSectionHeader(
@@ -819,86 +645,11 @@ fun LojiaRegisterScreen(
                 }
             }
 
-            // Status Banner
-            if (!isFormComplete) {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFFEF2F2),
-                    border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp, bottom = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = null,
-                            tint = Color(0xFFEF4444),
-                            modifier = Modifier.size(16.dp).padding(top = 1.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = if (isBn) "রেজিস্ট্রেশন বাটন নিষ্ক্রিয় (OFF)" else "Register Button Disabled (OFF)",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFB91C1C)
-                            )
-                            Text(
-                                text = if (isBn)
-                                    "সম্পূর্ণ ডাটা ১০০% পূরণ করার পর বাটন অন হবে। এখনও ${pendingRequirements.size}টি তথ্য বাকি রয়েছে।"
-                                else
-                                    "Complete 100% of all required information to turn ON the button. ${pendingRequirements.size} items remaining.",
-                                fontSize = 11.sp,
-                                color = Color(0xFF7F1D1D)
-                            )
-                        }
-                    }
-                }
-            } else {
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFF0FDF4),
-                    border = BorderStroke(1.dp, Color(0xFF86EFAC)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp, bottom = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = Color(0xFF10B981),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (isBn) "সব তথ্য ১০০% পূরণ সম্পন্ন হয়েছে! রেজিস্ট্রেশন বাটন এখন সক্রিয় (ON)।" else "100% information completed! Register button is now ACTIVE (ON).",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF047857)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             LojiaGradientButton(
-                text = if (isProcessingReg) LojiaStrings.get("processing", isBn)
-                else if (isFormComplete) LojiaStrings.get("regBtn", isBn)
-                else (if (isBn) "সম্পূর্ণ তথ্য পূরণ করুন ($regCompletionPercent%)" else "Fill All Fields ($regCompletionPercent%)"),
-                onClick = {
-                    if (isFormComplete) {
-                        handleRegister()
-                    }
-                },
-                enabled = isFormComplete && !isProcessingReg,
+                text = if (isProcessingReg) LojiaStrings.get("processing", isBn) else LojiaStrings.get("regBtn", isBn),
+                onClick = { handleRegister() },
+                enabled = !isProcessingReg,
                 isLoading = isProcessingReg,
                 testTag = "regBtn"
             )
