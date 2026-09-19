@@ -26,13 +26,18 @@ import androidx.core.view.WindowCompat
 
 // Solid 100% Light Color Scheme (No Dark Skin / Mode)
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryIndigo,
+    primary = PrimaryBlue,
     onPrimary = PureWhite,
-    primaryContainer = SurfaceVariantLight,
-    onPrimaryContainer = PrimaryIndigoDark,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = PrimaryBlueDark,
     secondary = SecondaryTeal,
     onSecondary = PureWhite,
-    tertiary = AccentGold,
+    secondaryContainer = SurfaceVariantLight,
+    onSecondaryContainer = TextPrimaryLight,
+    tertiary = WarningOrange,
+    onTertiary = PureWhite,
+    tertiaryContainer = WarningContainer,
+    onTertiaryContainer = WarningOrange,
     background = BackgroundLight,
     onBackground = TextPrimaryLight,
     surface = SurfaceLight,
@@ -40,7 +45,11 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = TextSecondaryLight,
     outline = OutlineLight,
-    outlineVariant = OutlineVariantLight
+    outlineVariant = OutlineVariantLight,
+    error = ErrorRed,
+    onError = PureWhite,
+    errorContainer = ErrorContainer,
+    onErrorContainer = ErrorRed
 )
 
 @Composable

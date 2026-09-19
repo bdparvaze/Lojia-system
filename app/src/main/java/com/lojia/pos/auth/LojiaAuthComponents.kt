@@ -66,7 +66,7 @@ fun LojiaHeader(
         modifier = modifier
             .fillMaxWidth()
             .then(if (headerHeight != null) Modifier.height(headerHeight) else Modifier.height(260.dp))
-            .background(Color(0xFF3858F6))
+            .background(PrimaryBlue)
             .testTag("lojiaHeader"),
         contentAlignment = Alignment.Center
     ) {

@@ -8,6 +8,6 @@ import com.lojia.pos.BuildConfig
  */
 object DevCredentials {
     val DEFAULT_USERNAME: String = if (BuildConfig.DEBUG) "demo" else ""
-    val DEFAULT_PASSWORD: String = if (BuildConfig.DEBUG) "admin123" else ""
+    val DEFAULT_PASSWORD: String = if (BuildConfig.DEBUG) "demo123" else ""
     val DEFAULT_PIN: String = if (BuildConfig.DEBUG) "123456" else ""
 }

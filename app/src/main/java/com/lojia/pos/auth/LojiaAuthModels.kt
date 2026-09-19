@@ -13,36 +13,36 @@ import com.lojia.pos.settings.*
 import androidx.compose.ui.graphics.Color
 
 object LojiaColors {
-    val P800 = Color(0xFF1A1290)
-    val P700 = Color(0xFF2D22C4)
-    val P600 = Color(0xFF3B2FD6)
-    val P500 = Color(0xFF4F3EE8)
-    val P400 = Color(0xFF6A5CF0)
-    val P100 = Color(0xFFEEF0FF)
-    val P50 = Color(0xFFF5F6FF)
+    val P800 = Color(0xFF1E3A8A)
+    val P700 = Color(0xFF1D4ED8)
+    val P600 = Color(0xFF2563EB)
+    val P500 = Color(0xFF2563EB)
+    val P400 = Color(0xFF3B82F6)
+    val P100 = Color(0xFFDBEAFE)
+    val P50 = Color(0xFFEFF6FF)
 
-    val G500 = Color(0xFF10B981)
+    val G500 = Color(0xFF059669)
     val G200 = Color(0xFFA7F3D0)
-    val G100 = Color(0xFFD1FAE5)
+    val G100 = Color(0xFFECFDF5)
 
-    val R500 = Color(0xFFEF4444)
-    val R100 = Color(0xFFFEE2E2)
+    val R500 = Color(0xFFDC2626)
+    val R100 = Color(0xFFFEF2F2)
 
-    val A400 = Color(0xFFFBBF24)
+    val A400 = Color(0xFFD97706)
 
-    val N900 = Color(0xFF0F0F1A)
-    val N700 = Color(0xFF374151)
-    val N600 = Color(0xFF4B5563)
-    val N500 = Color(0xFF6B7280)
-    val N400 = Color(0xFF9CA3AF)
-    val N300 = Color(0xFFD1D5DB)
-    val N200 = Color(0xFFE5E7EB)
-    val N100 = Color(0xFFF3F4F6)
-    val N50 = Color(0xFFFAFAFA)
+    val N900 = Color(0xFF0F172A)
+    val N700 = Color(0xFF334155)
+    val N600 = Color(0xFF475569)
+    val N500 = Color(0xFF64748B)
+    val N400 = Color(0xFF94A3B8)
+    val N300 = Color(0xFFCBD5E1)
+    val N200 = Color(0xFFE2E8F0)
+    val N100 = Color(0xFFF1F5F9)
+    val N50 = Color(0xFFF8FAFC)
     val White = Color(0xFFFFFFFF)
 
-    val CanvasBg = Color(0xFFECEEFF)
-    val OkBg = Color(0xFFF0FDF4)
+    val CanvasBg = Color(0xFFFFFFFF)
+    val OkBg = Color(0xFFECFDF5)
 }
 
 data class LojiaCountry(

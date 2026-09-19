@@ -1,62 +1,84 @@
 package com.lojia.pos.ui.theme
 
-
-
 import androidx.compose.ui.graphics.Color
 
-// Pure Light Theme System
-val PureWhite = Color(0xFFFFFFFF)
-val PureBlack = Color(0xFF000000)
-val BackgroundLight = Color(0xFFFFFFFF) // Pure white background
-val BgLightGrey = Color(0xFFF8F9FA) // Light grey card variant
-val SurfaceLight = Color(0xFFFFFFFF) // Pure white surface
-val SurfaceVariantLight = Color(0xFFF8F9FA) // Subtle light grey variant
-val OutlineLight = Color(0xFFE5E7EB) // Subtle clean border (#E5E7EB)
-val OutlineVariantLight = Color(0xFFCBD5E1)
+// =========================================================================
+// UNIFIED INTERNATIONAL DESIGN TOKEN SYSTEM (Material / Google M3 standard)
+// Single Source of Truth
+// =========================================================================
 
-val PrimaryBlue = Color(0xFF2563EB) // Standard primary blue
-val PrimaryIndigo = Color(0xFF2563EB) // Clean primary blue
-val PrimaryIndigoDark = Color(0xFF1D4ED8)
-val DarkCharcoal = Color(0xFF1E293B) // Dark slate for buttons
-val SecondaryTeal = Color(0xFF0D9488)
-val AccentGold = Color(0xFFD97706)
-val AccentEmerald = Color(0xFF10B981)
-val AccentRose = Color(0xFFEF4444)
+// Primary Brand Token
+val PrimaryBlue = Color(0xFF2563EB)         // #2563EB - Main buttons, links, selected states
+val PrimaryBlueDark = Color(0xFF1D4ED8)     // #1D4ED8
+val PrimaryContainer = Color(0xFFEFF6FF)    // #EFF6FF
 
-val TextPrimaryLight = Color(0xFF111827) // High-contrast dark #111827
-val TextSecondaryLight = Color(0xFF4B5563) // Dark grey #4B5563
-val TextTertiaryLight = Color(0xFF6B7280) // Meta text #6B7280
+// Aliases for compatibility
+val PrimaryIndigo = PrimaryBlue
+val PrimaryIndigoDark = PrimaryBlueDark
+val DarkCharcoal = Color(0xFF0F172A)
 
-// Loyverse Theme Colors
-val LoyverseTopGreen = Color(0xFF43A047)
-val LoyverseGreenPrimary = Color(0xFF388E3C)
-val LoyverseGreenDark = Color(0xFF2E7D32)
-val LoyverseGreenLight = Color(0xFF43A047)
-val LoyverseHeaderButtonGreen = Color(0xFF7CB342)
-val LoyverseItemGrey = Color(0xFFD9D9D9)
-val LoyverseDividerGrey = Color(0xFFE0E0E0)
-val LoyverseTextDark = Color(0xFF212121)
-val LoyverseBlue = Color(0xFF00796B)
+// Status Tokens
+val SuccessGreen = Color(0xFF059669)        // #059669 - Positive indicators, completed states ONLY
+val SuccessContainer = Color(0xFFECFDF5)    // #ECFDF5
+val AccentEmerald = SuccessGreen
 
+val WarningOrange = Color(0xFFD97706)       // #D97706
+val WarningContainer = Color(0xFFFFFBEB)    // #FFFBEB
+val AccentGold = WarningOrange
+
+val ErrorRed = Color(0xFFDC2626)            // #DC2626
+val ErrorContainer = Color(0xFFFEF2F2)      // #FEF2F2
+val AccentRose = ErrorRed
+
+// Neutral Canvas System
+val PureWhite = Color(0xFFFFFFFF)           // #FFFFFF
+val PureBlack = Color(0xFF000000)           // #000000
+val BackgroundLight = Color(0xFFFFFFFF)     // #FFFFFF
+val SurfaceLight = Color(0xFFF8FAFC)        // #F8FAFC
+val SurfaceVariantLight = Color(0xFFF1F5F9) // #F1F5F9
+val OutlineLight = Color(0xFFE2E8F0)        // #E2E8F0
+val OutlineVariantLight = Color(0xFFCBD5E1) // #CBD5E1
+val BgLightGrey = SurfaceLight
+
+// Text Tokens
+val TextPrimaryLight = Color(0xFF0F172A)    // #0F172A
+val TextSecondaryLight = Color(0xFF64748B)  // #64748B
+val TextTertiaryLight = Color(0xFF94A3B8)   // #94A3B8
+
+// Secondary Accent
+val SecondaryTeal = Color(0xFF0284C7)
+
+// Loyverse Theme Color Mapping (Unified to Global Tokens)
+val LoyverseTopGreen = PrimaryBlue          // Header uses brand primary
+val LoyverseGreenPrimary = PrimaryBlue      // Action buttons use brand primary
+val LoyverseGreenDark = PrimaryBlueDark
+val LoyverseGreenLight = PrimaryBlue
+val LoyverseHeaderButtonGreen = PrimaryBlue // Header buttons use brand primary
+val LoyverseItemGrey = SurfaceVariantLight
+val LoyverseDividerGrey = OutlineLight
+val LoyverseTextDark = TextPrimaryLight
+val LoyverseBlue = PrimaryBlue
+
+// ShiftColors System (Unified to Global Tokens)
 object ShiftColors {
-    val Primary = Color(0xFF10B981)
-    val PrimaryDark = Color(0xFF059669)
-    val Bg = Color(0xFFF8FAFC)
-    val Card = Color(0xFFFFFFFF)
-    val Text = Color(0xFF0F172A)
-    val TextMuted = Color(0xFF64748B)
-    val Border = Color(0xFFE2E8F0)
-    val SaveBtn = Color(0xFF3B82F6)
-    val Danger = Color(0xFFEF4444)
-    val DangerLight = Color(0xFFFEF2F2)
-    val Purple = Color(0xFF8B5CF6)
-    val PurpleLight = Color(0xFFF3E8FF)
-    val Charcoal = Color(0xFF1E293B)
-    val CharcoalSoft = Color(0xFF334155)
-    val Brass = Color(0xFFD97706)
-    val BrassLight = Color(0xFFFFFBEB)
-    val NetCashGreen = Color(0xFF047857)
-    val NetMadaBlue = Color(0xFF1D4ED8)
+    val Primary = PrimaryBlue               // #2563EB - Main buttons are Primary Blue
+    val PrimaryDark = PrimaryBlueDark       // #1D4ED8
+    val Bg = SurfaceLight                  // #F8FAFC
+    val Card = PureWhite                   // #FFFFFF
+    val Text = TextPrimaryLight            // #0F172A
+    val TextMuted = TextSecondaryLight      // #64748B
+    val Border = OutlineLight              // #E2E8F0
+    val SaveBtn = PrimaryBlue              // #2563EB
+    val Danger = ErrorRed                  // #DC2626
+    val DangerLight = ErrorContainer        // #FEF2F2
+    val Purple = PrimaryBlue               // #2563EB
+    val PurpleLight = PrimaryContainer     // #EFF6FF
+    val Charcoal = TextPrimaryLight        // #0F172A
+    val CharcoalSoft = TextSecondaryLight   // #64748B
+    val Brass = WarningOrange              // #D97706
+    val BrassLight = WarningContainer       // #FFFBEB
+    val NetCashGreen = SuccessGreen        // #059669
+    val NetMadaBlue = PrimaryBlue          // #2563EB
 }
 
 

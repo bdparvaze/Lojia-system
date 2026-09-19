@@ -495,7 +495,7 @@ fun BarcodeScannerDialog(
                                 onBarcodeScanned(manualBarcode.trim())
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                         enabled = manualBarcode.isNotBlank(),

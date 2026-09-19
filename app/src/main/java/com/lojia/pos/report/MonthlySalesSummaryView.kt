@@ -530,7 +530,7 @@ fun MonthlySalesSummaryView(
                 value = "%.2f %s".format(projectedMonthClose, currency),
                 subtitle = stringResource(R.string.subtitle_estimated_30_day_run),
                 icon = Icons.Default.QueryStats,
-                accentColor = Color(0xFF8B5CF6),
+                accentColor = PrimaryBlue,
                 modifier = Modifier.weight(1f)
             )
         }

@@ -824,7 +824,7 @@ fun SettingsReportSection(
                                 }
                             },
                             enabled = !isBackingUp,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
